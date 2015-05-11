@@ -3,25 +3,16 @@ import hudson.Launcher;
 import hudson.Extension;
 import hudson.model.*;
 import hudson.tasks.*;
-import hudson.scm.*;
 import java.util.List;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
- * Creates releases
+ * Executes deployments of releases.
  * @author badriance
  */
-public class OctopusDeployReleaseRecorder extends Recorder {
-
-    /**
-     * The octopus project
-     */
-    private final String project;
-    public String getProject() {
-        return project;
-    }
+public class OctopusDeployDeploymentRecorder extends Recorder {
     
     /**
      * The release version number in octopus.
@@ -32,47 +23,29 @@ public class OctopusDeployReleaseRecorder extends Recorder {
     }
     
     /**
-     * The source from which to get releasenotes.
-     * File or SCM
+     * The release version number in octopus.
      */
-    private final String releaseNotesSource;
-    public String getReleaseNotesSource() {
-        return releaseNotesSource;
+    private final String environment;
+    public String getEnvironment() {
+        return environment;
     }
-   
     
-    // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public OctopusDeployReleaseRecorder(String project, String releaseVersion, String releaseNotesSource) {
-        this.project = project;
+    public OctopusDeployDeploymentRecorder(String releaseVersion, String environment) {
         this.releaseVersion = releaseVersion;
-        this.releaseNotesSource = releaseNotesSource;
+        this.environment = environment;
     }
-    
+
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
     }
-
+    
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
-        
-        try {
-
-            Result result = build.getResult();
-            Job  job = build.getParent();
-            // need to get all the changesets for all builds from this one up to
-            // but not including the last successful build
-            List changesets = build.getChangeSets();
-            
-            return true;
-        } catch (Exception ex) {
-             listener.getLogger().println("Error Occured: " + ex.getMessage());
-        }
-        
-         return true;
+       return true;
     }
-
+    
     /**
      * Descriptor for {@link OctopusDeployReleaseRecorder}. Used as a singleton.
      * The class is marked as public so that it can be accessed from views.
@@ -81,13 +54,12 @@ public class OctopusDeployReleaseRecorder extends Recorder {
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
-            // Indicates that this builder can be used with all kinds of project types 
             return true;
         }
 
         @Override
         public String getDisplayName() {
-            return "OctopusDeploy Release";
+            return "OctopusDeploy Deployment";
         }
 
         @Override
@@ -97,4 +69,3 @@ public class OctopusDeployReleaseRecorder extends Recorder {
         }
     }
 }
-

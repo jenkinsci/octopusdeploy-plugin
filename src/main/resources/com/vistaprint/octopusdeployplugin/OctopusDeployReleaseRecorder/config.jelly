@@ -4,9 +4,16 @@
 
     See global.jelly for a general discussion about jelly script.
   -->
-  <f:entry title="Test" field="test">
-    <f:textbox />
-  </f:entry>
+  <f:block>
+    <table>
+      <f:dropdownListBlock name="releasenotes" title="Release Notes">
+        <f:entry title="Release notes file">
+          <f:textbox name="file" value=""/>
+        </f:entry>
+      </f:dropdownListBlock>
+    </table>
+  </f:block>
+  
   <f:entry title="Is Active" field="isActive">
     <f:checkbox value="true" />
   </f:entry>
