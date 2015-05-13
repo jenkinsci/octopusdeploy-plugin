@@ -16,21 +16,24 @@
     <jdk.version>1.7</jdk.version>
   </properties>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>versions-maven-plugin</artifactId>
-        <version>2.1</version>
-      </plugin>
-    </plugins>
-  </build>
-
-  <distributionManagement>
+   <distributionManagement>
     <repository>
       <id>plugins-snapshot-local</id>
       <name>plugins-snapshot-local Artifactory</name>
       <url>http://vbuartifactory.vistaprint.net/plugins-snapshot-local</url>
     </repository>
   </distributionManagement>
+  <repositories>
+    <repository>
+      <id>repo.jenkins-ci.org</id>
+      <url>http://repo.jenkins-ci.org/public/</url>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>repo.jenkins-ci.org</id>
+      <url>http://repo.jenkins-ci.org/public/</url>
+    </pluginRepository>
+  </pluginRepositories>
 </project>
