@@ -4,6 +4,9 @@
 
     See global.jelly for a general discussion about jelly script.
   -->
+  <f:entry title="Project Name" field="project">
+    <f:textbox />
+  </f:entry>
   <f:entry title="Release Version" field="releaseVersion">
     <f:textbox />
   </f:entry>

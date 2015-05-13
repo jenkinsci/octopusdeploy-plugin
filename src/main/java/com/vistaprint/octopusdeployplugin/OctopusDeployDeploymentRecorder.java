@@ -14,6 +14,14 @@ import org.kohsuke.stapler.StaplerRequest;
 public class OctopusDeployDeploymentRecorder extends Recorder {
     
     /**
+     * The Project name of the project as defined in Octopus.
+     */
+    private final String project;
+    public String getProject() {
+        return project;
+    }
+    
+    /**
      * The release version number in octopus.
      */
     private final String releaseVersion;
@@ -30,7 +38,8 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
     }
     
     @DataBoundConstructor
-    public OctopusDeployDeploymentRecorder(String releaseVersion, String environment) {
+    public OctopusDeployDeploymentRecorder(String project, String releaseVersion, String environment) {
+        this.project = project;
         this.releaseVersion = releaseVersion;
         this.environment = environment;
     }
