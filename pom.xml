@@ -11,7 +11,8 @@
   <artifactId>OctopusDeployPlugin</artifactId>
   <version>1.0.0</version>
   <packaging>hpi</packaging>
-
+  <url>https://vistawiki.vistaprint.net/wiki/OctopusDeploy_Jenkins_Plugin</url>
+  
   <properties>
     <jdk.version>1.7</jdk.version>
   </properties>

@@ -32,21 +32,32 @@ public class OctopusDeployReleaseRecorder extends Recorder {
     }
     
     /**
-     * The source from which to get releasenotes.
-     * File or SCM
+     * releaseNotesFromFile
      */
-    private final String releaseNotesSource;
-    public String getReleaseNotesSource() {
-        return releaseNotesSource;
+    private final boolean releaseNotesFromFile;
+    public boolean getReleaseNotesSource() {
+        return releaseNotesFromFile;
     }
-   
+
+    private final String releaseNotesFileSource;
+    public String getReleaseNotesFileSource() {
+        return releaseNotesFileSource;
+    }
+    
+    private final String packageVersion;
+    public String getPackageVersion() {
+        return releaseNotesFileSource;
+    }
+    
     
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public OctopusDeployReleaseRecorder(String project, String releaseVersion, String releaseNotesSource) {
+    public OctopusDeployReleaseRecorder(String project, String releaseVersion, boolean releaseNotesFromFile, String releaseNotesFileSource, String packageVersion) {
         this.project = project;
         this.releaseVersion = releaseVersion;
-        this.releaseNotesSource = releaseNotesSource;
+        this.packageVersion = packageVersion;
+        this.releaseNotesFromFile = releaseNotesFromFile;
+        this.releaseNotesFileSource = releaseNotesFileSource;
     }
     
     @Override

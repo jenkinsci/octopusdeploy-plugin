@@ -1,20 +1,18 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-  <!--
-    This jelly script is used for per-project configuration.
-
-    See global.jelly for a general discussion about jelly script.
-  -->
-  <f:block>
-    <table>
-      <f:dropdownListBlock name="releasenotes" title="Release Notes">
-        <f:entry title="Release notes file">
-          <f:textbox name="file" value=""/>
-        </f:entry>
-      </f:dropdownListBlock>
-    </table>
-  </f:block>
-  
-  <f:entry title="Is Active" field="isActive">
-    <f:checkbox value="true" />
+  f:entry title="Project Name" field="project">
+    <f:textbox />
+  </f:entry>
+<!-- This is probably a problem
+  <f:optionalBlock name="releaseNotesFromFile" title="Release Notes from File">
+      <f:entry title="File Path" field="releaseNotesFileSource">
+        <f:textbox />
+      </f:entry>
+    </f:optionalBlock>
+-->
+  <f:entry title="Release Version" field="releaseVersion">
+    <f:textbox />
+  </f:entry>
+  <f:entry title="Package Version" field="packageVersion">
+    <f:textbox />
   </f:entry>
 </j:jelly>
