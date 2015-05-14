@@ -8,3 +8,7 @@ end
 task :bundle do
   raise 'Packaging failed!' unless system 'mvn package'
 end
+
+task :demo do
+  raise 'Starting demo failed!' unless system 'mvn hpi:run'
+end
