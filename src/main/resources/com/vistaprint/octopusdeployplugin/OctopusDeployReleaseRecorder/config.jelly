@@ -1,18 +1,34 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-  f:entry title="Project Name" field="project">
+  <f:entry title="Project Name" field="project">
     <f:textbox />
   </f:entry>
-<!-- This is probably a problem
-  <f:optionalBlock name="releaseNotesFromFile" title="Release Notes from File">
-      <f:entry title="File Path" field="releaseNotesFileSource">
-        <f:textbox />
-      </f:entry>
-    </f:optionalBlock>
--->
-  <f:entry title="Release Version" field="releaseVersion">
-    <f:textbox />
-  </f:entry>
-  <f:entry title="Package Version" field="packageVersion">
-    <f:textbox />
-  </f:entry>
+  
+	<f:section title="Version">
+  	<f:entry title="Release Version" field="releaseVersion">
+    	<f:textbox />
+	  </f:entry>
+  	<f:entry title="Package Version" field="packageVersion">
+    	<f:textbox />
+	  </f:entry>
+	</f:section>
+
+  <f:optionalBlock title="Do you want release notes?" field="releaseNotes">
+  	<f:block>
+  		From where?
+			<f:radioBlock title="Release Notes from SCM" field="releaseNotesFromSCM" checked="true">
+ 				<f:textbox />
+		  </f:radioBlock>
+ 			<f:radioBlock title="Release Notes from File" field="releaseNotesFromFile">
+	  		<f:entry title="Path to File" field="releaseNotesFile">
+ 					<f:textbox />
+  			</f:entry>
+	  	</f:radioBlock>
+		</f:block>
+  </f:optionalBlock>
+
+  <f:optionalBlock title="Deploy this release immediately" field="deployImmediately">
+  	<f:entry title="ENV" field="env">
+  		<f:textbox />
+  	</f:entry>
+  </f:optionalBlock>
 </j:jelly>
