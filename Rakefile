@@ -1,5 +1,10 @@
+require 'rake/clean'
+
+CLEAN.include 'work', 'target'
 
 task :default => :bundle
+
+
 
 task :build do 
   raise 'Build failed' unless system 'mvn compile'

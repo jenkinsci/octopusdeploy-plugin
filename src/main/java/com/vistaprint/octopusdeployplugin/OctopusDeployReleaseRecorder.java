@@ -5,9 +5,8 @@ import hudson.model.*;
 import hudson.tasks.*;
 import hudson.scm.*;
 import java.util.List;
-import net.sf.json.JSONObject;
+import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * Creates releases
@@ -49,6 +48,8 @@ public class OctopusDeployReleaseRecorder extends Recorder {
         return releaseNotesFileSource;
     }
     
+    private String octopusHost;
+    private String apiKey;
     
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
@@ -69,7 +70,8 @@ public class OctopusDeployReleaseRecorder extends Recorder {
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
         
         try {
-
+            SetGlobalConfiguration();
+            
             Result result = build.getResult();
             Job  job = build.getParent();
             // need to get all the changesets for all builds from this one up to
@@ -83,29 +85,16 @@ public class OctopusDeployReleaseRecorder extends Recorder {
         
          return true;
     }
-
+    
     /**
-     * Descriptor for {@link OctopusDeployReleaseRecorder}. Used as a singleton.
-     * The class is marked as public so that it can be accessed from views.
+     * Loads the OctopusDeployPlugin descriptor and pulls configuration from it
+     * for API Key, and Host.
      */
-    @Extension // This indicates to Jenkins that this is an implementation of an extension point.
-    public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
-        @Override
-        public boolean isApplicable(Class<? extends AbstractProject> aClass) {
-            // Indicates that this builder can be used with all kinds of project types 
-            return true;
-        }
-
-        @Override
-        public String getDisplayName() {
-            return "OctopusDeploy Release";
-        }
-
-        @Override
-        public boolean configure(StaplerRequest req, JSONObject formData) throws Descriptor.FormException {
-            save();
-            return super.configure(req, formData);
-        }
+    private void SetGlobalConfiguration() {
+        OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl) 
+                    Jenkins.getInstance().getDescriptor( OctopusDeployPlugin.class );
+        apiKey = descriptor.getApiKey();
+        octopusHost = descriptor.getOctopusHost();
     }
 }
 
