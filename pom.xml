@@ -13,6 +13,15 @@
   <packaging>hpi</packaging>
   <url>https://vistawiki.vistaprint.net/wiki/OctopusDeploy_Jenkins_Plugin</url>
   
+  <profiles>
+    <profile>
+        <id>buildServer</id>
+        <build>
+            <directory>target/${project.version}-${env.BUILD_NUMBER}</directory>
+        </build>
+    </profile>
+  </profiles>
+  
   <properties>
     <jdk.version>1.7</jdk.version>
   </properties>
