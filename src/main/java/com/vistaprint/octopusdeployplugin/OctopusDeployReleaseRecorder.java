@@ -6,7 +6,9 @@ import hudson.tasks.*;
 import hudson.scm.*;
 import java.util.List;
 import jenkins.model.Jenkins;
+import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * Creates releases
@@ -70,7 +72,7 @@ public class OctopusDeployReleaseRecorder extends Recorder {
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
         
         try {
-            SetGlobalConfiguration();
+         //   SetGlobalConfiguration();
             
             Result result = build.getResult();
             Job  job = build.getParent();
@@ -95,6 +97,29 @@ public class OctopusDeployReleaseRecorder extends Recorder {
                     Jenkins.getInstance().getDescriptor( OctopusDeployPlugin.class );
         apiKey = descriptor.getApiKey();
         octopusHost = descriptor.getOctopusHost();
+    }
+    
+    /**
+     * Descriptor for {@link OctopusDeployReleaseRecorder}. Used as a singleton.
+     * The class is marked as public so that it can be accessed from views.
+     */
+    @Extension // This indicates to Jenkins that this is an implementation of an extension point.
+    public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+        @Override
+        public boolean isApplicable(Class<? extends AbstractProject> aClass) {
+            return true;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "OctopusDeploy Release";
+        }
+
+        @Override
+        public boolean configure(StaplerRequest req, JSONObject formData) throws Descriptor.FormException {
+            save();
+            return super.configure(req, formData);
+        }
     }
 }
 

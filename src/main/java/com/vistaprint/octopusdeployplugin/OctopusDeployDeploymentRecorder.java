@@ -55,7 +55,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
     }
     
     /**
-     * Descriptor for {@link OctopusDeployReleaseRecorder}. Used as a singleton.
+     * Descriptor for {@link OctopusDeployDeploymentRecorder}. Used as a singleton.
      * The class is marked as public so that it can be accessed from views.
      */
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
