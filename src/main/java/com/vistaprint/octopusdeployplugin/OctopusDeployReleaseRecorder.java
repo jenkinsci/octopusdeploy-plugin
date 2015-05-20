@@ -124,6 +124,58 @@ public class OctopusDeployReleaseRecorder extends Recorder {
             save();
             return super.configure(req, formData);
         }
+        
+        /**
+         * Check that the project field is not empty.
+         * @param project The name of the project.
+         * @return Ok if not empty, error otherwise.
+         * @throws java.io.IOException
+         * @throws javax.servlet.ServletException
+         */
+        public FormValidation doCheckProject(@QueryParameter String project) throws IOException, ServletException {
+            if ("".equals(project))
+                return FormValidation.error("Please provide a project name.");
+            return FormValidation.ok();
+        }
+        
+        /**
+         * Check that the releaseVersion field is not empty.
+         * @param releaseVersion The name of the project.
+         * @return Ok if not empty, error otherwise.
+         * @throws java.io.IOException
+         * @throws javax.servlet.ServletException
+         */
+        public FormValidation doCheckReleaseVersion(@QueryParameter String releaseVersion) throws IOException, ServletException {
+            if ("".equals(releaseVersion))
+                return FormValidation.error("Please provide a release version.");
+            return FormValidation.ok();
+        }
+        
+        /**
+         * Check that the releaseNotesFile field is not empty.
+         * @param releaseNotesFile The name of the project.
+         * @return Ok if not empty, error otherwise.
+         * @throws java.io.IOException
+         * @throws javax.servlet.ServletException
+         */
+        public FormValidation doCheckReleaseNotesFile(@QueryParameter String releaseNotesFile) throws IOException, ServletException {
+            if ("".equals(releaseNotesFile))
+                return FormValidation.error("Please provide a project notes file.");
+            return FormValidation.ok();
+        }
+        
+        /**
+         * Check that the env field is not empty.
+         * @param env The name of the project.
+         * @return Ok if not empty, error otherwise.
+         * @throws java.io.IOException
+         * @throws javax.servlet.ServletException
+         */
+        public FormValidation doCheckEnv(@QueryParameter String env) throws IOException, ServletException {
+            if ("".equals(env))
+                return FormValidation.error("Please provide an environment.");
+            return FormValidation.ok();
+        }
     }
 }
 

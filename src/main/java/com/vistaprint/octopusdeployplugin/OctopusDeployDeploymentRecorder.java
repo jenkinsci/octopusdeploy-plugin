@@ -98,5 +98,44 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
             // return FormValidation.ok("This is a Error message");
             return FormValidation.ok("I'm a sample success message!");
         }
+        
+        /**
+         * Check that the project field is not empty.
+         * @param project The name of the project.
+         * @return Ok if not empty, error otherwise.
+         * @throws java.io.IOException
+         * @throws javax.servlet.ServletException
+         */
+        public FormValidation doCheckProject(@QueryParameter String project) throws IOException, ServletException {
+            if ("".equals(project))
+                return FormValidation.error("Please provide a project name.");
+            return FormValidation.ok();
+        }
+        
+        /**
+         * Check that the releaseVersion field is not empty.
+         * @param releaseVersion The release version of the package.
+         * @return Ok if not empty, error otherwise.
+         * @throws java.io.IOException
+         * @throws javax.servlet.ServletException
+         */
+        public FormValidation doCheckReleaseVersion(@QueryParameter String releaseVersion) throws IOException, ServletException {
+            if ("".equals(releaseVersion))
+                return FormValidation.error("Please provide a release version.");
+            return FormValidation.ok();
+        }
+        
+        /**
+         * Check that the environment field is not empty.
+         * @param environment The name of the project.
+         * @return Ok if not empty, error otherwise.
+         * @throws java.io.IOException
+         * @throws javax.servlet.ServletException
+         */
+        public FormValidation doCheckEnvironment(@QueryParameter String environment) throws IOException, ServletException {
+            if ("".equals(environment))
+                return FormValidation.error("Please provide an environment.");
+            return FormValidation.ok();
+        }
     }
 }
