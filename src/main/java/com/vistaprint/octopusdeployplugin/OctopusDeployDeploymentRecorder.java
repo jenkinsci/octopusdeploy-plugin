@@ -3,8 +3,12 @@ import hudson.Launcher;
 import hudson.Extension;
 import hudson.model.*;
 import hudson.tasks.*;
+import hudson.util.*;
+import java.io.IOException;
+import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
@@ -53,7 +57,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
        return true;
     }
-    
+
     /**
      * Descriptor for {@link OctopusDeployDeploymentRecorder}. Used as a singleton.
      * The class is marked as public so that it can be accessed from views.
@@ -74,6 +78,25 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
         public boolean configure(StaplerRequest req, JSONObject formData) throws Descriptor.FormException {
             save();
             return super.configure(req, formData);
+        }
+        
+        /**
+         * Allows plugin user to validate release information by implementing Validate button.
+         * @param project
+         * @param releaseVersion
+         * @param environment 
+         * @return A FormValidation object with the validation status and a brief message explaining the status.
+         * @throws IOException
+         * @throws ServletException 
+         */
+        public FormValidation doDeployValidation(@QueryParameter("project") final String project,
+            @QueryParameter("releaseVersion") final String releaseVersion,
+            @QueryParameter("environment") final String environment) throws IOException, ServletException {
+            // Tests go here, then return one of the following based on results:
+            // return FormValidation.ok("This is a Success message");
+            // return FormValidation.ok("This is a Warning message");
+            // return FormValidation.ok("This is a Error message");
+            return FormValidation.ok("I'm a sample success message!");
         }
     }
 }

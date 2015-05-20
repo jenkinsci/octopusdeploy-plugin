@@ -1,11 +1,12 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-  <f:entry title="Project Name" field="project">
-    <f:textbox />
+  <f:entry title="Project Name">
+    <f:textbox field="project" />
   </f:entry>
-  <f:entry title="Release Version" field="releaseVersion">
-    <f:textbox />
+  <f:entry title="Release Version">
+    <f:textbox field="releaseVersion" />
   </f:entry>
-  <f:entry title="Environment" field="environment">
-    <f:textbox />
+  <f:entry title="Environment">
+    <f:textbox field="environment" />
   </f:entry>
+  <f:validateButton title="Validate Deploy" progress="${%Validating...}" method="deployValidation" with="project,releaseVersion,environment" />
 </j:jelly>
