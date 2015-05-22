@@ -1,4 +1,4 @@
-package com.vistaprint.octopusapi;
+package com.octopusdeploy.api;
 
 public class OctopusApi {
 
@@ -22,5 +22,6 @@ public class OctopusApi {
 	public void ExecuteDeployment(String project, String releaseVersion, String environment) {
             // https://github.com/OctopusDeploy/OctopusDeploy-Api/wiki/Deployments
 	}
+        
         
 }

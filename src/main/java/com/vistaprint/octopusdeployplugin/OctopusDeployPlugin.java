@@ -1,4 +1,4 @@
-package com.vistaprint.octopusdeployplugin;
+package hudson.plugins.octopusdeployplugin;
 
 import jenkins.model.*;
 import org.kohsuke.stapler.*;

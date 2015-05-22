@@ -133,8 +133,11 @@ public class OctopusDeployReleaseRecorder extends Recorder {
          * @throws javax.servlet.ServletException
          */
         public FormValidation doCheckProject(@QueryParameter String project) throws IOException, ServletException {
+            OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl) 
+                    Jenkins.getInstance().getDescriptor( OctopusDeployPlugin.class );
+            String host = descriptor.getOctopusHost();
             if ("".equals(project))
-                return FormValidation.error("Please provide a project name.");
+                return FormValidation.error("Please provide a project name." + host);
             return FormValidation.ok();
         }
         

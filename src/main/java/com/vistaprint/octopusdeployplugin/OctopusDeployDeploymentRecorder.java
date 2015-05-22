@@ -1,4 +1,4 @@
-package com.vistaprint.octopusdeployplugin;
+package hudson.plugins.octopusdeployplugin;
 import hudson.Launcher;
 import hudson.Extension;
 import hudson.model.*;
