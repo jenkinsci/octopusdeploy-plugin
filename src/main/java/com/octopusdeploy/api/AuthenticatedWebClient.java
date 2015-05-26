@@ -6,7 +6,6 @@ import net.sf.json.*;
 
 /**
  *
- * @author badriance
  */
 public class AuthenticatedWebClient {
     

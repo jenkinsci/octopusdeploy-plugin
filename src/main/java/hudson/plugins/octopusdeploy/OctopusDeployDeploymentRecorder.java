@@ -1,4 +1,5 @@
 package hudson.plugins.octopusdeploy;
+import com.octopusdeploy.api.*;
 import hudson.Launcher;
 import hudson.Extension;
 import hudson.model.*;
@@ -6,10 +7,9 @@ import hudson.tasks.*;
 import hudson.util.*;
 import java.io.IOException;
 import javax.servlet.ServletException;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.*;
 
 /**
  * Executes deployments of releases.
@@ -111,8 +111,11 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
          * @throws javax.servlet.ServletException
          */
         public FormValidation doCheckProject(@QueryParameter String project) throws IOException, ServletException {
-            if ("".equals(project))
+            
+            
+            if ("".equals(project)) {
                 return FormValidation.error("Please provide a project name.");
+            }
             return FormValidation.ok();
         }
         
@@ -124,8 +127,9 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
          * @throws javax.servlet.ServletException
          */
         public FormValidation doCheckReleaseVersion(@QueryParameter String releaseVersion) throws IOException, ServletException {
-            if ("".equals(releaseVersion))
+            if ("".equals(releaseVersion)) {
                 return FormValidation.error("Please provide a release version.");
+            }
             return FormValidation.ok();
         }
         
@@ -137,8 +141,9 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
          * @throws javax.servlet.ServletException
          */
         public FormValidation doCheckEnvironment(@QueryParameter String environment) throws IOException, ServletException {
-            if ("".equals(environment))
+            if ("".equals(environment)) {
                 return FormValidation.error("Please provide an environment.");
+            }
             return FormValidation.ok();
         }
     }
