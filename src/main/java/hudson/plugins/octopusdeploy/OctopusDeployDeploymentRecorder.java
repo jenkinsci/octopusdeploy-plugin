@@ -55,7 +55,11 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
     
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
-       return true;
+        Log log = new Log(listener);
+        log.info("Started Octopus Deploy");
+        log.error("This is an error message.");
+        log.fatal("This is a fatal error!");
+        return true;
     }
 
     /**
