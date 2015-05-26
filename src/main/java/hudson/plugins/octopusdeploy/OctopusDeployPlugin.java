@@ -1,6 +1,5 @@
 package hudson.plugins.octopusdeploy;
 
-import java.util.logging.Logger;
 import jenkins.model.*;
 import org.kohsuke.stapler.*;
 import net.sf.json.JSONObject;
@@ -42,7 +41,5 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
             save();
             return super.configure(req, formData);
         }
-        
-        private static final Logger LOG = Logger.getLogger(OctopusDeployPlugin.class.getName());
     }
 }
