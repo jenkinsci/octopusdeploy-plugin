@@ -3,14 +3,12 @@
         <f:textbox />
     </f:entry>
   
-    <f:section title="Version">
-        <f:entry title="Release Version" field="releaseVersion">
-            <f:textbox />
-        </f:entry>
-  	<f:entry title="Package Version" field="packageVersion">
-            <f:textbox />
-        </f:entry>
-    </f:section>
+    <f:entry title="Release Version" field="releaseVersion">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Package Version" field="packageVersion">
+        <f:textbox />
+    </f:entry>
 
     <f:optionalBlock title="Do you want release notes?" field="releaseNotes">
   	<f:block>
