@@ -34,7 +34,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
     }
     
     /**
-     * The release version number in octopus.
+     * The environment to deploy to in octopus.
      */
     private final String environment;
     public String getEnvironment() {

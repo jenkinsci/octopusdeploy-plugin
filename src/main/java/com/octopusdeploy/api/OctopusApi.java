@@ -28,7 +28,12 @@ public class OctopusApi {
         public Set<Project> getAllProjects() throws IllegalArgumentException, IOException {
             HashSet<Project> projects = new HashSet<Project>();
             JSONArray json = (JSONArray)webClient.MakeRequest(AuthenticatedWebClient.GET, "api/projects/all");
-            
+            for (Object obj : json) {
+                JSONObject jsonObj = (JSONObject)obj;
+                String id = jsonObj.getString("Id");
+                String name = jsonObj.getString("Name");
+                projects.add(new Project(id, name));
+            }
             return projects;
         }
         
