@@ -1,4 +1,4 @@
-package hudson.plugins.octopusdeployplugin;
+package hudson.plugins.octopusdeploy;
 
 import jenkins.model.*;
 import org.kohsuke.stapler.*;

@@ -1,4 +1,4 @@
-package hudson.plugins.octopusdeployplugin;
+package hudson.plugins.octopusdeploy;
 import hudson.Launcher;
 import hudson.Extension;
 import hudson.model.*;
