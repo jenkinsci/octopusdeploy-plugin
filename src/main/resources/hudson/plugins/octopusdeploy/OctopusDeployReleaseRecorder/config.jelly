@@ -15,13 +15,13 @@
     <f:optionalBlock title="Do you want release notes?" field="releaseNotes">
   	<f:block>
             From where?
-            <f:radioBlock title="Release Notes from SCM" field="releaseNotesFromSCM" checked="true">
-                <f:textbox />
-            </f:radioBlock>
-            <f:radioBlock title="Release Notes from File" field="releaseNotesFromFile">
+            <f:radioBlock title="Release Notes from File" field="releaseNotesFromFile" checked="true">
                 <f:entry title="Path to File" field="releaseNotesFile">
                     <f:textbox />
                 </f:entry>
+            </f:radioBlock>
+            <f:radioBlock title="Release Notes from SCM" field="releaseNotesFromSCM">
+                <f:textbox />
             </f:radioBlock>
         </f:block>
     </f:optionalBlock>
