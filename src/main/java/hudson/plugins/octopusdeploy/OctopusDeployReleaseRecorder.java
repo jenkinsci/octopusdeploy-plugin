@@ -7,6 +7,7 @@ import hudson.scm.*;
 import hudson.util.*;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Logger;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
@@ -74,6 +75,8 @@ public class OctopusDeployReleaseRecorder extends Recorder {
 
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+        Log log = new Log(listener);
+        log.info("Started Octopus Release");
         
         try {
          //   SetGlobalConfiguration();
@@ -86,7 +89,7 @@ public class OctopusDeployReleaseRecorder extends Recorder {
             
             return true;
         } catch (Exception ex) {
-             listener.getLogger().println("Error Occured: " + ex.getMessage());
+            log.error(ex.getMessage());
         }
         
          return true;
@@ -109,6 +112,8 @@ public class OctopusDeployReleaseRecorder extends Recorder {
      */
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+        private static final Logger LOG = Logger.getLogger(OctopusDeployReleaseRecorder.class.getName());
+        
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             return true;
