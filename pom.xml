@@ -25,6 +25,9 @@
   <properties>
     <jdk.version>1.7</jdk.version>
   </properties>
+  
+  <dependencies>
+  </dependencies>
 
    <distributionManagement>
     <repository>
