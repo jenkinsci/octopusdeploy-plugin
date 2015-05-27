@@ -25,6 +25,13 @@ public class OctopusApi {
             // https://github.com/OctopusDeploy/OctopusDeploy-Api/wiki/Deployments
 	}
         
+        /**
+         * Uses the authenticated web client to pull all projects from the api and
+         * convert them to POJOs
+         * @return a Set of Projects (may be empty)
+         * @throws IllegalArgumentException
+         * @throws IOException 
+         */
         public Set<Project> getAllProjects() throws IllegalArgumentException, IOException {
             HashSet<Project> projects = new HashSet<Project>();
             JSONArray json = (JSONArray)webClient.MakeRequest(AuthenticatedWebClient.GET, "api/projects/all");
@@ -37,6 +44,13 @@ public class OctopusApi {
             return projects;
         }
         
+        /**
+         * Loads in the full list of projects from the API, then selects one project by name.
+         * @param name name of the project to select
+         * @return the named project or null if no such project exists
+         * @throws IllegalArgumentException
+         * @throws IOException 
+         */
         public Project getProjectByName(String name)  throws IllegalArgumentException, IOException {
             Set<Project> allProjects = getAllProjects();
             for (Project project : allProjects) {

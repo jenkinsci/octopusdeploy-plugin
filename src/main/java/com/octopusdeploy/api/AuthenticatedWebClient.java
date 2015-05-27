@@ -38,8 +38,10 @@ public class AuthenticatedWebClient {
             joinedUrl = String.join("?", joinedUrl, queryParameters);
         }
         URL url = new URL(joinedUrl);
-        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
-        connection.setRequestMethod(method);
+        URLConnection connection = url.openConnection();
+        if (connection instanceof HttpURLConnection) {
+            ((HttpURLConnection)connection).setRequestMethod(method);
+        }
         connection.setRequestProperty(OCTOPUS_API_KEY_HEADER, apiKey);
         
         if (POST.equals(method) && queryParameters != null && !queryParameters.isEmpty()) {
@@ -59,7 +61,10 @@ public class AuthenticatedWebClient {
             response.append(inputLine);
         }
         reader.close();
-        connection.disconnect();
+        if (connection instanceof HttpURLConnection) {
+            ((HttpURLConnection)connection).disconnect();
+        }
         return JSONSerializer.toJSON(response.toString());
     }
+
 }

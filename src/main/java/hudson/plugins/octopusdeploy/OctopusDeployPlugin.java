@@ -32,6 +32,10 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
             return octopusHost;
         }
         
+        public DescriptorImpl() {
+            load();
+        }
+        
         @Override
         public String getDisplayName() {
             return "OctopusDeploy Plugin";
@@ -46,6 +50,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
                 url = new URL(octopusHost);
             } catch (MalformedURLException ex) {
                 final String INVALID_URL = "Supplied Octopus Host URL is invalid";
+                Logger.getLogger(OctopusDeployPlugin.class.getName()).log(Level.WARNING, INVALID_URL, ex);
                 return FormValidation.error(INVALID_URL);
             }
             
@@ -63,6 +68,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
                 }
             } catch (IOException ex) {
                 final String UNABLE_TO_CONNECT = "Unable to connect to Octopus Host URL";
+                Logger.getLogger(OctopusDeployPlugin.class.getName()).log(Level.WARNING, UNABLE_TO_CONNECT, ex);
                 return FormValidation.error("%s - %s", UNABLE_TO_CONNECT, ex.getMessage());
             }
             

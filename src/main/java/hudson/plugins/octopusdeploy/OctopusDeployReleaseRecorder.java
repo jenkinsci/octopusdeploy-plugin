@@ -79,7 +79,7 @@ public class OctopusDeployReleaseRecorder extends Recorder {
         log.info("Started Octopus Release");
         
         try {
-         //   SetGlobalConfiguration();
+         //   setGlobalConfiguration();
             
             Result result = build.getResult();
             Job  job = build.getParent();
@@ -99,9 +99,9 @@ public class OctopusDeployReleaseRecorder extends Recorder {
      * Loads the OctopusDeployPlugin descriptor and pulls configuration from it
      * for API Key, and Host.
      */
-    private void SetGlobalConfiguration() {
+    private void setGlobalConfiguration() {
         OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl) 
-                    Jenkins.getInstance().getDescriptor( OctopusDeployPlugin.class );
+                    Jenkins.getInstance().getDescriptor(OctopusDeployPlugin.class );
         apiKey = descriptor.getApiKey();
         octopusHost = descriptor.getOctopusHost();
     }
