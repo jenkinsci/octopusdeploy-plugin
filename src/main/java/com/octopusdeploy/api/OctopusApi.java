@@ -46,15 +46,28 @@ public class OctopusApi {
         
         /**
          * Loads in the full list of projects from the API, then selects one project by name.
+         * Only selects the project if the name is an exact match (including case)
          * @param name name of the project to select
          * @return the named project or null if no such project exists
          * @throws IllegalArgumentException
          * @throws IOException 
          */
         public Project getProjectByName(String name)  throws IllegalArgumentException, IOException {
+            return getProjectByName(name, false);
+        }
+        /**
+         * Loads in the full list of projects from the API, then selects one project by name.
+         * @param name name of the project to select
+         * @param ignoreCase when true uses equalsIgnoreCase in the name check
+         * @return the named project or null if no such project exists
+         * @throws IllegalArgumentException
+         * @throws IOException 
+         */
+        public Project getProjectByName(String name, boolean ignoreCase)  throws IllegalArgumentException, IOException {
             Set<Project> allProjects = getAllProjects();
             for (Project project : allProjects) {
-                if (name.equals(project.getName())) {
+                if ((ignoreCase && name.equalsIgnoreCase(project.getName())) ||
+                   (!ignoreCase && name.equals(project.getName()))) {
                     return project;
                 }
             }
@@ -82,15 +95,29 @@ public class OctopusApi {
         
         /**
          * Get the Environment with the given name if it exists, return null otherwise.
+         * Only selects the environment if the name is an exact match (including case)
          * @param name The name of the Environment to find.
          * @return The Environment with that name.
          * @throws IllegalArgumentException
          * @throws IOException 
          */
         public Environment getEnvironmentByName(String name) throws IllegalArgumentException, IOException {
+            return getEnvironmentByName(name, false);
+        }
+        
+        /**
+         * Get the Environment with the given name if it exists, return null otherwise.
+         * @param name The name of the Environment to find.
+         * @param ignoreCase when true uses equalsIgnoreCase in the name check
+         * @return The Environment with that name.
+         * @throws IllegalArgumentException
+         * @throws IOException 
+         */
+        public Environment getEnvironmentByName(String name, boolean ignoreCase) throws IllegalArgumentException, IOException {
             Set<Environment> environments = getAllEnvironments();
             for (Environment env : environments) {
-                if (name.equals(env.getName())) {
+                if ((ignoreCase && name.equalsIgnoreCase(env.getName())) ||
+                   (!ignoreCase && name.equals(env.getName()))) { {
                     return env;
                 }
             }

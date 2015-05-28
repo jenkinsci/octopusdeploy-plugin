@@ -134,10 +134,14 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
             }
             OctopusApi api = new OctopusApi(octopusHost, apiKey);
             try {
-                com.octopusdeploy.api.Project p = api.getProjectByName(project);
+                com.octopusdeploy.api.Project p = api.getProjectByName(project, true);
                 if (p == null)
                 {
                     return FormValidation.error("Project not found.");
+                }
+                if (!project.equals(p.getName()))
+                {
+                    return FormValidation.warning("Project name case does not match. Did you mean '%s'?", p.getName());
                 }
             } catch (IllegalArgumentException ex) {
                 return FormValidation.error(ex.getMessage());
