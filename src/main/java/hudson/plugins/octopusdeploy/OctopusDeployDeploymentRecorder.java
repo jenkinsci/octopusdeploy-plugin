@@ -42,9 +42,9 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
     
     @DataBoundConstructor
     public OctopusDeployDeploymentRecorder(String project, String releaseVersion, String environment) {
-        this.project = project;
-        this.releaseVersion = releaseVersion;
-        this.environment = environment;
+        this.project = project.trim();
+        this.releaseVersion = releaseVersion.trim();
+        this.environment = environment.trim();
     }
 
     @Override
@@ -58,7 +58,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
         log.info("Started Octopus Deploy");
         log.info("Project " + project);
         log.info("Version " + releaseVersion);
-        log.info("Environment" + environment);
+        log.info("Environment " + environment);
         return true;
     }
 
@@ -112,7 +112,9 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
         * for API Key, and Host.
         */
         private void setGlobalConfiguration() {
-            if (!loadedConfig) {
+            // NOTE  - This method is not being called from the constructor due 
+            // to a circular dependency issue on startup
+            if (!loadedConfig) { 
                 OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl) 
                        Jenkins.getInstance().getDescriptor(OctopusDeployPlugin.class );
                 apiKey = descriptor.getApiKey();
@@ -127,9 +129,9 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
          * @return Ok if not empty, error otherwise.
          */
         public FormValidation doCheckProject(@QueryParameter String project) {
-            setGlobalConfiguration(); // TODO: Extract this to be shared between plugins
-            project = project.trim();
-            if ("".equals(project)) {
+            setGlobalConfiguration(); 
+            project = project.trim(); // TODO: Extract this to be shared between plugins
+            if (project.isEmpty()) {
                 return FormValidation.error("Please provide a project name.");
             }
             OctopusApi api = new OctopusApi(octopusHost, apiKey);
@@ -167,12 +169,30 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
          * Check that the environment field is not empty.
          * @param environment The name of the project.
          * @return Ok if not empty, error otherwise.
-         * @throws java.io.IOException
-         * @throws javax.servlet.ServletException
          */
         public FormValidation doCheckEnvironment(@QueryParameter String environment) {
-            if ("".equals(environment)) {
-                return FormValidation.error("Please provide an environment.");
+            setGlobalConfiguration();
+            // TODO: Extract this to be shared between plugins
+            // TODO: Deduplicate this with project check
+            environment = environment.trim(); 
+            if (environment.isEmpty()) {
+                return FormValidation.error("Please provide an environment name.");
+            }
+            OctopusApi api = new OctopusApi(octopusHost, apiKey);
+            try {
+                com.octopusdeploy.api.Environment env = api.getEnvironmentByName(environment, true);
+                if (env == null)
+                {
+                    return FormValidation.error("Environment not found.");
+                }
+                if (!environment.equals(env.getName()))
+                {
+                    return FormValidation.warning("Environment name case does not match. Did you mean '%s'?", env.getName());
+                }
+            } catch (IllegalArgumentException ex) {
+                return FormValidation.error(ex.getMessage());
+            } catch (IOException ex) {
+                return FormValidation.error(ex.getMessage());
             }
             return FormValidation.ok();
         }

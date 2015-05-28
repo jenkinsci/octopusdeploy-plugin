@@ -117,7 +117,7 @@ public class OctopusApi {
             Set<Environment> environments = getAllEnvironments();
             for (Environment env : environments) {
                 if ((ignoreCase && name.equalsIgnoreCase(env.getName())) ||
-                   (!ignoreCase && name.equals(env.getName()))) { {
+                   (!ignoreCase && name.equals(env.getName()))) { 
                     return env;
                 }
             }
