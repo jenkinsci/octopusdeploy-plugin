@@ -2,8 +2,6 @@ package com.octopusdeploy.api;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import net.sf.json.*;
 
 public class OctopusApi {
