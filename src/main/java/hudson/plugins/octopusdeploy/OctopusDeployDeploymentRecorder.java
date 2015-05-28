@@ -59,6 +59,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
         log.info("Project " + project);
         log.info("Version " + releaseVersion);
         log.info("Environment " + environment);
+        
         return true;
     }
 

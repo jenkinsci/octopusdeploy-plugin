@@ -2,6 +2,8 @@ package com.octopusdeploy.api;
 
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import net.sf.json.*;
 
 /**
@@ -21,17 +23,17 @@ public class AuthenticatedWebClient {
         this.apiKey = apiKey;
     }
     
-    public JSON MakeRequest(String method, String endpoint)
+    public JSON makeRequest(String method, String endpoint)
             throws IllegalArgumentException, IOException, MalformedURLException, ProtocolException {
-        return MakeRequest(method, endpoint, null);
+        return makeRequest(method, endpoint, null);
     }
     
-    public JSON MakeRequest(String method, String endpoint, String queryParameters) 
+    public JSON makeRequest(String method, String endpoint, String queryParameters) 
             throws IllegalArgumentException, IOException, MalformedURLException, ProtocolException {
         if (!GET.equals(method) && !POST.equals(method)) {
             throw new IllegalArgumentException ("Invalid method supplied.");
         }
-        
+
         String joinedUrl = String.join("/", hostUrl, endpoint);
         if (GET.equals(method) && queryParameters != null && !queryParameters.isEmpty())
         {
@@ -45,10 +47,13 @@ public class AuthenticatedWebClient {
         connection.setRequestProperty(OCTOPUS_API_KEY_HEADER, apiKey);
         
         if (POST.equals(method) && queryParameters != null && !queryParameters.isEmpty()) {
+            byte[] data = queryParameters.getBytes( StandardCharsets.UTF_8 );
+            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");		
+            connection.setRequestProperty("Content-Length", Integer.toString(data.length));
             connection.setDoOutput(true);
             connection.connect();
             DataOutputStream dataOutputStream = new DataOutputStream(connection.getOutputStream());
-            dataOutputStream.writeBytes(queryParameters);
+            dataOutputStream.write(data);
             dataOutputStream.flush();
             dataOutputStream.close();
         }
@@ -67,4 +72,6 @@ public class AuthenticatedWebClient {
         return JSONSerializer.toJSON(response.toString());
     }
 
+    
+    
 }
