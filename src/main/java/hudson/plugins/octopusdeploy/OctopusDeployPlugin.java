@@ -42,7 +42,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
         }
 
         public FormValidation doCheckOctopusHost(@QueryParameter String octopusHost) {
-            if ("".equals(octopusHost)) {
+            if (octopusHost.isEmpty()) {
                 return FormValidation.warning("Please enter a url to your OctopusDeploy Host");
             }
             URL url;
