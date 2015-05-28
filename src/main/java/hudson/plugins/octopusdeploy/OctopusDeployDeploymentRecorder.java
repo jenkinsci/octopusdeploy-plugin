@@ -56,8 +56,9 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
         Log log = new Log(listener);
         log.info("Started Octopus Deploy");
-        log.error("This is an error message.");
-        log.fatal("This is a fatal error!");
+        log.info("Project " + project);
+        log.info("Version " + releaseVersion);
+        log.info("Environment" + environment);
         return true;
     }
 
