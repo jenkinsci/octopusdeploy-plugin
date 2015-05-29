@@ -6,6 +6,9 @@ import hudson.model.*;
 import hudson.tasks.*;
 import hudson.util.*;
 import java.io.IOException;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.*;
@@ -54,13 +57,79 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
     
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+        boolean success = true;
         Log log = new Log(listener);
         log.info("Started Octopus Deploy");
-        log.info("Project " + project);
-        log.info("Version " + releaseVersion);
-        log.info("Environment " + environment);
+        log.info("======================");
+        log.info("Project: " + project);
+        log.info("Version: " + releaseVersion);
+        log.info("Environment: " + environment);
+        log.info("======================");
+        ((DescriptorImpl)getDescriptor()).setGlobalConfiguration();
+        OctopusApi api = new OctopusApi(((DescriptorImpl)getDescriptor()).octopusHost, ((DescriptorImpl)getDescriptor()).apiKey);
         
-        return true;
+        com.octopusdeploy.api.Project p = null;
+        try {
+            p = api.getProjectByName(project);
+        } catch (Exception ex) {
+            log.fatal(String.format("Retrieving project name '%s' failed with message '%s'",
+                    project, ex.getMessage()));
+            success = false;
+        }
+        com.octopusdeploy.api.Environment env = null;
+        try {
+            env = api.getEnvironmentByName(environment);
+        } catch (Exception ex) {
+            log.fatal(String.format("Retrieving environment name '%s' failed with message '%s'",
+                    environment, ex.getMessage()));
+            success = false;
+        }
+        if (p == null) {
+            log.fatal("Project was not found.");
+            success = false;
+        }
+        if (env == null) {
+            log.fatal("Environment was not found.");
+            success = false;
+        }
+        if (!success) // Early exit
+        {
+            return success;
+        }
+        Set<com.octopusdeploy.api.Release> releases = null;
+        try {
+            releases = api.getReleasesForProject(p.getId());
+        } catch (Exception ex) {
+            log.fatal(String.format("Retrieving releases for project '%s' failed with message '%s'",
+                    project, ex.getMessage()));
+            success = false;
+        }
+        if (releases == null) {
+            log.fatal("Releases was not found.");
+            return false;
+        }
+        Release releaseToDeploy = null;
+        for(Release r : releases) {
+            if (releaseVersion.equals(r.getVersion()))
+            {
+                releaseToDeploy = r;
+                break;
+            }
+        }
+        if (releaseToDeploy == null) // early exit
+        {
+            log.fatal(String.format("Unable to find release version %s for project %s", releaseVersion, project));
+            return false;
+        }
+        try {
+            String results = api.executeDeployment(releaseToDeploy.getId(), env.getId());
+            log.info(results);
+        } catch(IOException ex) {
+            log.fatal("Failed to deploy: " + ex.getMessage());
+            success = false;
+        }
+        
+        return success;
     }
 
     /**

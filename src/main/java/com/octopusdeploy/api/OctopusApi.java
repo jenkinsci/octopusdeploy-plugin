@@ -1,6 +1,7 @@
 package com.octopusdeploy.api;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.*;
 import net.sf.json.*;
 
@@ -21,9 +22,11 @@ public class OctopusApi {
             // repeat this general process to get all the other goodies needed in other methods
 	}
 	
-	public void executeDeployment(String project, String releaseVersion, String environment) {
-            // https://github.com/OctopusDeploy/OctopusDeploy-Api/wiki/Deployments
-            // webClient.post("api/deployments", "{EnvironmentId:\"Environments-3\",ReleaseId:\"releases-70\"}");
+	public String executeDeployment(String releaseId, String environmentId) throws IOException {
+            String json = String.format("{EnvironmentId:\"%s\",ReleaseId:\"%s\"}", environmentId, releaseId);
+            byte[] data = json.getBytes(Charset.forName("UTF-8"));
+            JSON response = webClient.post("api/deployments", data);
+            return response.toString();
 	}
         
         /**
@@ -123,5 +126,24 @@ public class OctopusApi {
                 }
             }
             return null;
+        }
+        
+        /**
+         * Get all releases for a given project from the Octopus server;
+         * @return A set of all releases for a given project
+         * @throws IllegalArgumentException
+         * @throws IOException 
+         */
+        public Set<Release> getReleasesForProject(String projectId) throws IllegalArgumentException, IOException {
+            HashSet<Release> releases = new HashSet<Release>();
+            JSONObject json = (JSONObject)webClient.get("api/projects/" + projectId + "/releases");
+            for (Object obj : json.getJSONArray("Items")) {
+                JSONObject jsonObj = (JSONObject)obj;
+                String id = jsonObj.getString("Id");
+                String version = jsonObj.getString("Version");
+                String ReleaseNotes = jsonObj.getString("ReleaseNotes");
+                releases.add(new Release(id, projectId, ReleaseNotes, version));
+            }
+            return releases;
         }
 }
