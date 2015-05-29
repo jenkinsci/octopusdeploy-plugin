@@ -37,7 +37,7 @@ public class AuthenticatedWebClient {
      * @throws ProtocolException
      * @throws IOException 
      */
-    public JSON post(String resource, byte[] data) throws ProtocolException, IOException
+    public WebResponse post(String resource, byte[] data) throws ProtocolException, IOException
     {
         if (data == null)
         {
@@ -61,7 +61,7 @@ public class AuthenticatedWebClient {
      * @return JSON blob representing the response from the server.
      * @throws IOException 
      */
-    public JSON get(String resource) throws IOException {
+    public WebResponse get(String resource) throws IOException {
         return get(resource, null);
     }
     
@@ -72,7 +72,7 @@ public class AuthenticatedWebClient {
      * @return JSON blob representing the response from the server.
      * @throws IOException 
      */
-    public JSON get(String resource, Map<String, String> queryParameters) throws IOException {
+    public WebResponse get(String resource, Map<String, String> queryParameters) throws IOException {
         String encodedParameterString = mapToQueryParameters(queryParameters);
         URLConnection connection = getConnection(GET, resource, encodedParameterString);
         return getResponse(connection);
@@ -133,13 +133,25 @@ public class AuthenticatedWebClient {
      * @return JSON blob representing the response from the server.
      * @throws IOException 
      */
-    private JSON getResponse(URLConnection connection) throws IOException  {
+    private WebResponse getResponse(URLConnection connection) throws IOException  {
+        int responseCode = -1;
         if (connection == null)
         {
             throw new IllegalArgumentException("Connection can not be null when getting a response from server.");
         }
         connection.connect();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        InputStream streamToRead = null;
+        if(connection instanceof HttpURLConnection) {
+            responseCode = ((HttpURLConnection)connection).getResponseCode();
+            if (responseCode >= 400)
+            {
+                streamToRead = ((HttpURLConnection)connection).getErrorStream();
+            }
+        }
+        if (streamToRead == null) {
+            streamToRead = connection.getInputStream();
+        }
+        BufferedReader reader = new BufferedReader(new InputStreamReader(streamToRead));
         String inputLine;
         StringBuilder response = new StringBuilder();
 
@@ -150,6 +162,35 @@ public class AuthenticatedWebClient {
         if (connection instanceof HttpURLConnection) {
             ((HttpURLConnection)connection).disconnect();
         }
-        return JSONSerializer.toJSON(response.toString());
+        return new WebResponse(responseCode, response.toString());
+    }
+    
+    /**
+     * A web response code (HTTP Response code) and content from the web request.
+     */
+    public class WebResponse {
+        private final int code;
+        /**
+         * The HTTP response code.
+         * @return The HTTP response code. Ex. 200 or 403
+         */
+        public int getCode() {
+            return code;
+        }
+        
+        private final String content;
+        /**
+         * Content for the web response, if any.
+         * @return JSON content for the web response, if any.
+         */
+        public String getContent() {
+            return content;
+        }
+        
+        private WebResponse(int code, String content) {
+            this.code = code;
+            this.content = content;
+        }
+                
     }
 }

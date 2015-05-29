@@ -25,8 +25,12 @@ public class OctopusApi {
 	public String executeDeployment(String releaseId, String environmentId) throws IOException {
             String json = String.format("{EnvironmentId:\"%s\",ReleaseId:\"%s\"}", environmentId, releaseId);
             byte[] data = json.getBytes(Charset.forName("UTF-8"));
-            JSON response = webClient.post("api/deployments", data);
-            return response.toString();
+            AuthenticatedWebClient.WebResponse response = webClient.post("api/deployments", data);
+            if (response.getCode() >= 400)
+            {
+                throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent().toString()));
+            }
+            return response.getContent().toString();
 	}
         
         /**
@@ -38,7 +42,12 @@ public class OctopusApi {
          */
         public Set<Project> getAllProjects() throws IllegalArgumentException, IOException {
             HashSet<Project> projects = new HashSet<Project>();
-            JSONArray json = (JSONArray)webClient.get("api/projects/all");
+            AuthenticatedWebClient.WebResponse response = webClient.get("api/projects/all");
+            if (response.getCode() >= 400)
+            {
+                throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent().toString()));
+            }
+            JSONArray json = (JSONArray)JSONSerializer.toJSON(response.getContent());
             for (Object obj : json) {
                 JSONObject jsonObj = (JSONObject)obj;
                 String id = jsonObj.getString("Id");
@@ -86,7 +95,12 @@ public class OctopusApi {
          */
         public Set<Environment> getAllEnvironments() throws IllegalArgumentException, IOException {
             HashSet<Environment> environments = new HashSet<Environment>();
-            JSONArray json = (JSONArray)webClient.get("api/environments/all");
+            AuthenticatedWebClient.WebResponse response =webClient.get("api/environments/all");
+            if (response.getCode() >= 400)
+            {
+                throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent().toString()));
+            }
+            JSONArray json = (JSONArray)JSONSerializer.toJSON(response.getContent());
             for (Object obj : json) {
                 JSONObject jsonObj = (JSONObject)obj;
                 String id = jsonObj.getString("Id");
@@ -136,7 +150,12 @@ public class OctopusApi {
          */
         public Set<Release> getReleasesForProject(String projectId) throws IllegalArgumentException, IOException {
             HashSet<Release> releases = new HashSet<Release>();
-            JSONObject json = (JSONObject)webClient.get("api/projects/" + projectId + "/releases");
+            AuthenticatedWebClient.WebResponse response = webClient.get("api/projects/" + projectId + "/releases");
+            if (response.getCode() >= 400)
+            {
+                throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent().toString()));
+            }
+            JSONObject json = (JSONObject)JSONSerializer.toJSON(response.getContent());
             for (Object obj : json.getJSONArray("Items")) {
                 JSONObject jsonObj = (JSONObject)obj;
                 String id = jsonObj.getString("Id");
