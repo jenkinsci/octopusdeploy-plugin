@@ -23,9 +23,7 @@ public class OctopusApi {
 	
 	public void executeDeployment(String project, String releaseVersion, String environment) {
             // https://github.com/OctopusDeploy/OctopusDeploy-Api/wiki/Deployments
-            // webClient.makeRequest(AuthenticatedWebClient.POST, "api/deployments", "{EnvironmentId:\"Environments-3\",ReleaseId:\"releases-70\"}");
-
-            
+            // webClient.post("api/deployments", "{EnvironmentId:\"Environments-3\",ReleaseId:\"releases-70\"}");
 	}
         
         /**
@@ -37,7 +35,7 @@ public class OctopusApi {
          */
         public Set<Project> getAllProjects() throws IllegalArgumentException, IOException {
             HashSet<Project> projects = new HashSet<Project>();
-            JSONArray json = (JSONArray)webClient.makeRequest(AuthenticatedWebClient.GET, "api/projects/all");
+            JSONArray json = (JSONArray)webClient.get("api/projects/all");
             for (Object obj : json) {
                 JSONObject jsonObj = (JSONObject)obj;
                 String id = jsonObj.getString("Id");
@@ -85,7 +83,7 @@ public class OctopusApi {
          */
         public Set<Environment> getAllEnvironments() throws IllegalArgumentException, IOException {
             HashSet<Environment> environments = new HashSet<Environment>();
-            JSONArray json = (JSONArray)webClient.makeRequest(AuthenticatedWebClient.GET, "api/environments/all");
+            JSONArray json = (JSONArray)webClient.get("api/environments/all");
             for (Object obj : json) {
                 JSONObject jsonObj = (JSONObject)obj;
                 String id = jsonObj.getString("Id");
