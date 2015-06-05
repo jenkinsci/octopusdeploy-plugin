@@ -279,7 +279,7 @@ public class OctopusDeployReleaseRecorder extends Recorder {
          */
         @Override
         // TODO: What should this return? / Is this even needed?
-        public OctopusDeployReleaseRecorder newInstance(StaplerRequest req, JSONObject formData) throws Descriptor.FormException {
+        public Publisher newInstance(StaplerRequest req, JSONObject formData) throws Descriptor.FormException {
             return req.bindJSON(clazz, flattenReleaseJSON(formData));
         }
         
@@ -299,34 +299,47 @@ public class OctopusDeployReleaseRecorder extends Recorder {
             flatJson.put("$class", json.getString("$class"));
             
             // Values sometimes set (will be empty string if not set)
-            flatJson.put("packageVersion", json.getString("packageVersion"));
+            flatJson.put("packageVersion", json.optString("packageVersion"));
             
             // releaseNotes : When releasenotes.publisher.value is "on" this is considered true
-            JSONObject releaseNotes = json.getJSONObject("releaseNotes");
-            if (releaseNotes != null) {
-                releaseNotes = releaseNotes.getJSONObject("releaseNotesSource");
-            }
-            if (releaseNotes.getString("value") != null) { // Release Notes
-                flatJson.put("releaseNotes", true);
-                if (releaseNotes.getString("value").equals("file")) { // Release Notes from File
-                    flatJson.put("releaseNotesFromFile", true);
-                    flatJson.put("releaseNotesFile", releaseNotes.getString("releaseNotesFile"));
-                    flatJson.put("releaseNotesFromSCM", false);
-                } else { // Release Notes from SCM
-                    flatJson.put("releaseNotesFromFile", false);
-                    flatJson.put("releaseNotesFile", "");
-                    flatJson.put("releaseNotesFromSCM", true);
+            if (json.has("releaseNotes")) {
+                JSONObject releaseNotes = json.getJSONObject("releaseNotes");
+                if (releaseNotes.has("releaseNotesSource")) {
+                    JSONObject releaseNotesSource = releaseNotes.getJSONObject("releaseNotesSource");
+                    if (releaseNotesSource.has("value")) { // Release Notes
+                        flatJson.put("releaseNotes", true);
+                        if (releaseNotesSource.getString("value").equals("file")) { // Release Notes from File
+                            flatJson.put("releaseNotesSource", "file");
+                            flatJson.put("releaseNotesFile", releaseNotesSource.getString("releaseNotesFile"));
+                        } else { // Release Notes from SCM
+                            flatJson.put("releaseNotesSource", "scm");
+                            flatJson.put("releaseNotesFile", "");
+                        }
+                    } else {
+                        // Error: Malformed JSON, missing value
+                        System.out.println("[ERROR] Malformed JSON - value");
+                    }
+                } else {
+                    // Error: Malformed JSON, missing releaseNotesSource
+                    System.out.println("[ERROR] Malformed JSON - releaseNotesSource");
                 }
             } else { // No release notes
                 flatJson.put("releaseNotes", "false");
+                flatJson.put("releaseNotesSource", "");
+                flatJson.put("releaseNotesFile", "");
             }
             
-            JSONObject deployImmediately = json.getJSONObject("deployImmediately");
-            if (deployImmediately != null) {
-                flatJson.put("deployImmediately", true);
-                flatJson.put("env", deployImmediately.getString("env"));
+            if (json.has("deployImmediately")) {
+                JSONObject deployImmediately = json.getJSONObject("deployImmediately");
+                if (deployImmediately.has("env")) {
+                    flatJson.put("deployImmediately", true);
+                    flatJson.put("env", deployImmediately.getString("env"));
+                } else {
+                    // Error: malformed JSON, missing env
+                }
             } else {
                 flatJson.put("deployImmediately", false);
+                flatJson.put("env", "");
             }
             
             return flatJson;
