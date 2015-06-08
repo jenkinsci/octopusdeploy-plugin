@@ -167,4 +167,40 @@ public class OctopusApi {
         }
         return releases;
     }
+    
+    public DeploymentProcess getDeploymentProcessForProject(String projectId) throws IllegalArgumentException, IOException {
+        // TODO: refactor/method extract/clean up
+        AuthenticatedWebClient.WebResponse response = webClient.get("api/deploymentprocesses/deploymentprocess-" + projectId);
+        if (response.getCode() >= 400) {
+            throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
+        }
+        JSONObject json = (JSONObject)JSONSerializer.toJSON(response.getContent());
+        JSONArray stepsJson = json.getJSONArray("Steps");
+        HashSet<DeploymentProcessStep> deploymentProcessSteps = new HashSet<DeploymentProcessStep>();
+        for (Object stepObj : stepsJson) {
+            JSONObject jsonStepObj = (JSONObject)stepObj;
+            HashSet<DeploymentProcessStepAction> deploymentProcessStepActions = new HashSet<DeploymentProcessStepAction>();
+            
+            JSONArray actionsJson = jsonStepObj.getJSONArray("Actions");
+            for (Object actionObj : actionsJson) {
+                JSONObject jsonActionObj = (JSONObject)actionObj;
+                JSONObject propertiesJson = jsonActionObj.getJSONObject("Properties");
+                HashMap<String, String> properties = new HashMap<String, String>();
+                for (Object key : propertiesJson.keySet()) {
+                    String keyString = key.toString();
+                    properties.put(keyString, propertiesJson.getString(keyString));
+                }
+                String dpsaId = jsonActionObj.getString("Id");
+                String dpsaName = jsonActionObj.getString("Name");
+                String dpsaType = jsonActionObj.getString("ActionType");
+                deploymentProcessStepActions.add(new DeploymentProcessStepAction(dpsaId, dpsaName, dpsaType, properties));
+            }
+            String dpsId = jsonStepObj.getString("Id");
+            String dpsName = jsonStepObj.getString("Name");
+            deploymentProcessSteps.add(new DeploymentProcessStep(dpsId, dpsName, deploymentProcessStepActions));
+        }
+        String dpId = json.getString("Id");
+        String dpProject = json.getString("ProjectId");
+        return new DeploymentProcess(dpId, dpProject, deploymentProcessSteps);
+    }
 }

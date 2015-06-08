@@ -167,10 +167,9 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
             @QueryParameter("releaseVersion") final String releaseVersion,
             @QueryParameter("environment") final String environment) {
             // Tests go here, then return one of the following based on results:
-            // return FormValidation.ok("This is a Success message");
+             return FormValidation.ok("This is a Success message");
             // return FormValidation.ok("This is a Warning message");
             // return FormValidation.ok("This is a Error message");
-            return FormValidation.ok("I'm a sample success message!");
         }
         
         /**
