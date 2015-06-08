@@ -19,6 +19,13 @@ public class OctopusApi {
         // repeat this general process to get all the other goodies needed in other methods
     }
 
+    /**
+     * Deploys a given release to provided environment.
+     * @param releaseId Release Id from Octopus to deploy.
+     * @param environmentId Environment Id from Octopus to deploy to.
+     * @return the content of the web response.
+     * @throws IOException 
+     */
     public String executeDeployment(String releaseId, String environmentId) throws IOException {
         String json = String.format("{EnvironmentId:\"%s\",ReleaseId:\"%s\"}", environmentId, releaseId);
         byte[] data = json.getBytes(Charset.forName("UTF-8"));
@@ -63,6 +70,7 @@ public class OctopusApi {
     public Project getProjectByName(String name)  throws IllegalArgumentException, IOException {
         return getProjectByName(name, false);
     }
+    
     /**
      * Loads in the full list of projects from the API, then selects one project by name.
      * @param name name of the project to select
