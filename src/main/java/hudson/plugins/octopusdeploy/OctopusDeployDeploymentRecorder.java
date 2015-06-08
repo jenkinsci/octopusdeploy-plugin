@@ -7,15 +7,12 @@ import hudson.tasks.*;
 import hudson.util.*;
 import java.io.IOException;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.*;
 
 /**
  * Executes deployments of releases.
- * @author badriance
  */
 public class OctopusDeployDeploymentRecorder extends Recorder {
     
@@ -28,7 +25,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
     }
     
     /**
-     * The release version number in octopus.
+     * The release version number in Octopus.
      */
     private final String releaseVersion;
     public String getReleaseVersion() {
@@ -36,7 +33,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
     }
     
     /**
-     * The environment to deploy to in octopus.
+     * The environment to deploy to in Octopus.
      */
     private final String environment;
     public String getEnvironment() {
@@ -57,6 +54,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
     
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+        // This method deserves a refactor and cleanup.
         boolean success = true;
         Log log = new Log(listener);
         log.info("Started Octopus Deploy");
@@ -136,7 +134,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
      * Descriptor for {@link OctopusDeployDeploymentRecorder}. Used as a singleton.
      * The class is marked as public so that it can be accessed from views.
      */
-    @Extension // This indicates to Jenkins that this is an implementation of an extension point.
+    @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
         private String octopusHost;
         private String apiKey;
@@ -163,9 +161,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
          * @param project
          * @param releaseVersion
          * @param environment 
-         * @return A FormValidation object with the validation status and a brief message explaining the status.
-         * @throws IOException
-         * @throws ServletException 
+         * @return A FormValidation object with the validation status and a brief message explaining the status. 
          */
         public FormValidation doDeployValidation(@QueryParameter("project") final String project,
             @QueryParameter("releaseVersion") final String releaseVersion,

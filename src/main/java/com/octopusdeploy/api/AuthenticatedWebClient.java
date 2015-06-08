@@ -3,7 +3,6 @@ package com.octopusdeploy.api;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import net.sf.json.*;
 
 /**
  * An Octopus Deploy web API client that automatically puts the API key in a header
@@ -190,7 +189,6 @@ public class AuthenticatedWebClient {
         private WebResponse(int code, String content) {
             this.code = code;
             this.content = content;
-        }
-                
+        }   
     }
 }

@@ -18,8 +18,7 @@ import java.util.logging.Logger;
  */
 public class OctopusDeployPlugin extends GlobalPluginConfiguration {
 
-    
-    @Extension // This indicates to Jenkins that this is an implementation of an extension point.
+    @Extension
     public static final class DescriptorImpl extends Descriptor<GlobalConfiguration> {
 
         private String apiKey;
@@ -41,6 +40,14 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
             return "OctopusDeploy Plugin";
         }
 
+        /**
+         * Validate that the host is:
+         *  - Not empty
+         *  - A well formed URL
+         *  - A real location that we can connect to
+         * @param octopusHost the host URL for the octopus deploy instance
+         * @return Form validation to present on the Jenkins UI
+         */
         public FormValidation doCheckOctopusHost(@QueryParameter String octopusHost) {
             if (octopusHost.isEmpty()) {
                 return FormValidation.warning("Please enter a url to your OctopusDeploy Host");

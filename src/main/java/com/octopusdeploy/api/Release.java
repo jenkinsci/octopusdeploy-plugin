@@ -1,7 +1,7 @@
 package com.octopusdeploy.api;
 
 /**
- *
+ * A simplified representation of a Release in OctopusDeploy.
  */
 public class Release {
     private final String id;
