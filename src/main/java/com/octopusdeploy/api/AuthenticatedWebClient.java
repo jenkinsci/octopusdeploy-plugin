@@ -9,7 +9,7 @@ import java.util.*;
  * Offers GET and POST, returning the response as JSON.
  */
 public class AuthenticatedWebClient {
-    
+    private static final String UTF8 = "UTF-8";
     private static final String GET = "GET";
     private static final String POST = "POST";
     private static final String OCTOPUS_API_KEY_HEADER = "X-Octopus-ApiKey";
@@ -88,7 +88,7 @@ public class AuthenticatedWebClient {
         Set<String> parameterKeyValuePairs = new HashSet<String>();
         if (queryParametersMap != null && !queryParametersMap.isEmpty()) {
             for (Map.Entry<String, String> entry : queryParametersMap.entrySet()) {
-                String encodedValue = URLEncoder.encode(entry.getValue(), "UTF-8");
+                String encodedValue = URLEncoder.encode(entry.getValue(), UTF8);
                 String kvp = String.format("%s=%s", entry.getKey(), encodedValue);
                 parameterKeyValuePairs.add(kvp);
             }
@@ -142,7 +142,7 @@ public class AuthenticatedWebClient {
         InputStream streamToRead = null;
         if(connection instanceof HttpURLConnection) {
             responseCode = ((HttpURLConnection)connection).getResponseCode();
-            if (responseCode >= 400)
+            if (isErrorCode(responseCode))
             {
                 streamToRead = ((HttpURLConnection)connection).getErrorStream();
             }
@@ -164,6 +164,16 @@ public class AuthenticatedWebClient {
         return new WebResponse(responseCode, response.toString());
     }
     
+   
+    /**
+    * Returns true if the HTTP Response code represents an error.
+    * @param code the HTTP Response code
+    * @return true or false
+    */
+   public final static boolean isErrorCode(final int code) {
+       return  code >= 400;
+   }
+    
     /**
      * A web response code (HTTP Response code) and content from the web request.
      */
@@ -175,6 +185,14 @@ public class AuthenticatedWebClient {
          */
         public int getCode() {
             return code;
+        }
+        
+        /**
+         * Returns true if the HTTP Response code represents an error.
+         * @return true or false
+         */
+        public boolean isErrorCode() {
+            return AuthenticatedWebClient.isErrorCode(code);
         }
         
         private final String content;

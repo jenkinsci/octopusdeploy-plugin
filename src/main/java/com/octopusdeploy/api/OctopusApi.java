@@ -6,17 +6,68 @@ import java.util.*;
 import net.sf.json.*;
 
 public class OctopusApi {
-
+    private final static String UTF8 = "UTF-8";
     private final AuthenticatedWebClient webClient;
 
     public OctopusApi(String octopusHost, String apiKey) {
         webClient = new AuthenticatedWebClient(octopusHost, apiKey);
     }
 
-    public void createRelease(String project, String releaseVersion, String releaseNotes, String packageVersion) {
-        // https://github.com/OctopusDeploy/OctopusDeploy-Api/wiki/Releases
-        // use api to get list of projects, map project name to id
-        // repeat this general process to get all the other goodies needed in other methods
+    /**
+     * Creates a release in octopus deploy.
+     * @param project The project id
+     * @param releaseVersion The version number for this release.
+     * @return content from the API post
+     * @throws java.io.IOException
+     */
+    public String createRelease(String project, String releaseVersion) throws IOException {
+        return createRelease(project, releaseVersion, null);
+    }
+    
+    /**
+     * Creates a release in octopus deploy.
+     * @param project The project id.
+     * @param releaseVersion The version number for this release.
+     * @param releaseNotes Release notes to be associated with this release.
+     * @return content from the API post
+     * @throws java.io.IOException
+     */
+    public String createRelease(String project, String releaseVersion, String releaseNotes) throws IOException {
+        return createRelease(project, releaseVersion, releaseNotes, null);
+    }
+    
+    /**
+     * Creates a release in octopus deploy.
+     * @param project The project id
+     * @param releaseVersion The version number for this release.
+     * @param releaseNotes Release notes to be associated with this release.
+     * @param selectedPackages Packages to be deployed with this release.
+     * @return content from the API post
+     * @throws java.io.IOException
+     */
+    public String createRelease(String project, String releaseVersion, String releaseNotes, Set<SelectedPackage> selectedPackages) throws IOException {
+        StringBuilder jsonBuilder = new StringBuilder();
+        jsonBuilder.append(String.format("{ProjectId:\"%s\",Version:\"%s\"", project, releaseVersion));
+        if (releaseNotes != null) {
+            jsonBuilder.append(String.format(",ReleaseNotes:\"%s\"", releaseNotes));
+        }
+        if (selectedPackages != null && !selectedPackages.isEmpty()) {
+            jsonBuilder.append(",SelectedPackages:[");
+            Set<String> selectedPackageStrings = new HashSet<String>();
+            for (SelectedPackage selectedPackage : selectedPackages) {
+                selectedPackageStrings.add(String.format("StepName:\"%s\",Version:\"%s\"", selectedPackage.getStepName(), selectedPackage.getVersion()));
+            }
+            jsonBuilder.append(String.join(",", selectedPackageStrings));
+            jsonBuilder.append("]");
+        }
+        jsonBuilder.append("}");
+        String json = jsonBuilder.toString();
+        byte[] data = json.getBytes(Charset.forName(UTF8));
+        AuthenticatedWebClient.WebResponse response = webClient.post("api/releases", data);
+        if (response.isErrorCode()) {
+            throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
+        }
+        return response.getContent();
     }
 
     /**
@@ -28,9 +79,9 @@ public class OctopusApi {
      */
     public String executeDeployment(String releaseId, String environmentId) throws IOException {
         String json = String.format("{EnvironmentId:\"%s\",ReleaseId:\"%s\"}", environmentId, releaseId);
-        byte[] data = json.getBytes(Charset.forName("UTF-8"));
+        byte[] data = json.getBytes(Charset.forName(UTF8));
         AuthenticatedWebClient.WebResponse response = webClient.post("api/deployments", data);
-        if (response.getCode() >= 400) {
+        if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
         }
         return response.getContent();
@@ -46,7 +97,7 @@ public class OctopusApi {
     public Set<Project> getAllProjects() throws IllegalArgumentException, IOException {
         HashSet<Project> projects = new HashSet<Project>();
         AuthenticatedWebClient.WebResponse response = webClient.get("api/projects/all");
-        if (response.getCode() >= 400) {
+        if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
         }
         JSONArray json = (JSONArray)JSONSerializer.toJSON(response.getContent());
@@ -99,7 +150,7 @@ public class OctopusApi {
     public Set<Environment> getAllEnvironments() throws IllegalArgumentException, IOException {
         HashSet<Environment> environments = new HashSet<Environment>();
         AuthenticatedWebClient.WebResponse response =webClient.get("api/environments/all");
-        if (response.getCode() >= 400) {
+        if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
         }
         JSONArray json = (JSONArray)JSONSerializer.toJSON(response.getContent());
@@ -154,7 +205,7 @@ public class OctopusApi {
     public Set<Release> getReleasesForProject(String projectId) throws IllegalArgumentException, IOException {
         HashSet<Release> releases = new HashSet<Release>();
         AuthenticatedWebClient.WebResponse response = webClient.get("api/projects/" + projectId + "/releases");
-        if (response.getCode() >= 400) {
+        if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
         }
         JSONObject json = (JSONObject)JSONSerializer.toJSON(response.getContent());
@@ -168,10 +219,17 @@ public class OctopusApi {
         return releases;
     }
     
+    /**
+     * Return a representation of a deployment process for a given project.
+     * @param projectId
+     * @return DeploymentProcess
+     * @throws IllegalArgumentException
+     * @throws IOException 
+     */
     public DeploymentProcess getDeploymentProcessForProject(String projectId) throws IllegalArgumentException, IOException {
         // TODO: refactor/method extract/clean up
         AuthenticatedWebClient.WebResponse response = webClient.get("api/deploymentprocesses/deploymentprocess-" + projectId);
-        if (response.getCode() >= 400) {
+        if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
         }
         JSONObject json = (JSONObject)JSONSerializer.toJSON(response.getContent());
