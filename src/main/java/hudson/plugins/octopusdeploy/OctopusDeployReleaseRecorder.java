@@ -27,6 +27,7 @@ public class OctopusDeployReleaseRecorder extends Recorder {
     /**
      * The project name as defined in Octopus.
      */
+    @SuppressWarnings("FieldMayBeFinal")
     private String project;
     public String getProject() {
         return project;
@@ -35,6 +36,7 @@ public class OctopusDeployReleaseRecorder extends Recorder {
     /**
      * The release version as defined in Octopus.
      */
+    @SuppressWarnings("FieldMayBeFinal")
     private String releaseVersion;
     public String getReleaseVersion() {
         return releaseVersion;
@@ -43,6 +45,7 @@ public class OctopusDeployReleaseRecorder extends Recorder {
     /**
      * The package version as defined in Octopus.
      */
+    @SuppressWarnings("FieldMayBeFinal")
     private String packageVersion;
     public String getPackageVersion() {
         return packageVersion;
@@ -51,6 +54,7 @@ public class OctopusDeployReleaseRecorder extends Recorder {
     /**
      * Is there release notes for this release?
      */
+    @SuppressWarnings("FieldMayBeFinal")
     private Boolean releaseNotes;
     public Boolean getReleaseNotes() {
         return releaseNotes;
@@ -59,6 +63,7 @@ public class OctopusDeployReleaseRecorder extends Recorder {
     /**
      * Where are the release notes located?
      */
+    @SuppressWarnings("FieldMayBeFinal")
     private String releaseNotesSource;
     public String getReleaseNotesSource() {
         return releaseNotesSource;
@@ -67,6 +72,7 @@ public class OctopusDeployReleaseRecorder extends Recorder {
     /**
      * The file that the release notes are in.
      */
+    @SuppressWarnings("FieldMayBeFinal")
     private String releaseNotesFile;
     public String getReleaseNotesFile() {
         return releaseNotesFile;
@@ -75,6 +81,7 @@ public class OctopusDeployReleaseRecorder extends Recorder {
     /**
      * Should this release be deployed immediately?
      */
+    @SuppressWarnings("FieldMayBeFinal")
     private Boolean deployImmediately;
     public Boolean getDeployImmediately() {
         return deployImmediately;
@@ -83,6 +90,7 @@ public class OctopusDeployReleaseRecorder extends Recorder {
     /**
      * The environment as defined in Octopus to deploy to.
      */
+    @SuppressWarnings("FieldMayBeFinal")
     private String env;
     public String getEnv() {
         return env;
@@ -91,6 +99,7 @@ public class OctopusDeployReleaseRecorder extends Recorder {
     /**
      * All package overrides as defined in Octopus
      */
+    @SuppressWarnings("FieldMayBeFinal")
     private List<PackageOverride> packageOverrides;
     public List<PackageOverride> getPackageOverrides() {
         return packageOverrides;
@@ -134,7 +143,7 @@ public class OctopusDeployReleaseRecorder extends Recorder {
         } else {
             log.info("Package Overrides:");
             for (PackageOverride po : packageOverrides) {
-                log.info("\t" + po.getPackageName() + " v" + po.getVersion());
+                log.info("\t" + po.getPackageName() + "\tv" + po.getVersion());
             }
         }
         log.info("======================");
