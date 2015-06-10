@@ -34,4 +34,20 @@
       </f:optionalBlock>
     </table>
   </f:block>
+
+  <f:block>
+    <f:entry field="packageOverrides" title="Package Overrides">
+      <f:repeatable add="Add Package Override" field="packageOverrides">
+        <table width="100%">
+          <f:repeatableDeleteButton value="Delete Package Override" />
+          <f:entry field="packageName" title="Package">
+            <f:textbox />
+          </f:entry>
+          <f:entry field="version" title="Version">
+            <f:textbox />
+          </f:entry>
+        </table>
+      </f:repeatable>
+    </f:entry>
+  </f:block>
 </j:jelly>

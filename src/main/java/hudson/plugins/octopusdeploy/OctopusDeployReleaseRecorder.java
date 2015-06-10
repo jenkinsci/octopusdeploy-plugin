@@ -1,5 +1,6 @@
 package hudson.plugins.octopusdeploy;
 import com.octopusdeploy.api.OctopusApi;
+import com.octopusdeploy.api.PackageOverride;
 import com.octopusdeploy.api.Release;
 import hudson.Launcher;
 import hudson.Extension;
@@ -12,6 +13,7 @@ import java.util.*;
 import java.util.logging.Logger;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -85,9 +87,18 @@ public class OctopusDeployReleaseRecorder extends Recorder {
     public String getEnv() {
         return env;
     }
+    
+    /**
+     * All package overrides as defined in Octopus
+     */
+    private List<PackageOverride> packageOverrides;
+    public List<PackageOverride> getPackageOverrides() {
+        return packageOverrides;
+    }
+
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public OctopusDeployReleaseRecorder(String project, String releaseVersion, String packageVersion, boolean releaseNotes, String releaseNotesSource, String releaseNotesFile, boolean deployImmediately, String env) {
+    public OctopusDeployReleaseRecorder(String project, String releaseVersion, String packageVersion, boolean releaseNotes, String releaseNotesSource, String releaseNotesFile, boolean deployImmediately, String env, List<PackageOverride> packageOverrides) {
         this.project = project;
         this.releaseVersion = releaseVersion;
         this.packageVersion = packageVersion;
@@ -96,6 +107,7 @@ public class OctopusDeployReleaseRecorder extends Recorder {
         this.releaseNotesFile = releaseNotesFile;
         this.deployImmediately = deployImmediately;
         this.env = env;
+        this.packageOverrides = packageOverrides;
     }
     
     @Override
@@ -117,6 +129,14 @@ public class OctopusDeployReleaseRecorder extends Recorder {
         log.info("Release Notes File: " + releaseNotesFile);
         log.info("Deploy this Release Immediately?: " + deployImmediately);
         log.info("Environment: " + env);
+        if (packageOverrides.isEmpty()) {
+            log.info("No package overrides");
+        } else {
+            log.info("Package Overrides:");
+            for (PackageOverride po : packageOverrides) {
+                log.info("\t" + po.getPackageName() + " v" + po.getVersion());
+            }
+        }
         log.info("======================");
         ((DescriptorImpl)getDescriptor()).setGlobalConfiguration();
         OctopusApi api = new OctopusApi(((DescriptorImpl)getDescriptor()).octopusHost, ((DescriptorImpl)getDescriptor()).apiKey);
@@ -167,6 +187,8 @@ public class OctopusDeployReleaseRecorder extends Recorder {
         if (!success) { // Early exit
             return success;
         }
+        
+        // Check packageOverrides
         
         // Do release
         
@@ -275,7 +297,6 @@ public class OctopusDeployReleaseRecorder extends Recorder {
          * @throws hudson.model.Descriptor.FormException 
          */
         @Override
-        // TODO: What should this return? / Is this even needed?
         public Publisher newInstance(StaplerRequest req, JSONObject formData) throws Descriptor.FormException {
             return req.bindJSON(clazz, flattenReleaseJSON(formData));
         }
@@ -288,6 +309,9 @@ public class OctopusDeployReleaseRecorder extends Recorder {
          * @return The flattened release JSON.
          */
         private JSONObject flattenReleaseJSON(JSONObject json) {
+            // TODO: Delete these two debug lines
+            System.out.println("[DEBUG] " + json);
+            System.out.println();
             JSONObject flatJson = new JSONObject();
             // Values that are always set
             flatJson.put("project", json.getString("project"));
@@ -333,11 +357,29 @@ public class OctopusDeployReleaseRecorder extends Recorder {
                     flatJson.put("env", deployImmediately.getString("env"));
                 } else {
                     // Error: malformed JSON, missing env
+                    System.out.println("[ERROR] Malformed JSON - env");
                 }
             } else {
                 flatJson.put("deployImmediately", false);
                 flatJson.put("env", "");
             }
+            
+            // packageOverrides: When exists, has an arbitrary amount of two string pairs
+            if (json.has("packageOverrides")) {
+                // Add the package overrides as a JSONArray
+                // This is necessary as a single package override is returned as a single JSONObject while more than one returns as a JSONARray of JSON objects
+                JSONArray overrides = json.optJSONArray("packageOverrides");
+                if (overrides == null) {
+                    // Only one override, wrap it in a new JSONArray
+                    overrides = new JSONArray();
+                    JSONObject override = json.getJSONObject("packageOverrides");
+                    overrides.add(override);
+                    flatJson.put("packageOverrides", overrides);
+                }
+                // Put the either fixed single object array or the original multiobject array
+                flatJson.put("packageOverrides", overrides);
+            }
+            // Else, no package overrides
             
             return flatJson;
         }
