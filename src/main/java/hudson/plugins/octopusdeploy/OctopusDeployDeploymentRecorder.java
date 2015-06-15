@@ -169,7 +169,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
      */
     private void waitForDeploymentCompletion(JSON json, OctopusApi api, Log logger) {
         JSONObject jsonObj = (JSONObject)json;
-        String id = jsonObj.getString("Id");
+        String id = jsonObj.getString("TaskId");
         Task task = null;
         try {
             task = api.getTask(id);
