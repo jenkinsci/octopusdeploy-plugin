@@ -8,5 +8,7 @@
   <f:entry title="Environment" field="environment">
     <f:textbox />
   </f:entry>
-  <f:validateButton title="Validate Deploy" progress="${%Validating...}" method="deployValidation" with="project,releaseVersion,environment" />
+  <f:entry title="Wait for deployment to complete" field="waitForDeployment">
+    <f:checkbox  value="false" />
+  </f:entry>
 </j:jelly>

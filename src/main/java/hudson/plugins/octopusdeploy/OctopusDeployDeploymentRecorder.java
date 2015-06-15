@@ -7,8 +7,10 @@ import hudson.tasks.*;
 import hudson.util.*;
 import java.io.IOException;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jenkins.model.Jenkins;
-import net.sf.json.JSONObject;
+import net.sf.json.*;
 import org.kohsuke.stapler.*;
 
 /**
@@ -40,11 +42,21 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
         return environment;
     }
     
+    /**
+     * Whether or not perform will return control immediately, or wait until the Deployment
+     * task is completed.
+     */
+    private final boolean waitForDeployment;
+    public boolean getWaitForDeployment() {
+        return waitForDeployment;
+    }
+    
     @DataBoundConstructor
-    public OctopusDeployDeploymentRecorder(String project, String releaseVersion, String environment) {
+    public OctopusDeployDeploymentRecorder(String project, String releaseVersion, String environment, boolean waitForDeployment) {
         this.project = project.trim();
         this.releaseVersion = releaseVersion.trim();
         this.environment = environment.trim();
+        this.waitForDeployment = waitForDeployment;
     }
 
     @Override
@@ -121,6 +133,10 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
         }
         try {
             String results = api.executeDeployment(releaseToDeploy.getId(), env.getId());
+            if (waitForDeployment && isTaskJson(results)) {
+                log.info("Waiting for deployment to complete.");
+                waitForDeploymentCompletion(JSONSerializer.toJSON(results), api, log);
+            }
             log.info(results);
         } catch(IOException ex) {
             log.fatal("Failed to deploy: " + ex.getMessage());
@@ -128,6 +144,68 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
         }
         
         return success;
+    }
+    
+    /**
+     * Attempts to parse the string as JSON. 
+     * returns true on success
+     * @param possiblyJson A string that may be JSON
+     * @return true or false. True if string is valid JSON.
+     */
+    private boolean isTaskJson(String possiblyJson) {
+        try {
+            JSONSerializer.toJSON(possiblyJson);
+            return true;
+        } catch (JSONException ex)
+        {
+            return false;
+        }
+    }
+    
+    /**
+     * Returns control when task is complete.
+     * @param json
+     * @param logger 
+     */
+    private void waitForDeploymentCompletion(JSON json, OctopusApi api, Log logger) {
+        JSONObject jsonObj = (JSONObject)json;
+        String id = jsonObj.getString("Id");
+        Task task = null;
+        try {
+            task = api.getTask(id);
+        } catch (IOException ex) {
+            logger.error("Error getting task: " + ex.getMessage());
+            return;
+        }
+        
+        logger.info("Task info:");
+        logger.info("\tId: " + task.getId());
+        logger.info("\tName: " + task.getName());
+        logger.info("\tDesc: " + task.getDescription());
+        logger.info("\tState: " + task.getState());
+        logger.info("\n\nStarting wait...");
+        boolean completed = task.getIsCompleted();
+        while (!completed)
+        {
+            try {
+                task = api.getTask(id);
+            } catch (IOException ex) {
+                logger.error("Error getting task: " + ex.getMessage());
+                return;
+            }
+            completed = task.getIsCompleted();
+            if (completed) {
+                logger.info("Task state: " + task.getState());
+            }
+            try {
+                Thread.sleep(1000 + (long)(Math.random() * 100.0));
+            } catch (InterruptedException ex) {
+                logger.info("Wait interrupted!");
+                logger.info(ex.getMessage());
+                completed = true; // bail out of wait loop
+            }
+        }
+        logger.info("Complete!");
     }
 
     /**
@@ -154,22 +232,6 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
         public boolean configure(StaplerRequest req, JSONObject formData) throws Descriptor.FormException {
             save();
             return super.configure(req, formData);
-        }
-        
-        /**
-         * Allows plugin user to validate release information by implementing Validate button.
-         * @param project
-         * @param releaseVersion
-         * @param environment 
-         * @return A FormValidation object with the validation status and a brief message explaining the status. 
-         */
-        public FormValidation doDeployValidation(@QueryParameter("project") final String project,
-            @QueryParameter("releaseVersion") final String releaseVersion,
-            @QueryParameter("environment") final String environment) {
-            // Tests go here, then return one of the following based on results:
-             return FormValidation.ok("This is a Success message");
-            // return FormValidation.ok("This is a Warning message");
-            // return FormValidation.ok("This is a Error message");
         }
         
         /**

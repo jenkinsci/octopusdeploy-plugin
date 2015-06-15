@@ -261,4 +261,24 @@ public class OctopusApi {
         String dpProject = json.getString("ProjectId");
         return new DeploymentProcess(dpId, dpProject, deploymentProcessSteps);
     }
+    
+    /**
+     * Retrieves a task by its id.
+     * @param taskId
+     * @return a Task object
+     * @throws IOException 
+     */
+    public Task getTask(String taskId) throws IOException {
+        AuthenticatedWebClient.WebResponse response = webClient.get("api/tasks/" + taskId);
+        if (response.isErrorCode()) {
+            throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
+        }
+        JSONObject json = (JSONObject)JSONSerializer.toJSON(response.getContent());
+        String id = json.getString("Id");
+        String name = json.getString("Name");
+        String description = json.getString("Description");
+        String state = json.getString("State");
+        boolean isCompleted = json.getBoolean("IsCompleted");
+        return new Task(id, name, description, state, isCompleted);
+    }
 }
