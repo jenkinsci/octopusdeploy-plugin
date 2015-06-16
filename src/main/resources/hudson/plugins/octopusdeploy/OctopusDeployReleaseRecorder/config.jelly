@@ -25,8 +25,8 @@
   <f:block>
     <table>
       <f:optionalBlock name="deployImmediately" title="Deploy this release immediately">
-        <f:entry title="Environment">
-          <f:textbox field="env" />
+        <f:entry title="Environment" field="env">
+          <f:textbox />
         </f:entry>
       </f:optionalBlock>
     </table>

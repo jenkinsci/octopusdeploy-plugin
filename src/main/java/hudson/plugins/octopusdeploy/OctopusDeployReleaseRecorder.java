@@ -331,11 +331,31 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
          * @throws javax.servlet.ServletException
          */
         public FormValidation doCheckEnv(@QueryParameter String env) throws IOException, ServletException {
-            if ("".equals(env))
-                return FormValidation.error("Please provide an environment.");
+            setGlobalConfiguration();
+            // TODO: Extract this to be shared between plugins
+            // TODO: Deduplicate this with project check
+            String environment = env.trim(); 
+            if (environment.isEmpty()) {
+                return FormValidation.error("Please provide an environment name.");
+            }
+            OctopusApi api = new OctopusApi(octopusHost, apiKey);
+            try {
+                com.octopusdeploy.api.Environment e = api.getEnvironmentByName(environment, true);
+                if (e == null)
+                {
+                    return FormValidation.error("Environment not found.");
+                }
+                if (!environment.equals(e.getName()))
+                {
+                    return FormValidation.warning("Environment name case does not match. Did you mean '%s'?", e.getName());
+                }
+            } catch (IllegalArgumentException ex) {
+                return FormValidation.error(ex.getMessage());
+            } catch (IOException ex) {
+                return FormValidation.error(ex.getMessage());
+            }
             return FormValidation.ok();
         }
-        
     }
 }
 
