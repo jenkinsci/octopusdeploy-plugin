@@ -55,7 +55,7 @@ public class OctopusApi {
             jsonBuilder.append(",SelectedPackages:[");
             Set<String> selectedPackageStrings = new HashSet<String>();
             for (SelectedPackage selectedPackage : selectedPackages) {
-                selectedPackageStrings.add(String.format("StepName:\"%s\",Version:\"%s\"", selectedPackage.getStepName(), selectedPackage.getVersion()));
+                selectedPackageStrings.add(String.format("{StepName:\"%s\",Version:\"%s\"}", selectedPackage.getStepName(), selectedPackage.getVersion()));
             }
             jsonBuilder.append(String.join(",", selectedPackageStrings));
             jsonBuilder.append("]");

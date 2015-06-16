@@ -1,34 +1,29 @@
 package hudson.plugins.octopusdeploy;
-import com.octopusdeploy.api.OctopusApi;
-import com.octopusdeploy.api.PackageOverride;
-import com.octopusdeploy.api.Release;
-import hudson.Launcher;
-import hudson.Extension;
+import com.octopusdeploy.api.*;
+import hudson.*;
 import hudson.model.*;
+import jenkins.model.*;
 import hudson.tasks.*;
 import hudson.scm.*;
 import hudson.util.*;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletException;
-import jenkins.model.Jenkins;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.QueryParameter;
+import net.sf.json.*;
+import org.kohsuke.stapler.*;
+import org.kohsuke.stapler.export.*;
 
 /**
  * Creates releases
- * @author badriance
  */
-public class OctopusDeployReleaseRecorder extends Recorder {
+public class OctopusDeployReleaseRecorder extends Recorder implements Serializable {
     /**
      * The project name as defined in Octopus.
      */
-    @SuppressWarnings("FieldMayBeFinal")
-    private String project;
+    private final String project;
     public String getProject() {
         return project;
     }
@@ -36,35 +31,24 @@ public class OctopusDeployReleaseRecorder extends Recorder {
     /**
      * The release version as defined in Octopus.
      */
-    @SuppressWarnings("FieldMayBeFinal")
-    private String releaseVersion;
+    private final String releaseVersion;
     public String getReleaseVersion() {
         return releaseVersion;
     }
 
-    /**
-     * The package version as defined in Octopus.
-     */
-    @SuppressWarnings("FieldMayBeFinal")
-    private String packageVersion;
-    public String getPackageVersion() {
-        return packageVersion;
-    }
 
     /**
      * Is there release notes for this release?
      */
-    @SuppressWarnings("FieldMayBeFinal")
-    private Boolean releaseNotes;
-    public Boolean getReleaseNotes() {
+    private final boolean releaseNotes;
+    public boolean getReleaseNotes() {
         return releaseNotes;
     }
     
     /**
      * Where are the release notes located?
      */
-    @SuppressWarnings("FieldMayBeFinal")
-    private String releaseNotesSource;
+    private final String releaseNotesSource;
     public String getReleaseNotesSource() {
         return releaseNotesSource;
     }
@@ -72,51 +56,47 @@ public class OctopusDeployReleaseRecorder extends Recorder {
     /**
      * The file that the release notes are in.
      */
-    @SuppressWarnings("FieldMayBeFinal")
-    private String releaseNotesFile;
+    private final String releaseNotesFile;
     public String getReleaseNotesFile() {
         return releaseNotesFile;
     }
-
+    
     /**
      * Should this release be deployed immediately?
      */
-    @SuppressWarnings("FieldMayBeFinal")
-    private Boolean deployImmediately;
-    public Boolean getDeployImmediately() {
+    private final boolean deployImmediately;
+    public boolean getDeployImmediately() {
         return deployImmediately;
     }
 
     /**
      * The environment as defined in Octopus to deploy to.
      */
-    @SuppressWarnings("FieldMayBeFinal")
-    private String env;
+    private final String env;
     public String getEnv() {
         return env;
     }
     
     /**
-     * All package overrides as defined in Octopus
+     * All packages as defined in Octopus
      */
-    @SuppressWarnings("FieldMayBeFinal")
-    private List<PackageOverride> packageOverrides;
-    public List<PackageOverride> getPackageOverrides() {
-        return packageOverrides;
+    private final List<PackageConfiguration> packageConfigs;
+    @Exported
+    public List<PackageConfiguration> getPackageConfigs() {
+        return packageConfigs;
     }
 
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public OctopusDeployReleaseRecorder(String project, String releaseVersion, String packageVersion, boolean releaseNotes, String releaseNotesSource, String releaseNotesFile, boolean deployImmediately, String env, List<PackageOverride> packageOverrides) {
+    public OctopusDeployReleaseRecorder(String project, String releaseVersion, boolean releaseNotes, String releaseNotesSource, String releaseNotesFile, boolean deployImmediately, String env, List<PackageConfiguration> packageConfigs) {
         this.project = project;
         this.releaseVersion = releaseVersion;
-        this.packageVersion = packageVersion;
         this.releaseNotes = releaseNotes;
         this.releaseNotesSource = releaseNotesSource;
         this.releaseNotesFile = releaseNotesFile;
         this.deployImmediately = deployImmediately;
         this.env = env;
-        this.packageOverrides = packageOverrides;
+        this.packageConfigs = packageConfigs;
     }
     
     @Override
@@ -129,24 +109,23 @@ public class OctopusDeployReleaseRecorder extends Recorder {
         boolean success = true;
         Log log = new Log(listener);
         log.info("Started Octopus Release");
-        log.info("======================");
+        log.info("=======================");
         log.info("Project: " + project);
         log.info("Release Version: " + releaseVersion);
-        log.info("Package Version: " + packageVersion);
         log.info("Release Notes?: " + releaseNotes);
         log.info("Release Notes Source: " + releaseNotesSource);
         log.info("Release Notes File: " + releaseNotesFile);
         log.info("Deploy this Release Immediately?: " + deployImmediately);
         log.info("Environment: " + env);
-        if (packageOverrides.isEmpty()) {
-            log.info("No package overrides");
+        if (packageConfigs == null || packageConfigs.isEmpty()) {
+            log.info("No package configurations");
         } else {
-            log.info("Package Overrides:");
-            for (PackageOverride po : packageOverrides) {
-                log.info("\t" + po.getPackageName() + "\tv" + po.getVersion());
+            log.info("Package Configurations:");
+            for (PackageConfiguration pc : packageConfigs) {
+                log.info("\t" + pc.getPackageName() + "\tv" + pc.getPackageVersion());
             }
         }
-        log.info("======================");
+        log.info("=======================");
         ((DescriptorImpl)getDescriptor()).setGlobalConfiguration();
         OctopusApi api = new OctopusApi(((DescriptorImpl)getDescriptor()).octopusHost, ((DescriptorImpl)getDescriptor()).apiKey);
         
@@ -162,18 +141,16 @@ public class OctopusDeployReleaseRecorder extends Recorder {
             log.fatal("Project was not found.");
             success = false;
         }
-        
-        // Check releaseVersion
-        
+
         // Check packageVersion
-        
+        String releaseNotesContent = null;
         if (releaseNotes) {
             if (releaseNotesSource.equals("file")) {
-                // Check releaseNotesFile
+                releaseNotesContent = getReleaseNotesFromFile(build);
             } else if (releaseNotesSource.equals("scm")) {
-                // Check ...whatever needs to be checked in SCM
+                releaseNotesContent = getReleaseNotesFromScm(build);
             } else {
-                // Exit early because misconfigured, should be releaseNotesFromFile ^ releaseNotesFromSCM
+                log.fatal(String.format("Bad configuration: if using release notes, should have source of file or scm. Found '%s'", releaseNotesSource));
                 success = false;
             }
         }
@@ -187,21 +164,78 @@ public class OctopusDeployReleaseRecorder extends Recorder {
                     environment, ex.getMessage()));
                 success = false;
             }
+            if (environment == null) {
+                log.fatal("Environment was not found.");
+                success = false;
+            }
         }
-        if (environment == null) {
-            log.fatal("Environment was not found.");
-            success = false;
-        }
+        
         
         if (!success) { // Early exit
             return success;
         }
         
         // Check packageOverrides
+        Set<SelectedPackage> selectedPackages = null;
+        if (packageConfigs != null && !packageConfigs.isEmpty()) {
+            selectedPackages = new HashSet<SelectedPackage>();
+            for (PackageConfiguration pc : packageConfigs) {
+                selectedPackages.add(new SelectedPackage(pc.getPackageName(), pc.getPackageVersion()));
+            }
+        }
         
-        // Do release
+        try {
+            log.info(api.createRelease(p.getId(), releaseVersion, releaseNotesContent, selectedPackages));
+        } catch (IOException ex) {
+            log.fatal("Failed to create release: " + ex.getMessage());
+            success = false;
+        }
         
+        if (success && deployImmediately) {
+            try {
+                api.executeDeployment(releaseVersion, p.getId());
+            } catch (IOException ex) {
+                log.fatal("Failed to deploy: " + ex.getMessage());
+                success = false;
+            }
+        }
+            
         return success;
+    }
+    
+    private String getReleaseNotesFromFile(AbstractBuild build) {
+        FilePath path = new FilePath(build.getWorkspace(), releaseNotesFile);
+        //Files.readAllLines(path.to)
+        return "need to read this";
+    }
+    
+    private String getReleaseNotesFromScm(AbstractBuild build) {
+        StringBuilder notes = new StringBuilder();
+        AbstractProject project = build.getProject();
+        AbstractBuild lastSuccessfulBuild = (AbstractBuild)project.getLastSuccessfulBuild();
+        AbstractBuild currentBuild = null;
+        if (lastSuccessfulBuild == null) {
+            AbstractBuild lastBuild = (AbstractBuild)project.getLastBuild();
+            currentBuild = lastBuild;
+        }
+        else
+        {
+            currentBuild = lastSuccessfulBuild.getNextBuild();
+        }
+        if (currentBuild != null) {
+            while (currentBuild != build)
+            {
+                ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = currentBuild.getChangeSet();
+                for(Object item : changeSet.getItems())
+                {
+                    ChangeLogSet.Entry entry = (ChangeLogSet.Entry)item;
+                    notes.append(entry.getMsg() + "\n");
+                }
+                currentBuild = currentBuild.getNextBuild();
+            }
+        }
+        
+        return notes.toString();
     }
     
     /**
@@ -213,6 +247,10 @@ public class OctopusDeployReleaseRecorder extends Recorder {
         private String octopusHost;
         private String apiKey;
         private boolean loadedConfig;
+        
+        public DescriptorImpl() {
+            load();
+        }
         
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
@@ -227,7 +265,7 @@ public class OctopusDeployReleaseRecorder extends Recorder {
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws Descriptor.FormException {
             save();
-            return super.configure(req, formData);
+            return true;
         }
         
         /**
@@ -298,100 +336,6 @@ public class OctopusDeployReleaseRecorder extends Recorder {
             return FormValidation.ok();
         }
         
-        /**
-         * Instantiate a new instance of OctopusDeployReleaseRecorder.
-         * @param req
-         * @param formData
-         * @return
-         * @throws hudson.model.Descriptor.FormException 
-         */
-        @Override
-        public Publisher newInstance(StaplerRequest req, JSONObject formData) throws Descriptor.FormException {
-            return req.bindJSON(clazz, flattenReleaseJSON(formData));
-        }
-        
-        /**
-         * Flattens the given release JSON by extracting values.
-         * Solves bind issues from the JSON normally passed.
-         * All Strings not set in Jenkins will be stored as empty.
-         * @param json The release's JSON.
-         * @return The flattened release JSON.
-         */
-        private JSONObject flattenReleaseJSON(JSONObject json) {
-            // TODO: Delete these two debug lines
-            System.out.println("[DEBUG] " + json);
-            System.out.println();
-            JSONObject flatJson = new JSONObject();
-            // Values that are always set
-            flatJson.put("project", json.getString("project"));
-            flatJson.put("releaseVersion", json.getString("releaseVersion"));
-            flatJson.put("stapler-class", json.getString("stapler-class"));
-            flatJson.put("$class", json.getString("$class"));
-            
-            // Values sometimes set (will be empty string if not set)
-            flatJson.put("packageVersion", json.optString("packageVersion"));
-            
-            // releaseNotes : When releasenotes.publisher.value is "on" this is considered true
-            if (json.has("releaseNotes")) {
-                JSONObject releaseNotes = json.getJSONObject("releaseNotes");
-                if (releaseNotes.has("releaseNotesSource")) {
-                    JSONObject releaseNotesSource = releaseNotes.getJSONObject("releaseNotesSource");
-                    if (releaseNotesSource.has("value")) { // Release Notes
-                        flatJson.put("releaseNotes", true);
-                        if (releaseNotesSource.getString("value").equals("file")) { // Release Notes from File
-                            flatJson.put("releaseNotesSource", "file");
-                            flatJson.put("releaseNotesFile", releaseNotesSource.getString("releaseNotesFile"));
-                        } else { // Release Notes from SCM
-                            flatJson.put("releaseNotesSource", "scm");
-                            flatJson.put("releaseNotesFile", "");
-                        }
-                    } else {
-                        // Error: Malformed JSON, missing value
-                        System.out.println("[ERROR] Malformed JSON - value");
-                    }
-                } else {
-                    // Error: Malformed JSON, missing releaseNotesSource
-                    System.out.println("[ERROR] Malformed JSON - releaseNotesSource");
-                }
-            } else { // No release notes
-                flatJson.put("releaseNotes", "false");
-                flatJson.put("releaseNotesSource", "");
-                flatJson.put("releaseNotesFile", "");
-            }
-            
-            if (json.has("deployImmediately")) {
-                JSONObject deployImmediately = json.getJSONObject("deployImmediately");
-                if (deployImmediately.has("env")) {
-                    flatJson.put("deployImmediately", true);
-                    flatJson.put("env", deployImmediately.getString("env"));
-                } else {
-                    // Error: malformed JSON, missing env
-                    System.out.println("[ERROR] Malformed JSON - env");
-                }
-            } else {
-                flatJson.put("deployImmediately", false);
-                flatJson.put("env", "");
-            }
-            
-            // packageOverrides: When exists, has an arbitrary amount of two string pairs
-            if (json.has("packageOverrides")) {
-                // Add the package overrides as a JSONArray
-                // This is necessary as a single package override is returned as a single JSONObject while more than one returns as a JSONARray of JSON objects
-                JSONArray overrides = json.optJSONArray("packageOverrides");
-                if (overrides == null) {
-                    // Only one override, wrap it in a new JSONArray
-                    overrides = new JSONArray();
-                    JSONObject override = json.getJSONObject("packageOverrides");
-                    overrides.add(override);
-                    flatJson.put("packageOverrides", overrides);
-                }
-                // Put the either fixed single object array or the original multiobject array
-                flatJson.put("packageOverrides", overrides);
-            }
-            // Else, no package overrides
-            
-            return flatJson;
-        }
     }
 }
 

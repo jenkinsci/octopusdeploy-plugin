@@ -5,10 +5,8 @@ import hudson.Extension;
 import hudson.model.*;
 import hudson.tasks.*;
 import hudson.util.*;
-import java.io.IOException;
+import java.io.*;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import net.sf.json.*;
 import org.kohsuke.stapler.*;
@@ -16,7 +14,7 @@ import org.kohsuke.stapler.*;
 /**
  * Executes deployments of releases.
  */
-public class OctopusDeployDeploymentRecorder extends Recorder {
+public class OctopusDeployDeploymentRecorder extends Recorder implements Serializable {
     
     /**
      * The Project name of the project as defined in Octopus.
@@ -234,6 +232,10 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
         private String apiKey;
         private boolean loadedConfig;
         
+        public DescriptorImpl() {
+            load();
+        }
+        
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             return true;
@@ -247,7 +249,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws Descriptor.FormException {
             save();
-            return super.configure(req, formData);
+            return true;
         }
         
         /**
