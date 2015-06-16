@@ -292,8 +292,28 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
          * @throws javax.servlet.ServletException
          */
         public FormValidation doCheckProject(@QueryParameter String project) throws IOException, ServletException {
-            if ("".equals(project))
+            // TODO: Extract this to be shared between plugins
+            setGlobalConfiguration(); 
+            project = project.trim(); // TODO: Extract this to be shared between plugins
+            if (project.isEmpty()) {
                 return FormValidation.error("Please provide a project name.");
+            }
+            OctopusApi api = new OctopusApi(octopusHost, apiKey);
+            try {
+                com.octopusdeploy.api.Project p = api.getProjectByName(project, true);
+                if (p == null)
+                {
+                    return FormValidation.error("Project not found.");
+                }
+                if (!project.equals(p.getName()))
+                {
+                    return FormValidation.warning("Project name case does not match. Did you mean '%s'?", p.getName());
+                }
+            } catch (IllegalArgumentException ex) {
+                return FormValidation.error(ex.getMessage());
+            } catch (IOException ex) {
+                return FormValidation.error(ex.getMessage());
+            }
             return FormValidation.ok();
         }
         
