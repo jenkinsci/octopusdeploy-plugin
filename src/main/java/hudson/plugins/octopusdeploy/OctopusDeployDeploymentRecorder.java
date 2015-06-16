@@ -135,7 +135,16 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
             String results = api.executeDeployment(releaseToDeploy.getId(), env.getId());
             if (waitForDeployment && isTaskJson(results)) {
                 log.info("Waiting for deployment to complete.");
-                waitForDeploymentCompletion(JSONSerializer.toJSON(results), api, log);
+                String resultState = waitForDeploymentCompletion(JSONSerializer.toJSON(results), api, log);
+                if (resultState == null) {
+                    log.info("Marking build failed due to failure in waiting for deployment to complete.");
+                    success = false;
+                }
+                    
+                if ("Failed".equals(resultState)) {
+                    log.info("Marking build failed due to deployment task status.");
+                    success = false;
+                }
             }
             log.info(results);
         } catch(IOException ex) {
@@ -167,15 +176,18 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
      * @param json
      * @param logger 
      */
-    private void waitForDeploymentCompletion(JSON json, OctopusApi api, Log logger) {
+    private String waitForDeploymentCompletion(JSON json, OctopusApi api, Log logger) {
+        final long WAIT_TIME = 5000;
+        final double WAIT_RANDOM_SCALER = 100.0;
         JSONObject jsonObj = (JSONObject)json;
         String id = jsonObj.getString("TaskId");
         Task task = null;
+        String lastState = "Unknown";
         try {
             task = api.getTask(id);
         } catch (IOException ex) {
             logger.error("Error getting task: " + ex.getMessage());
-            return;
+            return null;
         }
         
         logger.info("Task info:");
@@ -191,21 +203,25 @@ public class OctopusDeployDeploymentRecorder extends Recorder {
                 task = api.getTask(id);
             } catch (IOException ex) {
                 logger.error("Error getting task: " + ex.getMessage());
-                return;
+                return null;
             }
+            
             completed = task.getIsCompleted();
+            lastState = task.getState();
+            logger.info("Task state: " + lastState);
             if (completed) {
-                logger.info("Task state: " + task.getState());
+                break;
             }
             try {
-                Thread.sleep(1000 + (long)(Math.random() * 100.0));
+                Thread.sleep(WAIT_TIME + (long)(Math.random() * WAIT_RANDOM_SCALER));
             } catch (InterruptedException ex) {
                 logger.info("Wait interrupted!");
                 logger.info(ex.getMessage());
                 completed = true; // bail out of wait loop
             }
         }
-        logger.info("Complete!");
+        logger.info("Wait complete!");
+        return lastState;
     }
 
     /**
