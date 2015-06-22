@@ -252,6 +252,8 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         private String octopusHost;
         private String apiKey;
         private boolean loadedConfig;
+        private OctopusApi api;
+        private static final String PROJECT_RELEASE_VALIDATION_MESSAGE = "Project must be set to validate release.";
         
         public DescriptorImpl() {
             load();
@@ -282,9 +284,10 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             // to a circular dependency issue on startup
             if (!loadedConfig) { 
                 OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl) 
-                       Jenkins.getInstance().getDescriptor(OctopusDeployPlugin.class );
+                       Jenkins.getInstance().getDescriptor(OctopusDeployPlugin.class);
                 apiKey = descriptor.getApiKey();
                 octopusHost = descriptor.getOctopusHost();
+                api = new OctopusApi(octopusHost, apiKey);
                 loadedConfig = true;
             }
         }
@@ -293,57 +296,46 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
          * Check that the project field is not empty and represents an actual project.
          * @param project The name of the project.
          * @return FormValidation message if not ok.
-         * @throws java.io.IOException
-         * @throws javax.servlet.ServletException
          */
-        public FormValidation doCheckProject(@QueryParameter String project) throws IOException, ServletException {
-            // TODO: Extract this to be shared between plugins
+        public FormValidation doCheckProject(@QueryParameter String project) {
             setGlobalConfiguration(); 
-            project = project.trim(); // TODO: Extract this to be shared between plugins
-            if (project.isEmpty()) {
-                return FormValidation.error("Please provide a project name.");
-            }
-            OctopusApi api = new OctopusApi(octopusHost, apiKey);
-            try {
-                com.octopusdeploy.api.Project p = api.getProjectByName(project, true);
-                if (p == null)
-                {
-                    return FormValidation.error("Project not found.");
-                }
-                if (!project.equals(p.getName()))
-                {
-                    return FormValidation.warning("Project name case does not match. Did you mean '%s'?", p.getName());
-                }
-            } catch (IllegalArgumentException ex) {
-                return FormValidation.error(ex.getMessage());
-            } catch (IOException ex) {
-                return FormValidation.error(ex.getMessage());
-            }
-            return FormValidation.ok();
+            project = project.trim(); 
+            OctopusValidator validator = new OctopusValidator(api);
+            return validator.validateProject(project);
         }
         
         /**
          * Check that the releaseVersion field is not empty.
-         * @param releaseVersion The name of the project.
+         * @param releaseVersion release version.
+         * @param project  The name of the project.
          * @return Ok if not empty, error otherwise.
-         * @throws java.io.IOException
-         * @throws javax.servlet.ServletException
          */
-        public FormValidation doCheckReleaseVersion(@QueryParameter String releaseVersion) throws IOException, ServletException {
-            if ("".equals(releaseVersion)) {
-                return FormValidation.error("Please provide a release version.");
+        public FormValidation doCheckReleaseVersion(@QueryParameter String releaseVersion, @QueryParameter String project) {
+            setGlobalConfiguration();
+            releaseVersion = releaseVersion.trim();
+            if (project == null || project.isEmpty()) {
+                return FormValidation.warning(PROJECT_RELEASE_VALIDATION_MESSAGE);
             }
-            return FormValidation.ok();
+            com.octopusdeploy.api.Project p;
+            try {
+                p = api.getProjectByName(project);
+                if (p == null) {
+                    return FormValidation.warning(PROJECT_RELEASE_VALIDATION_MESSAGE);
+                }
+            } catch (Exception ex) {
+                return FormValidation.warning(PROJECT_RELEASE_VALIDATION_MESSAGE);
+            }
+            
+            OctopusValidator validator = new OctopusValidator(api);
+            return validator.validateRelease(releaseVersion, p.getId(), OctopusValidator.ReleaseExistenceRequirement.MustNotExist);
         }
         
         /**
          * Check that the releaseNotesFile field is not empty.
-         * @param releaseNotesFile The name of the project.
+         * @param releaseNotesFile The path to the release notes file, relative to the WS.
          * @return Ok if not empty, error otherwise.
-         * @throws java.io.IOException
-         * @throws javax.servlet.ServletException
          */
-        public FormValidation doCheckReleaseNotesFile(@QueryParameter String releaseNotesFile) throws IOException, ServletException {
+        public FormValidation doCheckReleaseNotesFile(@QueryParameter String releaseNotesFile) {
             if ("".equals(releaseNotesFile)) {
                 return FormValidation.error("Please provide a project notes file.");
             }
@@ -354,34 +346,12 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
          * Check that the environment field is not empty, and represents a real environment.
          * @param environment The name of the environment.
          * @return FormValidation message if not ok.
-         * @throws java.io.IOException
-         * @throws javax.servlet.ServletException
          */
-        public FormValidation doCheckEnvironment(@QueryParameter String environment) throws IOException, ServletException {
+        public FormValidation doCheckEnvironment(@QueryParameter String environment) {
             setGlobalConfiguration();
-            // TODO: Extract this to be shared between plugins
-            // TODO: Deduplicate this with project check
-            String env = environment.trim(); 
-            if (env.isEmpty()) {
-                return FormValidation.error("Please provide an environment name.");
-            }
-            OctopusApi api = new OctopusApi(octopusHost, apiKey);
-            try {
-                com.octopusdeploy.api.Environment e = api.getEnvironmentByName(env, true);
-                if (e == null)
-                {
-                    return FormValidation.error("Environment not found.");
-                }
-                if (!environment.equals(e.getName()))
-                {
-                    return FormValidation.warning("Environment name case does not match. Did you mean '%s'?", e.getName());
-                }
-            } catch (IllegalArgumentException ex) {
-                return FormValidation.error(ex.getMessage());
-            } catch (IOException ex) {
-                return FormValidation.error(ex.getMessage());
-            }
-            return FormValidation.ok();
+            environment = environment.trim(); 
+            OctopusValidator validator = new OctopusValidator(api);
+            return validator.validateEnvironment(environment);
         }
     }
 }
