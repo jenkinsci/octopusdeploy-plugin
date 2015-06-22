@@ -1,14 +1,11 @@
 package hudson.plugins.octopusdeploy;
 import com.octopusdeploy.api.*;
-import hudson.Launcher;
-import hudson.Extension;
+import hudson.*;
 import hudson.model.*;
 import hudson.tasks.*;
 import hudson.util.*;
 import java.io.*;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import net.sf.json.*;
 import org.kohsuke.stapler.*;
@@ -70,8 +67,10 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         boolean success = true;
         Log log = new Log(listener);
         logStartHeader(log);
+        // todo: getting from descriptor is ugly. refactor?
         ((DescriptorImpl)getDescriptor()).setGlobalConfiguration();
         OctopusApi api = new OctopusApi(((DescriptorImpl)getDescriptor()).octopusHost, ((DescriptorImpl)getDescriptor()).apiKey);
+        // todo need to resolve environment variables in fields! use build.getBuildVariableResolver() ?
         
         com.octopusdeploy.api.Project p = null;
         try {

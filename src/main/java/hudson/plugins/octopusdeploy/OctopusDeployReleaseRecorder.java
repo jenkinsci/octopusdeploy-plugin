@@ -132,8 +132,10 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         boolean success = true;
         Log log = new Log(listener);
         logStartHeader(log);
+        // todo: getting from descriptor is ugly. refactor?
         ((DescriptorImpl)getDescriptor()).setGlobalConfiguration();
         OctopusApi api = new OctopusApi(((DescriptorImpl)getDescriptor()).octopusHost, ((DescriptorImpl)getDescriptor()).apiKey);
+        // todo need to resolve environment variables in fields! use build.getBuildVariableResolver() ?
         
         com.octopusdeploy.api.Project p = null;
         try {
