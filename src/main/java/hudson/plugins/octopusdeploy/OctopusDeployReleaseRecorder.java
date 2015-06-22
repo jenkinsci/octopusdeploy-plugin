@@ -1,7 +1,9 @@
 package hudson.plugins.octopusdeploy;
 import com.octopusdeploy.api.*;
 import hudson.*;
+import hudson.FilePath.FileCallable;
 import hudson.model.*;
+import hudson.remoting.VirtualChannel;
 import jenkins.model.*;
 import hudson.tasks.*;
 import hudson.scm.*;
@@ -9,8 +11,10 @@ import hudson.util.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
-import javax.servlet.ServletException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.sf.json.*;
+import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.*;
 import org.kohsuke.stapler.export.*;
 
@@ -51,6 +55,13 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         return releaseNotesSource;
     }
 
+    public boolean isReleaseNotesSourceFile() {
+        return "file".equals(releaseNotesSource);
+    }
+    public boolean isReleaseNotesSourceScm() {
+        return "scm".equals(releaseNotesSource);
+    }
+    
     /**
      * The file that the release notes are in.
      */
@@ -140,9 +151,14 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         // Check packageVersion
         String releaseNotesContent = null;
         if (releaseNotes) {
-            if (releaseNotesSource.equals("file")) {
-                releaseNotesContent = getReleaseNotesFromFile(build);
-            } else if (releaseNotesSource.equals("scm")) {
+            if (isReleaseNotesSourceFile()) {
+                try {
+                    releaseNotesContent = getReleaseNotesFromFile(build);
+                } catch (Exception ex) {
+                    log.fatal(String.format("Unable to get file contents from release ntoes file! - %s", ex.getMessage()));
+                    success = false;
+                }
+            } else if (isReleaseNotesSourceScm()) {
                 releaseNotesContent = getReleaseNotesFromScm(build);
             } else {
                 log.fatal(String.format("Bad configuration: if using release notes, should have source of file or scm. Found '%s'", releaseNotesSource));
@@ -208,10 +224,37 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         log.info("=======================");
     }
     
-    private String getReleaseNotesFromFile(AbstractBuild build) {
+    /**
+     * Return the release notes contents from a file.
+     * @param build our build
+     * @return string contents of file
+     * @throws IOException
+     * @throws InterruptedException 
+     */
+    private String getReleaseNotesFromFile(AbstractBuild build) throws IOException, InterruptedException {
         FilePath path = new FilePath(build.getWorkspace(), releaseNotesFile);
-        //Files.readAllLines(path.to)
-        return "need to read this";
+        return path.act(new ReadFileCallable());        
+    }
+    
+    /**
+     * This callable allows us to read files from other nodes - ie. Jenkins slaves.
+     */
+    private static final class ReadFileCallable implements FileCallable<String> {
+        public final static String ERROR_READING = "<Error Reading File>";
+        
+        @Override 
+        public String invoke(File f, VirtualChannel channel) {
+            try {
+                return String.join("\n", Files.readAllLines(f.toPath()));
+            } catch (IOException ex) {
+                return ERROR_READING;
+            }
+        }
+
+        @Override
+        public void checkRoles(RoleChecker rc) throws SecurityException {
+            
+        }
     }
     
     private String getReleaseNotesFromScm(AbstractBuild build) {
@@ -339,6 +382,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             if ("".equals(releaseNotesFile)) {
                 return FormValidation.error("Please provide a project notes file.");
             }
+            
             return FormValidation.ok();
         }
         

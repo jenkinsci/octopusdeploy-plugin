@@ -10,12 +10,12 @@
   <f:block>
     <table>
       <f:optionalBlock name="releaseNotes" inline="true" title="Include release notes?" checked="${instance.getReleaseNotes()}">
-        <f:radioBlock title="Release Notes from File" name="releaseNotesSource" inline="true" value="file" checked="true">
+        <f:radioBlock title="Release Notes from File" name="releaseNotesSource" inline="true" value="file" checked="${instance.isReleaseNotesSourceFile()}">
           <f:entry title="Path to File" field="releaseNotesFile">
             <f:textbox />
           </f:entry>
         </f:radioBlock>
-        <f:radioBlock title="Release Notes from SCM" name="releaseNotesSource"  inline="true" value="scm" >
+        <f:radioBlock title="Release Notes from SCM" name="releaseNotesSource" inline="true" value="scm" checked="${instance.isReleaseNotesSourceScm()}">
         </f:radioBlock>
       </f:optionalBlock>
     </table>
