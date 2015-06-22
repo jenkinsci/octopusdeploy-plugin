@@ -9,8 +9,6 @@ import hudson.util.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.servlet.ServletException;
 import net.sf.json.*;
 import org.kohsuke.stapler.*;
@@ -38,7 +36,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
 
 
     /**
-     * Is there release notes for this release?
+     * Are there release notes for this release?
      */
     private final boolean releaseNotes;
     public boolean getReleaseNotes() {
@@ -62,23 +60,32 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
     }
     
     /**
-     * Should this release be deployed immediately?
+     * If we are deploying, should we wait for it to complete?
      */
-    private final boolean deployImmediately;
-    public boolean getDeployImmediately() {
-        return deployImmediately;
+    private final boolean waitForDeployment;
+    public boolean getWaitForDeployment() {
+        return waitForDeployment;
     }
-
-    /**
-     * The environment as defined in Octopus to deploy to.
+    
+    /** 
+     * The environment to deploy to, if we are deploying.
      */
-    private final String env;
-    public String getEnv() {
-        return env;
+    private final String environment;
+    public String getEnvironment() {
+        return environment;
     }
     
     /**
-     * All packages as defined in Octopus
+     * Should this release be deployed right after it is created?
+     */
+    private final boolean deployThisRelease;
+    @Exported
+    public boolean getDeployThisRelease() {
+        return deployThisRelease;
+    }
+
+    /**
+     * All packages needed to create this new release.
      */
     private final List<PackageConfiguration> packageConfigs;
     @Exported
@@ -88,15 +95,20 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
 
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public OctopusDeployReleaseRecorder(String project, String releaseVersion, boolean releaseNotes, String releaseNotesSource, String releaseNotesFile, boolean deployImmediately, String env, List<PackageConfiguration> packageConfigs) {
+    public OctopusDeployReleaseRecorder(
+            String project, String releaseVersion, 
+            boolean releaseNotes, String releaseNotesSource, String releaseNotesFile, 
+            boolean deployThisRelease, String environment, boolean waitForDeployment,
+            List<PackageConfiguration> packageConfigs) {
         this.project = project;
         this.releaseVersion = releaseVersion;
         this.releaseNotes = releaseNotes;
         this.releaseNotesSource = releaseNotesSource;
         this.releaseNotesFile = releaseNotesFile;
-        this.deployImmediately = deployImmediately;
-        this.env = env;
+        this.deployThisRelease = deployThisRelease;
         this.packageConfigs = packageConfigs;
+        this.environment = environment;
+        this.waitForDeployment = waitForDeployment;
     }
     
     @Override
@@ -108,24 +120,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
         boolean success = true;
         Log log = new Log(listener);
-        log.info("Started Octopus Release");
-        log.info("=======================");
-        log.info("Project: " + project);
-        log.info("Release Version: " + releaseVersion);
-        log.info("Release Notes?: " + releaseNotes);
-        log.info("Release Notes Source: " + releaseNotesSource);
-        log.info("Release Notes File: " + releaseNotesFile);
-        log.info("Deploy this Release Immediately?: " + deployImmediately);
-        log.info("Environment: " + env);
-        if (packageConfigs == null || packageConfigs.isEmpty()) {
-            log.info("No package configurations");
-        } else {
-            log.info("Package Configurations:");
-            for (PackageConfiguration pc : packageConfigs) {
-                log.info("\t" + pc.getPackageName() + "\tv" + pc.getPackageVersion());
-            }
-        }
-        log.info("=======================");
+        logStartHeader(log);
         ((DescriptorImpl)getDescriptor()).setGlobalConfiguration();
         OctopusApi api = new OctopusApi(((DescriptorImpl)getDescriptor()).octopusHost, ((DescriptorImpl)getDescriptor()).apiKey);
         
@@ -155,22 +150,6 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             }
         }
         
-        com.octopusdeploy.api.Environment environment = null;
-        if (deployImmediately) {
-            try {
-                environment = api.getEnvironmentByName(env);
-            } catch (Exception ex) {
-                log.fatal(String.format("Retrieving environment name '%s' failed with message '%s'",
-                    environment, ex.getMessage()));
-                success = false;
-            }
-            if (environment == null) {
-                log.fatal("Environment was not found.");
-                success = false;
-            }
-        }
-        
-        
         if (!success) { // Early exit
             return success;
         }
@@ -191,16 +170,38 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             success = false;
         }
         
-        if (success && deployImmediately) {
-            try {
-                api.executeDeployment(releaseVersion, p.getId());
-            } catch (IOException ex) {
-                log.fatal("Failed to deploy: " + ex.getMessage());
-                success = false;
-            }
+        if (success && deployThisRelease) {
+            OctopusDeployDeploymentRecorder deployment = new OctopusDeployDeploymentRecorder(project, releaseVersion, environment, waitForDeployment);
+            deployment.perform(build, launcher, listener);
         }
             
         return success;
+    }       
+    
+    private void logStartHeader(Log log) {
+        log.info("Started Octopus Release");
+        log.info("=======================");
+        log.info("Project: " + project);
+        log.info("Release Version: " + releaseVersion);
+        log.info("Include Release Notes?: " + releaseNotes);
+        if (releaseNotes) {
+            log.info("\tRelease Notes Source: " + releaseNotesSource);
+            log.info("\tRelease Notes File: " + releaseNotesFile);
+        }
+        log.info("Deploy this Release?: " + deployThisRelease);
+        if (deployThisRelease) {
+            log.info("\tEnvironment: " + environment);
+            log.info("\tWait for Deployment: " + waitForDeployment);
+        }
+        if (packageConfigs == null || packageConfigs.isEmpty()) {
+            log.info("Package Configurations: none");
+        } else {
+            log.info("Package Configurations:");
+            for (PackageConfiguration pc : packageConfigs) {
+                log.info("\t" + pc.getPackageName() + "\tv" + pc.getPackageVersion());
+            }
+        }
+        log.info("=======================");
     }
     
     private String getReleaseNotesFromFile(AbstractBuild build) {
@@ -229,7 +230,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
                 for(Object item : changeSet.getItems())
                 {
                     ChangeLogSet.Entry entry = (ChangeLogSet.Entry)item;
-                    notes.append(entry.getMsg() + "\n");
+                    notes.append(entry.getMsg()).append("\n");
                 }
                 currentBuild = currentBuild.getNextBuild();
             }
@@ -285,9 +286,9 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
         
         /**
-         * Check that the project field is not empty.
+         * Check that the project field is not empty and represents an actual project.
          * @param project The name of the project.
-         * @return Ok if not empty, error otherwise.
+         * @return FormValidation message if not ok.
          * @throws java.io.IOException
          * @throws javax.servlet.ServletException
          */
@@ -325,8 +326,9 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
          * @throws javax.servlet.ServletException
          */
         public FormValidation doCheckReleaseVersion(@QueryParameter String releaseVersion) throws IOException, ServletException {
-            if ("".equals(releaseVersion))
+            if ("".equals(releaseVersion)) {
                 return FormValidation.error("Please provide a release version.");
+            }
             return FormValidation.ok();
         }
         
@@ -338,29 +340,30 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
          * @throws javax.servlet.ServletException
          */
         public FormValidation doCheckReleaseNotesFile(@QueryParameter String releaseNotesFile) throws IOException, ServletException {
-            if ("".equals(releaseNotesFile))
+            if ("".equals(releaseNotesFile)) {
                 return FormValidation.error("Please provide a project notes file.");
+            }
             return FormValidation.ok();
         }
         
         /**
-         * Check that the env field is not empty.
-         * @param env The name of the project.
-         * @return Ok if not empty, error otherwise.
+         * Check that the environment field is not empty, and represents a real environment.
+         * @param environment The name of the environment.
+         * @return FormValidation message if not ok.
          * @throws java.io.IOException
          * @throws javax.servlet.ServletException
          */
-        public FormValidation doCheckEnv(@QueryParameter String env) throws IOException, ServletException {
+        public FormValidation doCheckEnvironment(@QueryParameter String environment) throws IOException, ServletException {
             setGlobalConfiguration();
             // TODO: Extract this to be shared between plugins
             // TODO: Deduplicate this with project check
-            String environment = env.trim(); 
-            if (environment.isEmpty()) {
+            String env = environment.trim(); 
+            if (env.isEmpty()) {
                 return FormValidation.error("Please provide an environment name.");
             }
             OctopusApi api = new OctopusApi(octopusHost, apiKey);
             try {
-                com.octopusdeploy.api.Environment e = api.getEnvironmentByName(environment, true);
+                com.octopusdeploy.api.Environment e = api.getEnvironmentByName(env, true);
                 if (e == null)
                 {
                     return FormValidation.error("Environment not found.");
@@ -378,4 +381,3 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
     }
 }
-

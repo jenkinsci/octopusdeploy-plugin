@@ -274,6 +274,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
          * @return Ok if not empty, error otherwise.
          */
         public FormValidation doCheckProject(@QueryParameter String project) {
+            // TODO: Extract this to be shared between plugins
             setGlobalConfiguration(); 
             project = project.trim(); // TODO: Extract this to be shared between plugins
             if (project.isEmpty()) {

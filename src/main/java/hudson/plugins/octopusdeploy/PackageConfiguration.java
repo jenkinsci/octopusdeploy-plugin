@@ -3,7 +3,6 @@ package hudson.plugins.octopusdeploy;
 import hudson.Extension;
 import hudson.model.*;
 import java.io.Serializable;
-import net.sf.json.*;
 import org.kohsuke.stapler.*;
 import org.kohsuke.stapler.export.*;
 

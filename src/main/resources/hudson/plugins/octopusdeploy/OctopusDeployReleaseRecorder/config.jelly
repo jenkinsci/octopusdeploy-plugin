@@ -9,14 +9,13 @@
 
   <f:block>
     <table>
-      <f:optionalBlock name="releaseNotes" title="Do you want release notes?">
-        From where?
-        <f:radioBlock title="Release Notes from File" name="releaseNotesSource" value="file" checked="true">
+      <f:optionalBlock name="releaseNotes" inline="true" title="Include release notes?" checked="${instance.getReleaseNotes()}">
+        <f:radioBlock title="Release Notes from File" name="releaseNotesSource" inline="true" value="file" checked="true">
           <f:entry title="Path to File" field="releaseNotesFile">
             <f:textbox />
           </f:entry>
         </f:radioBlock>
-        <f:radioBlock title="Release Notes from SCM" name="releaseNotesSource" value="scm">
+        <f:radioBlock title="Release Notes from SCM" name="releaseNotesSource"  inline="true" value="scm" >
         </f:radioBlock>
       </f:optionalBlock>
     </table>
@@ -24,9 +23,12 @@
     
   <f:block>
     <table>
-      <f:optionalBlock name="deployImmediately" title="Deploy this release immediately">
-        <f:entry title="Environment" field="env">
+      <f:optionalBlock name="deployThisRelease" inline="true" title="Deploy this release after it is created?" checked="${instance.getDeployThisRelease()}">
+        <f:entry title="Environment" field="environment">
           <f:textbox />
+        </f:entry>
+        <f:entry title="Wait for Deployment" field="waitForDeployment">
+          <f:checkbox value="false"/>
         </f:entry>
       </f:optionalBlock>
     </table>
