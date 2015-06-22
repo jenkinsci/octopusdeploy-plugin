@@ -178,6 +178,10 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         return success;
     }       
     
+    /**
+     * Write the startup header for the logs to show what our inputs are.
+     * @param log The logger
+     */
     private void logStartHeader(Log log) {
         log.info("Started Octopus Release");
         log.info("=======================");

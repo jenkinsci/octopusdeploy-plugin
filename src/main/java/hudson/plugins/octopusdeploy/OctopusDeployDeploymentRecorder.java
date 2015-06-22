@@ -67,12 +67,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         // This method deserves a refactor and cleanup.
         boolean success = true;
         Log log = new Log(listener);
-        log.info("Started Octopus Deploy");
-        log.info("======================");
-        log.info("Project: " + project);
-        log.info("Version: " + releaseVersion);
-        log.info("Environment: " + environment);
-        log.info("======================");
+        logStartHeader(log);
         ((DescriptorImpl)getDescriptor()).setGlobalConfiguration();
         OctopusApi api = new OctopusApi(((DescriptorImpl)getDescriptor()).octopusHost, ((DescriptorImpl)getDescriptor()).apiKey);
         
@@ -151,6 +146,19 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         }
         
         return success;
+    }
+    
+    /**
+     * Write the startup header for the logs to show what our inputs are.
+     * @param log The logger
+     */
+    private void logStartHeader(Log log) {
+        log.info("Started Octopus Deploy");
+        log.info("======================");
+        log.info("Project: " + project);
+        log.info("Version: " + releaseVersion);
+        log.info("Environment: " + environment);
+        log.info("======================");
     }
     
     /**
