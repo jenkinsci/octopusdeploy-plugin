@@ -379,10 +379,10 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
          * @return Ok if not empty, error otherwise.
          */
         public FormValidation doCheckReleaseNotesFile(@QueryParameter String releaseNotesFile) {
-            if ("".equals(releaseNotesFile)) {
+            if (releaseNotesFile.isEmpty()) {
                 return FormValidation.error("Please provide a project notes file.");
             }
-            
+
             return FormValidation.ok();
         }
         
