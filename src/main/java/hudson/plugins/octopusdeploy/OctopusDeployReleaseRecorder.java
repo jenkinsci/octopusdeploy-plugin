@@ -11,6 +11,8 @@ import hudson.util.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.sf.json.*;
 import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.*;
@@ -134,13 +136,22 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         ((DescriptorImpl)getDescriptor()).setGlobalConfiguration();
         OctopusApi api = new OctopusApi(((DescriptorImpl)getDescriptor()).octopusHost, ((DescriptorImpl)getDescriptor()).apiKey);
         
-        EnvironmentVariableValueInjector envInjector = new EnvironmentVariableValueInjector();
         VariableResolver resolver = build.getBuildVariableResolver();
+        EnvVars envVars;
+        try {
+            envVars = build.getEnvironment(listener);
+        } catch (Exception ex) {
+            log.fatal(String.format("Failed to retrieve environment variables for this build - '%s'",
+                    project, ex.getMessage()));
+            return false;
+        }
+        EnvironmentVariableValueInjector envInjector = new EnvironmentVariableValueInjector(resolver, envVars);
+        
         // NOTE: hiding the member variables of the same name with their env-injected equivalents
-        String project = envInjector.injectEnvironmentVariableValues(this.project, resolver);
-        String releaseVersion = envInjector.injectEnvironmentVariableValues(this.releaseVersion, resolver);
-        String releaseNotesFile = envInjector.injectEnvironmentVariableValues(this.releaseNotesFile, resolver);
-        String environment = envInjector.injectEnvironmentVariableValues(this.environment, resolver);
+        String project = envInjector.injectEnvironmentVariableValues(this.project);
+        String releaseVersion = envInjector.injectEnvironmentVariableValues(this.releaseVersion);
+        String releaseNotesFile = envInjector.injectEnvironmentVariableValues(this.releaseNotesFile);
+        String environment = envInjector.injectEnvironmentVariableValues(this.environment);
         
         com.octopusdeploy.api.Project p = null;
         try {
@@ -177,14 +188,13 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             return success;
         }
         
-        // Check packageOverrides
         Set<SelectedPackage> selectedPackages = null;
         if (packageConfigs != null && !packageConfigs.isEmpty()) {
             selectedPackages = new HashSet<SelectedPackage>();
             for (PackageConfiguration pc : packageConfigs) {
                 selectedPackages.add(new SelectedPackage(
-                        envInjector.injectEnvironmentVariableValues(pc.getPackageName(), resolver), 
-                        envInjector.injectEnvironmentVariableValues(pc.getPackageVersion(), resolver)));
+                        envInjector.injectEnvironmentVariableValues(pc.getPackageName()), 
+                        envInjector.injectEnvironmentVariableValues(pc.getPackageVersion())));
             }
         }
         
@@ -266,6 +276,11 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
     }
     
+    /**
+     * Attempt to load release notes info from SCM.
+     * @param build
+     * @return 
+     */
     private String getReleaseNotesFromScm(AbstractBuild build) {
         StringBuilder notes = new StringBuilder();
         AbstractProject project = build.getProject();

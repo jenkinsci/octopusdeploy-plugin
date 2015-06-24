@@ -71,12 +71,19 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         ((DescriptorImpl)getDescriptor()).setGlobalConfiguration();
         OctopusApi api = new OctopusApi(((DescriptorImpl)getDescriptor()).octopusHost, ((DescriptorImpl)getDescriptor()).apiKey);
         
-        EnvironmentVariableValueInjector envInjector = new EnvironmentVariableValueInjector();
         VariableResolver resolver = build.getBuildVariableResolver();
+        EnvVars envVars;
+        try {
+            envVars = build.getEnvironment(listener);
+        } catch (Exception ex) {
+            log.fatal(String.format("Failed to retrieve environment variables for this build - '%s'", ex.getMessage()));
+            return false;
+        }
+        EnvironmentVariableValueInjector envInjector = new EnvironmentVariableValueInjector(resolver, envVars);
         // NOTE: hiding the member variables of the same name with their env-injected equivalents
-        String project = envInjector.injectEnvironmentVariableValues(this.project, resolver);
-        String releaseVersion = envInjector.injectEnvironmentVariableValues(this.releaseVersion, resolver);
-        String environment = envInjector.injectEnvironmentVariableValues(this.environment, resolver);
+        String project = envInjector.injectEnvironmentVariableValues(this.project);
+        String releaseVersion = envInjector.injectEnvironmentVariableValues(this.releaseVersion);
+        String environment = envInjector.injectEnvironmentVariableValues(this.environment);
         
         com.octopusdeploy.api.Project p = null;
         try {
