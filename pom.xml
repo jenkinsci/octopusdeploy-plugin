@@ -7,9 +7,9 @@
   </parent>
 
   <name>OctopusDeploy Plugin</name>
-  <groupId>com.vistaprint</groupId>
+  <groupId>hudson.plugins.octopusdeploy</groupId>
   <artifactId>OctopusDeployPlugin</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <packaging>hpi</packaging>
   <url>https://vistawiki.vistaprint.net/wiki/OctopusDeploy_Jenkins_Plugin</url>
   

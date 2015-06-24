@@ -11,9 +11,8 @@ import hudson.util.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import net.sf.json.*;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.*;
 import org.kohsuke.stapler.export.*;
@@ -264,7 +263,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         @Override 
         public String invoke(File f, VirtualChannel channel) {
             try {
-                return String.join("\n", Files.readAllLines(f.toPath()));
+                return StringUtils.join(Files.readAllLines(f.toPath()), "\n");
             } catch (IOException ex) {
                 return ERROR_READING;
             }

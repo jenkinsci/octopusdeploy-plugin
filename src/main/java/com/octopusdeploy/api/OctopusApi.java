@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
 import net.sf.json.*;
+import org.apache.commons.lang.StringUtils;
 
 public class OctopusApi {
     private final static String UTF8 = "UTF-8";
@@ -57,7 +58,7 @@ public class OctopusApi {
             for (SelectedPackage selectedPackage : selectedPackages) {
                 selectedPackageStrings.add(String.format("{StepName:\"%s\",Version:\"%s\"}", selectedPackage.getStepName(), selectedPackage.getVersion()));
             }
-            jsonBuilder.append(String.join(",", selectedPackageStrings));
+            jsonBuilder.append(StringUtils.join(selectedPackageStrings, ","));
             jsonBuilder.append("]");
         }
         jsonBuilder.append("}");
