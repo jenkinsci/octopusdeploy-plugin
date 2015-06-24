@@ -70,7 +70,13 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         // todo: getting from descriptor is ugly. refactor?
         ((DescriptorImpl)getDescriptor()).setGlobalConfiguration();
         OctopusApi api = new OctopusApi(((DescriptorImpl)getDescriptor()).octopusHost, ((DescriptorImpl)getDescriptor()).apiKey);
-        // todo need to resolve environment variables in fields! use build.getBuildVariableResolver() ?
+        
+        EnvironmentVariableValueInjector envInjector = new EnvironmentVariableValueInjector();
+        VariableResolver resolver = build.getBuildVariableResolver();
+        // NOTE: hiding the member variables of the same name with their env-injected equivalents
+        String project = envInjector.injectEnvironmentVariableValues(this.project, resolver);
+        String releaseVersion = envInjector.injectEnvironmentVariableValues(this.releaseVersion, resolver);
+        String environment = envInjector.injectEnvironmentVariableValues(this.environment, resolver);
         
         com.octopusdeploy.api.Project p = null;
         try {

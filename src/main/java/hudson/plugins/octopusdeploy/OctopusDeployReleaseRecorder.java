@@ -11,15 +11,13 @@ import hudson.util.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import net.sf.json.*;
 import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.*;
 import org.kohsuke.stapler.export.*;
 
 /**
- * Creates releases
+ * Creates a release and optionally deploys it.
  */
 public class OctopusDeployReleaseRecorder extends Recorder implements Serializable {
     /**
@@ -111,14 +109,14 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             boolean releaseNotes, String releaseNotesSource, String releaseNotesFile, 
             boolean deployThisRelease, String environment, boolean waitForDeployment,
             List<PackageConfiguration> packageConfigs) {
-        this.project = project;
-        this.releaseVersion = releaseVersion;
+        this.project = project.trim();
+        this.releaseVersion = releaseVersion.trim();
         this.releaseNotes = releaseNotes;
         this.releaseNotesSource = releaseNotesSource;
-        this.releaseNotesFile = releaseNotesFile;
+        this.releaseNotesFile = releaseNotesFile.trim();
         this.deployThisRelease = deployThisRelease;
         this.packageConfigs = packageConfigs;
-        this.environment = environment;
+        this.environment = environment.trim();
         this.waitForDeployment = waitForDeployment;
     }
     
@@ -135,7 +133,14 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         // todo: getting from descriptor is ugly. refactor?
         ((DescriptorImpl)getDescriptor()).setGlobalConfiguration();
         OctopusApi api = new OctopusApi(((DescriptorImpl)getDescriptor()).octopusHost, ((DescriptorImpl)getDescriptor()).apiKey);
-        // todo need to resolve environment variables in fields! use build.getBuildVariableResolver() ?
+        
+        EnvironmentVariableValueInjector envInjector = new EnvironmentVariableValueInjector();
+        VariableResolver resolver = build.getBuildVariableResolver();
+        // NOTE: hiding the member variables of the same name with their env-injected equivalents
+        String project = envInjector.injectEnvironmentVariableValues(this.project, resolver);
+        String releaseVersion = envInjector.injectEnvironmentVariableValues(this.releaseVersion, resolver);
+        String releaseNotesFile = envInjector.injectEnvironmentVariableValues(this.releaseNotesFile, resolver);
+        String environment = envInjector.injectEnvironmentVariableValues(this.environment, resolver);
         
         com.octopusdeploy.api.Project p = null;
         try {
@@ -177,7 +182,9 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         if (packageConfigs != null && !packageConfigs.isEmpty()) {
             selectedPackages = new HashSet<SelectedPackage>();
             for (PackageConfiguration pc : packageConfigs) {
-                selectedPackages.add(new SelectedPackage(pc.getPackageName(), pc.getPackageVersion()));
+                selectedPackages.add(new SelectedPackage(
+                        envInjector.injectEnvironmentVariableValues(pc.getPackageName(), resolver), 
+                        envInjector.injectEnvironmentVariableValues(pc.getPackageVersion(), resolver)));
             }
         }
         

@@ -32,8 +32,8 @@ public class PackageConfiguration extends AbstractDescribableImpl<PackageConfigu
     
     @DataBoundConstructor
     public PackageConfiguration(String packageName, String packageVersion) {
-        this.packageName = packageName;
-        this.packageVersion = packageVersion;
+        this.packageName = packageName.trim();
+        this.packageVersion = packageVersion.trim();
     }
     
     @Extension
