@@ -3,6 +3,7 @@ package com.octopusdeploy.api;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * An Octopus Deploy web API client that automatically puts the API key in a header
@@ -93,7 +94,7 @@ public class AuthenticatedWebClient {
                 parameterKeyValuePairs.add(kvp);
             }
         }
-        return String.join("&", parameterKeyValuePairs);
+        return StringUtils.join(parameterKeyValuePairs, "&");
     }
     
     /**
@@ -112,10 +113,10 @@ public class AuthenticatedWebClient {
             throw new IllegalArgumentException(String.format("Unsupported method '%s'.", method));
         }
 
-        String joinedUrl = String.join("/", hostUrl, endpoint);
+        String joinedUrl = StringUtils.join(new String[] {hostUrl, endpoint}, "/");
         if (GET.equals(method) && queryParameters != null && !queryParameters.isEmpty())
         {
-            joinedUrl = String.join("?", joinedUrl, queryParameters);
+            joinedUrl = StringUtils.join(new String[]{joinedUrl, queryParameters}, "?");
         }
         URL url = new URL(joinedUrl);
         URLConnection connection = url.openConnection();
