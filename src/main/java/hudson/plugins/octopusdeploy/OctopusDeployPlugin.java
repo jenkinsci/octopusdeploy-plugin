@@ -89,6 +89,14 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
             octopusHost = json.getString("octopusHost");
             
             save();
+            // update the other plugin components when this changes!
+            OctopusDeployReleaseRecorder.DescriptorImpl releaseDescriptor = (OctopusDeployReleaseRecorder.DescriptorImpl) 
+                    Jenkins.getInstance().getDescriptor(OctopusDeployReleaseRecorder.class);
+            OctopusDeployDeploymentRecorder.DescriptorImpl deployDescriptor = (OctopusDeployDeploymentRecorder.DescriptorImpl) 
+                    Jenkins.getInstance().getDescriptor(OctopusDeployDeploymentRecorder.class);
+            releaseDescriptor.updateGlobalConfiguration();
+            deployDescriptor.updateGlobalConfiguration();
+            
             return super.configure(req, formData);
         }
     }
