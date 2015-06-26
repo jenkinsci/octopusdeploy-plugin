@@ -60,12 +60,17 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
     }
-    
+
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
         // This method deserves a refactor and cleanup.
         boolean success = true;
         Log log = new Log(listener);
+        if (Result.FAILURE.equals(build.getResult())) {
+            log.info("Not deploying due to job being in FAILED state.");
+            return success;
+        }
+        
         logStartHeader(log);
         // todo: getting from descriptor is ugly. refactor?
         ((DescriptorImpl)getDescriptor()).setGlobalConfiguration();
