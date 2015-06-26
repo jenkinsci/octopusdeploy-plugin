@@ -12,6 +12,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.List;
 import net.sf.json.*;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.remoting.RoleChecker;
@@ -175,7 +176,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         if (releaseNotes) {
             if (isReleaseNotesSourceFile()) {
                 try {
-                    releaseNotesContent = getReleaseNotesFromFile(build);
+                    releaseNotesContent = getReleaseNotesFromFile(build, releaseNotesFile);
                 } catch (Exception ex) {
                     log.fatal(String.format("Unable to get file contents from release ntoes file! - %s", ex.getMessage()));
                     success = false;
@@ -254,8 +255,8 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
      * @throws IOException
      * @throws InterruptedException 
      */
-    private String getReleaseNotesFromFile(AbstractBuild build) throws IOException, InterruptedException {
-        FilePath path = new FilePath(build.getWorkspace(), releaseNotesFile);
+    private String getReleaseNotesFromFile(AbstractBuild build, String releaseNotesFilename) throws IOException, InterruptedException {
+        FilePath path = new FilePath(build.getWorkspace(), releaseNotesFilename);
         return path.act(new ReadFileCallable());        
     }
     
@@ -268,7 +269,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         @Override 
         public String invoke(File f, VirtualChannel channel) {
             try {
-                return StringUtils.join(Files.readAllLines(f.toPath(), StandardCharsets.UTF_16), "\n");
+                return StringUtils.join(Files.readAllLines(f.toPath(), StandardCharsets.US_ASCII), "\n");
             } catch (IOException ex) {
                 return ERROR_READING;
             }
