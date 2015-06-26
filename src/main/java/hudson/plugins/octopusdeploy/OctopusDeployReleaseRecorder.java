@@ -349,13 +349,17 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             // NOTE  - This method is not being called from the constructor due 
             // to a circular dependency issue on startup
             if (!loadedConfig) { 
-                OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl) 
-                       Jenkins.getInstance().getDescriptor(OctopusDeployPlugin.class);
-                apiKey = descriptor.getApiKey();
-                octopusHost = descriptor.getOctopusHost();
-                api = new OctopusApi(octopusHost, apiKey);
-                loadedConfig = true;
+                updateGlobalConfiguration();
             }
+        }
+        
+        public void updateGlobalConfiguration() {
+            OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl) 
+                    Jenkins.getInstance().getDescriptor(OctopusDeployPlugin.class);
+             apiKey = descriptor.getApiKey();
+             octopusHost = descriptor.getOctopusHost();
+             api = new OctopusApi(octopusHost, apiKey);
+             loadedConfig = true;
         }
         
         /**
