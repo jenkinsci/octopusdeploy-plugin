@@ -130,6 +130,10 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
         boolean success = true;
         Log log = new Log(listener);
+        if (Result.FAILURE.equals(build.getResult())) {
+            log.info("Not creating a release due to job being in FAILED state.");
+            return success;
+        }
         logStartHeader(log);
         // todo: getting from descriptor is ugly. refactor?
         ((DescriptorImpl)getDescriptor()).setGlobalConfiguration();
