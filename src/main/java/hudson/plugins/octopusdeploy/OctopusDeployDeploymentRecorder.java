@@ -73,8 +73,8 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         
         logStartHeader(log);
         // todo: getting from descriptor is ugly. refactor?
-        ((DescriptorImpl)getDescriptor()).setGlobalConfiguration();
-        OctopusApi api = new OctopusApi(((DescriptorImpl)getDescriptor()).octopusHost, ((DescriptorImpl)getDescriptor()).apiKey);
+        getDescriptorImpl().setGlobalConfiguration();
+        OctopusApi api = new OctopusApi(getDescriptorImpl().octopusHost, getDescriptorImpl().apiKey);
         
         VariableResolver resolver = build.getBuildVariableResolver();
         EnvVars envVars;
@@ -145,20 +145,29 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         }
         try {
             String results = api.executeDeployment(releaseToDeploy.getId(), env.getId());
-            if (waitForDeployment && isTaskJson(results)) {
-                log.info("Waiting for deployment to complete.");
-                String resultState = waitForDeploymentCompletion(JSONSerializer.toJSON(results), api, log);
-                if (resultState == null) {
-                    log.info("Marking build failed due to failure in waiting for deployment to complete.");
-                    success = false;
+            if (isTaskJson(results)) {
+                JSON resultJson = JSONSerializer.toJSON(results);
+                String urlSuffix = ((JSONObject)resultJson).getJSONObject("Links").getString("Web");
+                String url = getDescriptorImpl().octopusHost;
+                if (url.endsWith("/")) {
+                    url = url.substring(0, url.length() - 2);
                 }
-                    
-                if ("Failed".equals(resultState)) {
-                    log.info("Marking build failed due to deployment task status.");
-                    success = false;
+                log.info("Deployment executed: \n\t" + url + urlSuffix);
+                if (waitForDeployment) {
+
+                    log.info("Waiting for deployment to complete.");
+                    String resultState = waitForDeploymentCompletion(resultJson, api, log);
+                    if (resultState == null) {
+                        log.info("Marking build failed due to failure in waiting for deployment to complete.");
+                        success = false;
+                    }
+
+                    if ("Failed".equals(resultState)) {
+                        log.info("Marking build failed due to deployment task status.");
+                        success = false;
+                    }
                 }
             }
-            log.info(results);
         } catch(IOException ex) {
             log.fatal("Failed to deploy: " + ex.getMessage());
             success = false;
@@ -166,6 +175,11 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         
         return success;
     }
+    
+    private DescriptorImpl getDescriptorImpl() {
+        return ((DescriptorImpl)getDescriptor());
+    }
+            
     
     /**
      * Write the startup header for the logs to show what our inputs are.

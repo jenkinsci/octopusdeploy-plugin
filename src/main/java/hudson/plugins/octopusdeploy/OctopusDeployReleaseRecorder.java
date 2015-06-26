@@ -136,8 +136,8 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
         logStartHeader(log);
         // todo: getting from descriptor is ugly. refactor?
-        ((DescriptorImpl)getDescriptor()).setGlobalConfiguration();
-        OctopusApi api = new OctopusApi(((DescriptorImpl)getDescriptor()).octopusHost, ((DescriptorImpl)getDescriptor()).apiKey);
+        getDescriptorImpl().setGlobalConfiguration();
+        OctopusApi api = new OctopusApi(getDescriptorImpl().octopusHost, getDescriptorImpl().apiKey);
         
         VariableResolver resolver = build.getBuildVariableResolver();
         EnvVars envVars;
@@ -202,8 +202,16 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
         
         try {
-            log.info(api.createRelease(p.getId(), releaseVersion, releaseNotesContent, selectedPackages));
-        } catch (IOException ex) {
+            String results = api.createRelease(p.getId(), releaseVersion, releaseNotesContent, selectedPackages);
+            JSONObject json = (JSONObject)JSONSerializer.toJSON(results);
+            String urlSuffix = json.getJSONObject("Links").getString("Web");
+            String url = getDescriptorImpl().octopusHost;
+            if (url.endsWith("/")) {
+                url = url.substring(0, url.length() - 2);
+            }
+            log.info("Release created: \n\t" + url + urlSuffix);
+
+        } catch (Exception ex) {
             log.fatal("Failed to create release: " + ex.getMessage());
             success = false;
         }
@@ -215,6 +223,10 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             
         return success;
     }       
+    
+    private DescriptorImpl getDescriptorImpl() {
+        return ((DescriptorImpl)getDescriptor());
+    }
     
     /**
      * Write the startup header for the logs to show what our inputs are.
