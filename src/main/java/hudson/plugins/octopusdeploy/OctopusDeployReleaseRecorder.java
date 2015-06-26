@@ -9,6 +9,7 @@ import hudson.tasks.*;
 import hudson.scm.*;
 import hudson.util.*;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import net.sf.json.*;
@@ -267,7 +268,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         @Override 
         public String invoke(File f, VirtualChannel channel) {
             try {
-                return StringUtils.join(Files.readAllLines(f.toPath()), "\n");
+                return StringUtils.join(Files.readAllLines(f.toPath(), StandardCharsets.UTF_16), "\n");
             } catch (IOException ex) {
                 return ERROR_READING;
             }
