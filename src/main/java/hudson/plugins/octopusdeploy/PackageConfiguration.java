@@ -13,7 +13,7 @@ import org.kohsuke.stapler.export.*;
 @ExportedBean
 public class PackageConfiguration extends AbstractDescribableImpl<PackageConfiguration> implements Serializable {
     /**
-     * The name of the package..
+     * The name of the package.
      */
     private final String packageName;
     @Exported

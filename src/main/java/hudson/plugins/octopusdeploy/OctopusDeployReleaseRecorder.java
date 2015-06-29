@@ -1,18 +1,18 @@
 package hudson.plugins.octopusdeploy;
+
 import com.octopusdeploy.api.*;
-import hudson.*;
-import hudson.FilePath.FileCallable;
-import hudson.model.*;
-import hudson.remoting.VirtualChannel;
-import jenkins.model.*;
-import hudson.tasks.*;
-import hudson.scm.*;
-import hudson.util.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.List;
+import jenkins.model.*;
+import hudson.*;
+import hudson.FilePath.FileCallable;
+import hudson.model.*;
+import hudson.remoting.VirtualChannel;
+import hudson.scm.*;
+import hudson.tasks.*;
+import hudson.util.*;
 import net.sf.json.*;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.remoting.RoleChecker;
@@ -148,8 +148,8 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
         logStartHeader(log);
         // todo: getting from descriptor is ugly. refactor?
-        ((DescriptorImpl)getDescriptor()).setGlobalConfiguration();
-        OctopusApi api = new OctopusApi(((DescriptorImpl)getDescriptor()).octopusHost, ((DescriptorImpl)getDescriptor()).apiKey);
+        getDescriptorImpl().setGlobalConfiguration();
+        OctopusApi api = new OctopusApi(getDescriptorImpl().octopusHost, getDescriptorImpl().apiKey);
         
         VariableResolver resolver = build.getBuildVariableResolver();
         EnvVars envVars;
@@ -187,58 +187,70 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         // Prepend Release Notes with Jenkins URL?
         // Do this regardless if Release Notes are specified
         if (releaseNotesJenkinsLinkback) {
-          final String buildUrlVar = "${BUILD_URL}";
+            final String buildUrlVar = "${BUILD_URL}";
           
-          // Use env vars
-          String resolvedBuildUrlVar = envInjector.injectEnvironmentVariableValues(buildUrlVar);          
-          releaseNotesContent = String.format("Created by: <a href=\\\"%s\\\">%s</a><br />", 
-                  resolvedBuildUrlVar,
-                  resolvedBuildUrlVar);
+            // Use env vars
+            String resolvedBuildUrlVar = envInjector.injectEnvironmentVariableValues(buildUrlVar);          
+            releaseNotesContent = String.format("Created by: <a href=\\\"%s\\\">%s</a><br />", 
+                resolvedBuildUrlVar,
+                resolvedBuildUrlVar);
         }
    
         if (releaseNotes) {
-          if (isReleaseNotesSourceFile()) {
-            try {
-              releaseNotesContent += getReleaseNotesFromFile(build, releaseNotesFile);
-            } catch (Exception ex) {
-              log.fatal(String.format("Unable to get file contents from release ntoes file! - %s", ex.getMessage()));
-              success = false;
+            if (isReleaseNotesSourceFile()) {
+                try {
+                    releaseNotesContent += getReleaseNotesFromFile(build, releaseNotesFile);
+                } catch (Exception ex) {
+                    log.fatal(String.format("Unable to get file contents from release ntoes file! - %s", ex.getMessage()));
+                    success = false;
+                }
+            } else if (isReleaseNotesSourceScm()) {
+                releaseNotesContent += getReleaseNotesFromScm(build);
+            } else {
+                log.fatal(String.format("Bad configuration: if using release notes, should have source of file or scm. Found '%s'", releaseNotesSource));
+                success = false;
             }
-          } else if (isReleaseNotesSourceScm()) {
-            releaseNotesContent += getReleaseNotesFromScm(build);
-          } else {
-            log.fatal(String.format("Bad configuration: if using release notes, should have source of file or scm. Found '%s'", releaseNotesSource));
-            success = false;
-          }
         }
       
         if (!success) { // Early exit
-          return success;
-      }
-
-      Set<SelectedPackage> selectedPackages = null;
-      if (packageConfigs != null && !packageConfigs.isEmpty()) {
-        selectedPackages = new HashSet<SelectedPackage>();
-        for (PackageConfiguration pc : packageConfigs) {
-          selectedPackages.add(new SelectedPackage(
-                  envInjector.injectEnvironmentVariableValues(pc.getPackageName()),
-                  envInjector.injectEnvironmentVariableValues(pc.getPackageVersion())));
+            return success;
         }
-      }
 
-      try {
-        log.info(api.createRelease(p.getId(), releaseVersion, releaseNotesContent, selectedPackages));
-      } catch (IOException ex) {
-        log.fatal("Failed to create release: " + ex.getMessage());
-        success = false;
-      }
+        Set<SelectedPackage> selectedPackages = null;
+        if (packageConfigs != null && !packageConfigs.isEmpty()) {
+            selectedPackages = new HashSet<SelectedPackage>();
+            for (PackageConfiguration pc : packageConfigs) {
+                selectedPackages.add(new SelectedPackage(
+                    envInjector.injectEnvironmentVariableValues(pc.getPackageName()),
+                    envInjector.injectEnvironmentVariableValues(pc.getPackageVersion())));
+            }
+        }
 
-      if (success && deployThisRelease) {
-        OctopusDeployDeploymentRecorder deployment = new OctopusDeployDeploymentRecorder(project, releaseVersion, environment, waitForDeployment);
-        deployment.perform(build, launcher, listener);
-      }
+        try {
+            String results = api.createRelease(p.getId(), releaseVersion, releaseNotesContent, selectedPackages);
+            JSONObject json = (JSONObject)JSONSerializer.toJSON(results);
+            String urlSuffix = json.getJSONObject("Links").getString("Web");
+            String url = getDescriptorImpl().octopusHost;
+            if (url.endsWith("/")) {
+                url = url.substring(0, url.length() - 2);
+            }
+            log.info("Release created: \n\t" + url + urlSuffix);
+            build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Release, url + urlSuffix));
+        } catch (Exception ex) {
+            log.fatal("Failed to create release: " + ex.getMessage());
+            success = false;
+        }
 
-      return success;
+        if (success && deployThisRelease) {
+          OctopusDeployDeploymentRecorder deployment = new OctopusDeployDeploymentRecorder(project, releaseVersion, environment, waitForDeployment);
+          deployment.perform(build, launcher, listener);
+        }
+
+        return success;
+    }
+    
+    private DescriptorImpl getDescriptorImpl() {
+        return ((DescriptorImpl)getDescriptor());
     }
     
     /**
