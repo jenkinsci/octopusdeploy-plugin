@@ -11,7 +11,7 @@
   <artifactId>octopusdeploy</artifactId>
   <version>1.1.0</version>
   <packaging>hpi</packaging>
-  <url>https://vistawiki.vistaprint.net/wiki/OctopusDeploy_Jenkins_Plugin</url>
+  <url>http://github.com/vistaprint/octopusdeploy-jenkins</url>
   
   <profiles>
     <profile>
@@ -29,13 +29,6 @@
   <dependencies>
   </dependencies>
 
-   <distributionManagement>
-    <repository>
-      <id>plugins-snapshot-local</id>
-      <name>plugins-snapshot-local Artifactory</name>
-      <url>http://vbuartifactory.vistaprint.net/plugins-snapshot-local</url>
-    </repository>
-  </distributionManagement>
   <repositories>
     <repository>
       <id>repo.jenkins-ci.org</id>
