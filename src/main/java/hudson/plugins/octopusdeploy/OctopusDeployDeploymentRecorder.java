@@ -1,12 +1,13 @@
 package hudson.plugins.octopusdeploy;
+
 import com.octopusdeploy.api.*;
+import java.io.*;
+import java.util.Set;
+import jenkins.model.Jenkins;
 import hudson.*;
 import hudson.model.*;
 import hudson.tasks.*;
 import hudson.util.*;
-import java.io.*;
-import java.util.Set;
-import jenkins.model.Jenkins;
 import net.sf.json.*;
 import org.kohsuke.stapler.*;
 
@@ -153,6 +154,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
                     url = url.substring(0, url.length() - 2);
                 }
                 log.info("Deployment executed: \n\t" + url + urlSuffix);
+                build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Deployment, url + urlSuffix));
                 if (waitForDeployment) {
 
                     log.info("Waiting for deployment to complete.");

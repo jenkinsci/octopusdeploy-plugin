@@ -1,16 +1,17 @@
 package hudson.plugins.octopusdeploy;
+
 import com.octopusdeploy.api.*;
+import java.io.*;
+import java.nio.file.Files;
+import java.util.*;
+import jenkins.model.*;
 import hudson.*;
 import hudson.FilePath.FileCallable;
 import hudson.model.*;
 import hudson.remoting.VirtualChannel;
-import jenkins.model.*;
-import hudson.tasks.*;
 import hudson.scm.*;
+import hudson.tasks.*;
 import hudson.util.*;
-import java.io.*;
-import java.nio.file.Files;
-import java.util.*;
 import net.sf.json.*;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.remoting.RoleChecker;
@@ -210,6 +211,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
                 url = url.substring(0, url.length() - 2);
             }
             log.info("Release created: \n\t" + url + urlSuffix);
+            build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Release, url + urlSuffix));
 
         } catch (Exception ex) {
             log.fatal("Failed to create release: " + ex.getMessage());
