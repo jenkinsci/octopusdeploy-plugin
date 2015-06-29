@@ -68,7 +68,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
      * Octopus release notes?
      */
     private final boolean releaseNotesJenkinsLinkback;
-    public boolean isReleaseNotesJenkinsURL() {
+    public boolean getJenkinsUrlLinkback() {
         return releaseNotesJenkinsLinkback;
     }
     

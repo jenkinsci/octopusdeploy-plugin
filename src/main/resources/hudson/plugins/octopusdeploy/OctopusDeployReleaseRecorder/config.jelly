@@ -8,7 +8,7 @@
   </f:entry>
 
   <f:entry title="Include Jenkins URL?">
-    <f:checkbox field="jenkinsUrlLinkback" checked="${instance.isReleaseNotesJenkinsURL()}" />
+    <f:checkbox field="jenkinsUrlLinkback" />
   </f:entry>
 
   <f:block>
