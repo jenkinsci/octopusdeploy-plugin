@@ -120,7 +120,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             String project, String releaseVersion, 
             boolean releaseNotes, String releaseNotesSource, String releaseNotesFile, 
             boolean deployThisRelease, String environment, boolean waitForDeployment,
-            List<PackageConfiguration> packageConfigs, boolean jenkinsURLLinkback) {
+            List<PackageConfiguration> packageConfigs, boolean jenkinsUrlLinkback) {
         this.project = project.trim();
         this.releaseVersion = releaseVersion.trim();
         this.releaseNotes = releaseNotes;
@@ -130,7 +130,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         this.packageConfigs = packageConfigs;
         this.environment = environment.trim();
         this.waitForDeployment = waitForDeployment;
-        this.releaseNotesJenkinsLinkback = jenkinsURLLinkback;
+        this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
     }
     
     @Override
@@ -184,15 +184,16 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         // Check packageVersion
         String releaseNotesContent = "";
         
-        //Prepend Release Notes with Jenkins URL?
-        //Do this regardless if Release Notes are specified
+        // Prepend Release Notes with Jenkins URL?
+        // Do this regardless if Release Notes are specified
         if (releaseNotesJenkinsLinkback) {
           final String buildUrlVar = "${BUILD_URL}";
           
-          //Use env vars
+          // Use env vars
           String resolvedBuildUrlVar = envInjector.injectEnvironmentVariableValues(buildUrlVar);          
-          releaseNotesContent = "Created by: <a href=\\\"" + resolvedBuildUrlVar + "\\\">"
-                  + resolvedBuildUrlVar + "</a>" + "<br />";
+          releaseNotesContent = String.format("Created by: <a href=\\\"%s\\\">%s</a><br />", 
+                  resolvedBuildUrlVar,
+                  resolvedBuildUrlVar);
         }
    
         if (releaseNotes) {
@@ -213,8 +214,8 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
       
         if (!success) { // Early exit
           return success;
-        }
-      
+      }
+
       Set<SelectedPackage> selectedPackages = null;
       if (packageConfigs != null && !packageConfigs.isEmpty()) {
         selectedPackages = new HashSet<SelectedPackage>();
@@ -224,19 +225,19 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
                   envInjector.injectEnvironmentVariableValues(pc.getPackageVersion())));
         }
       }
-      
+
       try {
         log.info(api.createRelease(p.getId(), releaseVersion, releaseNotesContent, selectedPackages));
       } catch (IOException ex) {
         log.fatal("Failed to create release: " + ex.getMessage());
         success = false;
       }
-      
+
       if (success && deployThisRelease) {
         OctopusDeployDeploymentRecorder deployment = new OctopusDeployDeploymentRecorder(project, releaseVersion, environment, waitForDeployment);
         deployment.perform(build, launcher, listener);
       }
-      
+
       return success;
     }
     
@@ -291,7 +292,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         @Override 
         public String invoke(File f, VirtualChannel channel) {
             try {
-                return StringUtils.join(Files.readAllLines(f.toPath(), StandardCharsets.US_ASCII), "\n");
+                return StringUtils.join(Files.readAllLines(f.toPath(), StandardCharsets.UTF_8), "\n");
             } catch (IOException ex) {
                 return ERROR_READING;
             }
