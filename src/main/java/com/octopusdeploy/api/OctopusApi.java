@@ -49,7 +49,7 @@ public class OctopusApi {
     public String createRelease(String project, String releaseVersion, String releaseNotes, Set<SelectedPackage> selectedPackages) throws IOException {
         StringBuilder jsonBuilder = new StringBuilder();
         jsonBuilder.append(String.format("{ProjectId:\"%s\",Version:\"%s\"", project, releaseVersion));
-        if (releaseNotes != null) {
+        if (releaseNotes != null && !releaseNotes.isEmpty()) {
             jsonBuilder.append(String.format(",ReleaseNotes:\"%s\"", releaseNotes));
         }
         if (selectedPackages != null && !selectedPackages.isEmpty()) {
