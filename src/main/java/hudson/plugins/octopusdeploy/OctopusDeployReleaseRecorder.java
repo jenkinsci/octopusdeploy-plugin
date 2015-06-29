@@ -9,8 +9,10 @@ import hudson.tasks.*;
 import hudson.scm.*;
 import hudson.util.*;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.List;
 import net.sf.json.*;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.remoting.RoleChecker;
@@ -62,6 +64,15 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
     }
     
     /**
+     * Write a link back to the originating Jenkins build to the 
+     * Octopus release notes?
+     */
+    private final boolean releaseNotesJenkinsLinkback;
+    public boolean getJenkinsUrlLinkback() {
+        return releaseNotesJenkinsLinkback;
+    }
+    
+    /**
      * The file that the release notes are in.
      */
     private final String releaseNotesFile;
@@ -109,7 +120,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             String project, String releaseVersion, 
             boolean releaseNotes, String releaseNotesSource, String releaseNotesFile, 
             boolean deployThisRelease, String environment, boolean waitForDeployment,
-            List<PackageConfiguration> packageConfigs) {
+            List<PackageConfiguration> packageConfigs, boolean jenkinsUrlLinkback) {
         this.project = project.trim();
         this.releaseVersion = releaseVersion.trim();
         this.releaseNotes = releaseNotes;
@@ -119,6 +130,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         this.packageConfigs = packageConfigs;
         this.environment = environment.trim();
         this.waitForDeployment = waitForDeployment;
+        this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
     }
     
     @Override
@@ -168,53 +180,66 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             log.fatal("Project was not found.");
             success = false;
         }
-
+      
         // Check packageVersion
-        String releaseNotesContent = null;
+        String releaseNotesContent = "";
+        
+        // Prepend Release Notes with Jenkins URL?
+        // Do this regardless if Release Notes are specified
+        if (releaseNotesJenkinsLinkback) {
+          final String buildUrlVar = "${BUILD_URL}";
+          
+          // Use env vars
+          String resolvedBuildUrlVar = envInjector.injectEnvironmentVariableValues(buildUrlVar);          
+          releaseNotesContent = String.format("Created by: <a href=\\\"%s\\\">%s</a><br />", 
+                  resolvedBuildUrlVar,
+                  resolvedBuildUrlVar);
+        }
+   
         if (releaseNotes) {
-            if (isReleaseNotesSourceFile()) {
-                try {
-                    releaseNotesContent = getReleaseNotesFromFile(build);
-                } catch (Exception ex) {
-                    log.fatal(String.format("Unable to get file contents from release ntoes file! - %s", ex.getMessage()));
-                    success = false;
-                }
-            } else if (isReleaseNotesSourceScm()) {
-                releaseNotesContent = getReleaseNotesFromScm(build);
-            } else {
-                log.fatal(String.format("Bad configuration: if using release notes, should have source of file or scm. Found '%s'", releaseNotesSource));
-                success = false;
+          if (isReleaseNotesSourceFile()) {
+            try {
+              releaseNotesContent += getReleaseNotesFromFile(build, releaseNotesFile);
+            } catch (Exception ex) {
+              log.fatal(String.format("Unable to get file contents from release ntoes file! - %s", ex.getMessage()));
+              success = false;
             }
-        }
-        
-        if (!success) { // Early exit
-            return success;
-        }
-        
-        Set<SelectedPackage> selectedPackages = null;
-        if (packageConfigs != null && !packageConfigs.isEmpty()) {
-            selectedPackages = new HashSet<SelectedPackage>();
-            for (PackageConfiguration pc : packageConfigs) {
-                selectedPackages.add(new SelectedPackage(
-                        envInjector.injectEnvironmentVariableValues(pc.getPackageName()), 
-                        envInjector.injectEnvironmentVariableValues(pc.getPackageVersion())));
-            }
-        }
-        
-        try {
-            log.info(api.createRelease(p.getId(), releaseVersion, releaseNotesContent, selectedPackages));
-        } catch (IOException ex) {
-            log.fatal("Failed to create release: " + ex.getMessage());
+          } else if (isReleaseNotesSourceScm()) {
+            releaseNotesContent += getReleaseNotesFromScm(build);
+          } else {
+            log.fatal(String.format("Bad configuration: if using release notes, should have source of file or scm. Found '%s'", releaseNotesSource));
             success = false;
+          }
         }
-        
-        if (success && deployThisRelease) {
-            OctopusDeployDeploymentRecorder deployment = new OctopusDeployDeploymentRecorder(project, releaseVersion, environment, waitForDeployment);
-            deployment.perform(build, launcher, listener);
+      
+        if (!success) { // Early exit
+          return success;
+      }
+
+      Set<SelectedPackage> selectedPackages = null;
+      if (packageConfigs != null && !packageConfigs.isEmpty()) {
+        selectedPackages = new HashSet<SelectedPackage>();
+        for (PackageConfiguration pc : packageConfigs) {
+          selectedPackages.add(new SelectedPackage(
+                  envInjector.injectEnvironmentVariableValues(pc.getPackageName()),
+                  envInjector.injectEnvironmentVariableValues(pc.getPackageVersion())));
         }
-            
-        return success;
-    }       
+      }
+
+      try {
+        log.info(api.createRelease(p.getId(), releaseVersion, releaseNotesContent, selectedPackages));
+      } catch (IOException ex) {
+        log.fatal("Failed to create release: " + ex.getMessage());
+        success = false;
+      }
+
+      if (success && deployThisRelease) {
+        OctopusDeployDeploymentRecorder deployment = new OctopusDeployDeploymentRecorder(project, releaseVersion, environment, waitForDeployment);
+        deployment.perform(build, launcher, listener);
+      }
+
+      return success;
+    }
     
     /**
      * Write the startup header for the logs to show what our inputs are.
@@ -253,8 +278,8 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
      * @throws IOException
      * @throws InterruptedException 
      */
-    private String getReleaseNotesFromFile(AbstractBuild build) throws IOException, InterruptedException {
-        FilePath path = new FilePath(build.getWorkspace(), releaseNotesFile);
+    private String getReleaseNotesFromFile(AbstractBuild build, String releaseNotesFilename) throws IOException, InterruptedException {
+        FilePath path = new FilePath(build.getWorkspace(), releaseNotesFilename);
         return path.act(new ReadFileCallable());        
     }
     
@@ -267,7 +292,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         @Override 
         public String invoke(File f, VirtualChannel channel) {
             try {
-                return StringUtils.join(Files.readAllLines(f.toPath()), "\n");
+                return StringUtils.join(Files.readAllLines(f.toPath(), StandardCharsets.UTF_8), "\n");
             } catch (IOException ex) {
                 return ERROR_READING;
             }
