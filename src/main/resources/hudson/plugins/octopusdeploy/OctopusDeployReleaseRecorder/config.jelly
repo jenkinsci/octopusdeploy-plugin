@@ -7,6 +7,10 @@
     <f:textbox />
   </f:entry>
 
+  <f:entry title="Include Jenkins URL?">
+    <f:checkbox field="jenkinsURLLinkback" checked="${instance.isReleaseNotesJenkinsURL()}" />
+  </f:entry>
+
   <f:block>
     <table>
       <f:optionalBlock name="releaseNotes" inline="true" title="Include release notes?" checked="${instance.getReleaseNotes()}">
