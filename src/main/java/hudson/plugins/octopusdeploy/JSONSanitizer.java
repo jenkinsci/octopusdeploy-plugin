@@ -2,7 +2,6 @@ package hudson.plugins.octopusdeploy;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.Test;
 
 /**
  * Simple JSON sanitizer to allow special characters in JSON input. It also replaces
