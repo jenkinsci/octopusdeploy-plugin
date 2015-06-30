@@ -191,7 +191,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
           
             // Use env vars
             String resolvedBuildUrlVar = envInjector.injectEnvironmentVariableValues(buildUrlVar);          
-            releaseNotesContent = String.format("Created by: <a href=\\\"%s\\\">%s</a><br />", 
+            releaseNotesContent = String.format("Created by: <a href=\"%s\">%s</a>\n", 
                 resolvedBuildUrlVar,
                 resolvedBuildUrlVar);
         }
@@ -227,6 +227,9 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
 
         try {
+            //Sanitize the release notes in preparation for JSON
+            releaseNotesContent = JSONSanitizer.getInstance().sanitize(releaseNotesContent);
+            
             String results = api.createRelease(p.getId(), releaseVersion, releaseNotesContent, selectedPackages);
             JSONObject json = (JSONObject)JSONSerializer.toJSON(results);
             String urlSuffix = json.getJSONObject("Links").getString("Web");
