@@ -3,7 +3,7 @@ package com.octopusdeploy.api;
 import java.util.Set;
 
 /**
- * 
+ * Represents a set of packages from the deployment process template
  */
 public class DeploymentProcessTemplate {
     private final String id;
