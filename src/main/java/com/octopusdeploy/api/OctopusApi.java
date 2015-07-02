@@ -264,6 +264,35 @@ public class OctopusApi {
     }
     
     /**
+     * Return a representation of a deployment process for a given project.
+     * @param projectId
+     * @return DeploymentProcessTemplate
+     * @throws IllegalArgumentException
+     * @throws IOException 
+     */
+    public DeploymentProcessTemplate getDeploymentProcessTemplateForProject(String projectId) throws IllegalArgumentException, IOException {
+        AuthenticatedWebClient.WebResponse response = webClient.get("api/deploymentprocesses/deploymentprocess-" + projectId + "/template");
+        if (response.isErrorCode()) {
+            throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
+        }
+        
+        JSONObject json = (JSONObject)JSONSerializer.toJSON(response.getContent());
+        Set<SelectedPackage> packages = new HashSet<SelectedPackage>();
+        String deploymentId = json.getString("DeploymentProcessId");
+        JSONArray pkgsJson = json.getJSONArray("Packages");
+        for (Object pkgObj : pkgsJson) {
+            JSONObject pkgJsonObj = (JSONObject) pkgObj;
+            String name = pkgJsonObj.getString("StepName");
+            String version = pkgJsonObj.getString("VersionSelectedLastRelease");
+            packages.add(new SelectedPackage(name, version));
+        }
+        
+        DeploymentProcessTemplate template = new DeploymentProcessTemplate(deploymentId, projectId, packages);
+        return template;
+
+    }    
+    
+    /**
      * Retrieves a task by its id.
      * @param taskId
      * @return a Task object
