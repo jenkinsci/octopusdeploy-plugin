@@ -310,7 +310,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
      * @throws IOException
      */
     private List<PackageConfiguration> getCombinedPackageList(String projectId, List<PackageConfiguration> selectedPackages,
-            String defaultPackageVersion, Log log) throws IllegalArgumentException, IOException
+            String defaultPackageVersion, Log log)
     {
         List<PackageConfiguration> combinedList = new ArrayList<PackageConfiguration>();
         
