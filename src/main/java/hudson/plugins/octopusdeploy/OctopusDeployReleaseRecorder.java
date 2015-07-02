@@ -179,6 +179,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         String releaseVersion = envInjector.injectEnvironmentVariableValues(this.releaseVersion);
         String releaseNotesFile = envInjector.injectEnvironmentVariableValues(this.releaseNotesFile);
         String environment = envInjector.injectEnvironmentVariableValues(this.environment);
+        String defaultPackageVersion = envInjector.injectEnvironmentVariableValues(this.defaultPackageVersion);
         
         com.octopusdeploy.api.Project p = null;
         try {
