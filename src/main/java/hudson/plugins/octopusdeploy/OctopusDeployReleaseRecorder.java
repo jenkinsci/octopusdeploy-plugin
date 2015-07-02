@@ -116,13 +116,24 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         return packageConfigs;
     }
 
+    /**
+     * Default package version to use for required packages that are not
+     * specified in the Package Configurations
+     */
+    private final String defaultPackageVersion;
+    @Exported
+    public String getDefaultPackageVersion() {
+        return defaultPackageVersion;
+    }
+    
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
     public OctopusDeployReleaseRecorder(
             String project, String releaseVersion, 
             boolean releaseNotes, String releaseNotesSource, String releaseNotesFile, 
             boolean deployThisRelease, String environment, boolean waitForDeployment,
-            List<PackageConfiguration> packageConfigs, boolean jenkinsUrlLinkback) {
+            List<PackageConfiguration> packageConfigs, boolean jenkinsUrlLinkback,
+            String defaultPackageVersion) {
         this.project = project.trim();
         this.releaseVersion = releaseVersion.trim();
         this.releaseNotes = releaseNotes;
@@ -133,7 +144,8 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         this.environment = environment.trim();
         this.waitForDeployment = waitForDeployment;
         this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
-    }
+        this.defaultPackageVersion = defaultPackageVersion;
+    } 
     
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
@@ -168,6 +180,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         String releaseVersion = envInjector.injectEnvironmentVariableValues(this.releaseVersion);
         String releaseNotesFile = envInjector.injectEnvironmentVariableValues(this.releaseNotesFile);
         String environment = envInjector.injectEnvironmentVariableValues(this.environment);
+        String defaultPackageVersion = envInjector.injectEnvironmentVariableValues(this.defaultPackageVersion);
         
         com.octopusdeploy.api.Project p = null;
         try {
@@ -218,9 +231,10 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
 
         Set<SelectedPackage> selectedPackages = null;
-        if (packageConfigs != null && !packageConfigs.isEmpty()) {
+        List<PackageConfiguration> combinedPackageConfigs = getCombinedPackageList(p.getId(), packageConfigs, defaultPackageVersion, log);
+        if (combinedPackageConfigs != null && !combinedPackageConfigs.isEmpty()) {
             selectedPackages = new HashSet<SelectedPackage>();
-            for (PackageConfiguration pc : packageConfigs) {
+            for (PackageConfiguration pc : combinedPackageConfigs) {
                 selectedPackages.add(new SelectedPackage(
                     envInjector.injectEnvironmentVariableValues(pc.getPackageName()),
                     envInjector.injectEnvironmentVariableValues(pc.getPackageVersion())));
@@ -285,6 +299,59 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             }
         }
         log.info("=======================");
+    }
+    
+    /**
+     * Gets a package list that is a combination of the default packages (taken from the Octopus template)
+     * and the packages selected. Selected package version overwrite the default package version for a given package
+     * @param projectId
+     * @param selectedPackages
+     * @param defaultPackageVersion
+     * @return A list that combines the default packages and selected packages
+     * @throws IllegalArgumentException
+     * @throws IOException
+     */
+    private List<PackageConfiguration> getCombinedPackageList(String projectId, List<PackageConfiguration> selectedPackages,
+            String defaultPackageVersion, Log log)
+    {
+        List<PackageConfiguration> combinedList = new ArrayList<PackageConfiguration>();
+        
+        //Get all selected package names for easier lookup later
+        Set<String> selectedNames = new HashSet<String>();
+        for (PackageConfiguration pkgConfig : selectedPackages) {
+            selectedNames.add(pkgConfig.getPackageName());
+        }
+        
+        //Start with the selected packages
+        combinedList.addAll(selectedPackages);
+        
+        DeploymentProcessTemplate defaultPackages = null;
+        //If not default version specified, ignore all default packages
+        try {
+            defaultPackages = this.getDescriptorImpl().api.getDeploymentProcessTemplateForProject(projectId);
+        } catch (Exception ex) {
+            //Default package retrieval unsuccessful
+            log.info(String.format("Could not retrieve default package list for project id: %s. No default packages will be used", projectId));
+        }
+        
+        if (defaultPackages != null) {
+            for (SelectedPackage selPkg : defaultPackages.getSteps()) {
+                String name = selPkg.getStepName();
+                
+                //Only add if it was not a selected package
+                if (!selectedNames.contains(name)) {
+                    //Get the default version, if not specified, warn
+                    if (defaultPackageVersion != null && !defaultPackageVersion.isEmpty()) {
+                        combinedList.add(new PackageConfiguration(name, defaultPackageVersion));
+                        log.info(String.format("Using default version (%s) of package %s", defaultPackageVersion, name));
+                    }
+                    else
+                        log.error(String.format("Required package %s not included because package is not in Package Configuration list and no default package version defined", name));
+                }
+            }
+        }
+        
+        return combinedList;
     }
     
     /**
