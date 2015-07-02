@@ -282,8 +282,8 @@ public class OctopusApi {
         JSONArray pkgsJson = json.getJSONArray("Packages");
         for (Object pkgObj : pkgsJson) {
             JSONObject pkgJsonObj = (JSONObject) pkgObj;
-            String name = pkgJsonObj.get("StepName").toString();
-            String version = pkgJsonObj.get("VersionSelectedLastRelease").toString();
+            String name = pkgJsonObj.getString("StepName");
+            String version = pkgJsonObj.getString("VersionSelectedLastRelease");
             packages.add(new SelectedPackage(name, version));
         }
         

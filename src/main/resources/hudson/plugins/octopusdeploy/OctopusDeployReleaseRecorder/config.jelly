@@ -7,8 +7,8 @@
     <f:textbox />
   </f:entry>
 
-  <f:entry title="Include Jenkins URL?" inline="true" field="jenkinsUrlLinkback">
-    <f:checkbox field="jenkinsUrlLinkback" />
+  <f:entry title="Include Jenkins URL?" field="jenkinsUrlLinkback">
+    <f:checkbox />
   </f:entry>
 
   <f:block>
@@ -42,7 +42,7 @@
     <f:entry field="packageConfigs" title="Package Configurations">
       <f:repeatableProperty field="packageConfigs"/>
     </f:entry>
-    <f:entry title="Default Package Version" field="defaultPackageVersion" inline="true">
+    <f:entry title="Default Package Version" field="defaultPackageVersion">
         <f:textbox />
     </f:entry>    
   </f:block>
