@@ -318,12 +318,13 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         
         //Get all selected package names for easier lookup later
         Set<String> selectedNames = new HashSet<String>();
-        for (PackageConfiguration pkgConfig : selectedPackages) {
-            selectedNames.add(pkgConfig.getPackageName());
-        }
-        
-        //Start with the selected packages
-        combinedList.addAll(selectedPackages);
+        if (selectedPackages != null) {
+            for (PackageConfiguration pkgConfig : selectedPackages) {
+                selectedNames.add(pkgConfig.getPackageName());
+            }
+            //Start with the selected packages
+            combinedList.addAll(selectedPackages);            
+        }     
         
         DeploymentProcessTemplate defaultPackages = null;
         //If not default version specified, ignore all default packages
