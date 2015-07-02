@@ -13,6 +13,8 @@ import hudson.remoting.VirtualChannel;
 import hudson.scm.*;
 import hudson.tasks.*;
 import hudson.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.sf.json.*;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.remoting.RoleChecker;
@@ -149,8 +151,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         logStartHeader(log);
         // todo: getting from descriptor is ugly. refactor?
         getDescriptorImpl().setGlobalConfiguration();
-        OctopusApi api = new OctopusApi(getDescriptorImpl().octopusHost, getDescriptorImpl().apiKey);
-        
+        OctopusApi api = getDescriptorImpl().api;
         VariableResolver resolver = build.getBuildVariableResolver();
         EnvVars envVars;
         try {
@@ -384,7 +385,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             save();
             return true;
         }
-        
+               
         /**
         * Loads the OctopusDeployPlugin descriptor and pulls configuration from it
         * for API Key, and Host.
@@ -467,6 +468,43 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             environment = environment.trim(); 
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateEnvironment(environment);
+        }
+        
+        /**
+         * Data binding that returns all possible environment names to be used in the environment autocomplete.
+         * @return 
+         */
+        public ComboBoxModel doFillEnvironmentItems() {
+            setGlobalConfiguration();
+            ComboBoxModel names = new ComboBoxModel();
+            
+            try {
+                Set<com.octopusdeploy.api.Environment> environments = api.getAllEnvironments();
+                for (com.octopusdeploy.api.Environment env : environments) {
+                    names.add(env.getName());
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(OctopusDeployReleaseRecorder.class.getName()).log(Level.SEVERE, "Filling environments combo failed!", ex);
+            }
+            return names;
+        }
+        
+        /**
+         * Data binding that returns all possible project names to be used in the project autocomplete.
+         * @return 
+         */
+        public ComboBoxModel doFillProjectItems() {
+            setGlobalConfiguration();
+            ComboBoxModel names = new ComboBoxModel();
+            try {
+                Set<com.octopusdeploy.api.Project> projects = api.getAllProjects();
+                for (com.octopusdeploy.api.Project proj : projects) {
+                    names.add(proj.getName());
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(OctopusDeployReleaseRecorder.class.getName()).log(Level.SEVERE, "Filling projects combo failed!", ex);
+            }
+            return names;
         }
     }
 }

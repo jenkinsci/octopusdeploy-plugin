@@ -2,12 +2,14 @@ package hudson.plugins.octopusdeploy;
 
 import com.octopusdeploy.api.*;
 import java.io.*;
-import java.util.Set;
+import java.util.*;
 import jenkins.model.Jenkins;
 import hudson.*;
 import hudson.model.*;
 import hudson.tasks.*;
 import hudson.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.sf.json.*;
 import org.kohsuke.stapler.*;
 
@@ -75,7 +77,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         logStartHeader(log);
         // todo: getting from descriptor is ugly. refactor?
         getDescriptorImpl().setGlobalConfiguration();
-        OctopusApi api = new OctopusApi(getDescriptorImpl().octopusHost, getDescriptorImpl().apiKey);
+        OctopusApi api = getDescriptorImpl().api;
         
         VariableResolver resolver = build.getBuildVariableResolver();
         EnvVars envVars;
@@ -367,6 +369,43 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
             environment = environment.trim(); 
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateEnvironment(environment);
+        }
+        
+        /**
+         * Data binding that returns all possible environment names to be used in the environment autocomplete.
+         * @return 
+         */
+        public ComboBoxModel doFillEnvironmentItems() {
+            setGlobalConfiguration();
+            ComboBoxModel names = new ComboBoxModel();
+            
+            try {
+                Set<com.octopusdeploy.api.Environment> environments = api.getAllEnvironments();
+                for (com.octopusdeploy.api.Environment env : environments) {
+                    names.add(env.getName());
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(OctopusDeployDeploymentRecorder.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            return names;
+        }
+        
+        /**
+         * Data binding that returns all possible project names to be used in the project autocomplete.
+         * @return 
+         */
+        public ComboBoxModel doFillProjectItems() {
+            setGlobalConfiguration();
+            ComboBoxModel names = new ComboBoxModel();
+            try {
+                Set<com.octopusdeploy.api.Project> projects = api.getAllProjects();
+                for (com.octopusdeploy.api.Project proj : projects) {
+                    names.add(proj.getName());
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(OctopusDeployDeploymentRecorder.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            return names;
         }
     }
 }
