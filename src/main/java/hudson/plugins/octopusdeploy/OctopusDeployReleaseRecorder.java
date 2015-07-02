@@ -324,29 +324,31 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         combinedList.addAll(selectedPackages);
         
         DeploymentProcessTemplate defaultPackages = null;
+        //If not default version specified, ignore all default packages
         try {
             defaultPackages = this.getDescriptorImpl().api.getDeploymentProcessTemplateForProject(projectId);
         } catch (Exception ex) {
             //Default package retrieval unsuccessful
-            log.error(String.format("Could not retrieve default package list for project id: %s. No default packages will be used", projectId));            
+            log.info(String.format("Could not retrieve default package list for project id: %s. No default packages will be used", projectId));
         }
         
-        if ( defaultPackages != null ) {
+        if (defaultPackages != null) {
             for (SelectedPackage selPkg : defaultPackages.getSteps()) {
                 String name = selPkg.getStepName();
                 
                 //Only add if it was not a selected package
                 if (!selectedNames.contains(name)) {
-                    //Get the default version, if not specified, use the version from the template (this may or may not make sense)
-                    String version = defaultPackageVersion != null && !defaultPackageVersion.isEmpty() ? defaultPackageVersion : selPkg.getVersion();
-                    combinedList.add(new PackageConfiguration(name, version));
+                    //Get the default version, if not specified, warn
+                    if (defaultPackageVersion != null && !defaultPackageVersion.isEmpty()) {
+                        combinedList.add(new PackageConfiguration(name, defaultPackageVersion));
+                        log.info(String.format("Using default version (%s) of package %s", defaultPackageVersion, name));
+                    }
+                    else
+                        log.error(String.format("Required package %s not included because package is not in Package Configuration list and no default package version defined", name));
                 }
-            }  
+            }
         }
-        else {
-            combinedList.addAll(selectedPackages);
-        }
-
+        
         return combinedList;
     }
     
@@ -427,7 +429,6 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         private String apiKey;
         private boolean loadedConfig;
         private OctopusApi api;
-        private DeploymentProcessTemplate deploymentPackageDefaults = null;
         private static final String PROJECT_RELEASE_VALIDATION_MESSAGE = "Project must be set to validate release.";
         
         public DescriptorImpl() {
@@ -448,11 +449,6 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         public boolean configure(StaplerRequest req, JSONObject formData) throws Descriptor.FormException {
             save();
             return true;
-        }
-        
-        @Override 
-        public Publisher newInstance(StaplerRequest req, JSONObject formData) {
-            return req.bindJSON(OctopusDeployReleaseRecorder.class, formData);
         }
         
         /**
@@ -537,6 +533,6 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             environment = environment.trim(); 
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateEnvironment(environment);
-        }    
+        }
     }
 }
