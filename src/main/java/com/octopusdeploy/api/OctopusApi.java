@@ -349,7 +349,7 @@ public class OctopusApi {
      * Grabs a single error data field from an Octopus html response
      * @param fieldName The field name of the error string
      * @param response The field data
-     * @return 
+     * @return The error data
      */
     protected static String getErrorDataByFieldName(String fieldName, String response) {
         //Get the next string in script parameter list: "var errorData = {<fieldName>:"Field value", ...
@@ -364,30 +364,26 @@ public class OctopusApi {
         return errData;
     }
     
+    /**
+     * Returns a list of "Errors" values from Octopus html response
+     * @param response The full Octopus html response
+     */
     protected static List<String> getErrorDetails(String response) {
         List<String> errorList = new ArrayList<String>();
         
         //Find a group of messages in the format: "Errors":["error message 1", "error message 2", "error message 3"]
         String pattern = "(?:\\\"Errors\\\")(?:[^\\[]\\[)([^\\]]+)";
 
-        // Create a Pattern object
         Pattern r = Pattern.compile(pattern);
-
-        // Now create matcher object.
         Matcher m = r.matcher(response);
-
         if (m.find() && m.groupCount() > 0) {
             //Split up the list of error messages into individual messages
             String errors = m.group(1);
-            String pattern2 = "(?:\")([^\"]+)(?:[^\"])(?:\")";
+            String pattern2 = "(?:\\\")([^\\\"]+)*(?:\\\")";
             
-            // Create a Pattern object
             Pattern r2 = Pattern.compile(pattern2);
-            
-            // Now create matcher object.
             m = r2.matcher(errors);
             while (m.find() && m.groupCount() > 0) {
-                //System.out.println("error: " + m.group(i));
                 errorList.add("\t" + m.group(1));
             }
         }    
