@@ -3,8 +3,6 @@ package com.octopusdeploy.api;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import net.sf.json.*;
 import org.apache.commons.lang.StringUtils;
 
