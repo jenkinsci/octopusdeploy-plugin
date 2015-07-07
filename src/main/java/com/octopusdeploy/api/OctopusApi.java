@@ -66,7 +66,8 @@ public class OctopusApi {
         byte[] data = json.getBytes(Charset.forName(UTF8));
         AuthenticatedWebClient.WebResponse response = webClient.post("api/releases", data);
         if (response.isErrorCode()) {
-            throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
+            String errorMsg = ErrorParser.getErrorsFromResponse(response.getContent());
+            throw new IOException(String.format("Code %s - %n%s", response.getCode(), errorMsg));
         }
         return response.getContent();
     }
@@ -83,7 +84,8 @@ public class OctopusApi {
         byte[] data = json.getBytes(Charset.forName(UTF8));
         AuthenticatedWebClient.WebResponse response = webClient.post("api/deployments", data);
         if (response.isErrorCode()) {
-            throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
+            String errorMsg = ErrorParser.getErrorsFromResponse(response.getContent());          
+            throw new IOException(String.format("Code %s - %n%s", response.getCode(), errorMsg));
         }
         return response.getContent();
     }
@@ -310,5 +312,5 @@ public class OctopusApi {
         String state = json.getString("State");
         boolean isCompleted = json.getBoolean("IsCompleted");
         return new Task(id, name, description, state, isCompleted);
-    }
+    }   
 }
