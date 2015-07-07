@@ -3,6 +3,8 @@ package com.octopusdeploy.api;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import net.sf.json.*;
 import org.apache.commons.lang.StringUtils;
 
@@ -66,7 +68,12 @@ public class OctopusApi {
         byte[] data = json.getBytes(Charset.forName(UTF8));
         AuthenticatedWebClient.WebResponse response = webClient.post("api/releases", data);
         if (response.isErrorCode()) {
-            throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
+            List<String> errorMsgs = getErrorsFromResponse(response.getContent());
+            String errorMsg = "";
+            for (String err : errorMsgs) {
+                errorMsg += String.format("%s\n", err);
+            }
+            throw new IOException(String.format("Code %s - %n%s", response.getCode(), errorMsg));
         }
         return response.getContent();
     }
@@ -83,7 +90,12 @@ public class OctopusApi {
         byte[] data = json.getBytes(Charset.forName(UTF8));
         AuthenticatedWebClient.WebResponse response = webClient.post("api/deployments", data);
         if (response.isErrorCode()) {
-            throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
+            List<String> errorMsgs = getErrorsFromResponse(response.getContent());
+            String errorMsg = "";
+            for (String err : errorMsgs) {
+                errorMsg += String.format("%s\n", err);
+            }            
+            throw new IOException(String.format("Code %s - %n%s", response.getCode(), errorMsg));
         }
         return response.getContent();
     }
@@ -311,4 +323,85 @@ public class OctopusApi {
         boolean isCompleted = json.getBoolean("IsCompleted");
         return new Task(id, name, description, state, isCompleted);
     }
+    
+    /**
+     * Parse any errors from the returned HTML/javascript from Octopus
+     * @param response The Octopus html response that may include error data
+     * @return A list of error strings
+     */
+    public static List<String> getErrorsFromResponse(String response) {
+        List<String> errorStrings = new ArrayList<String>();        
+
+        //Get the error title and main message
+        String errorTitle = getErrorDataByFieldName("title", response);
+        if (!errorTitle.isEmpty()) {
+            errorStrings.add(String.format("%s", errorTitle));
+        }
+     
+        //Get the error details
+        String errorDetailMessage = getErrorDataByFieldName("ErrorMessage", response);
+        if (!errorDetailMessage.isEmpty()) {
+            errorStrings.add("\t" + errorDetailMessage);        
+        }
+        errorStrings.addAll(getErrorDetails(response));       
+
+        return errorStrings;
+    }
+    
+    /**
+     * Grabs a single error data field from an Octopus html response
+     * @param fieldName The field name of the error string
+     * @param response The field data
+     * @return 
+     */
+    protected static String getErrorDataByFieldName(String fieldName, String response) {
+        //Get the next string in script parameter list: "var errorData = {<fieldName>:"Field value", ...
+        final String patternString = String.format(  "(?:errorData.+)(?:\"%s\")(?:[:\\[\"]+)([^\"]+)", fieldName);
+        
+        Pattern pattern = Pattern.compile(patternString);
+        Matcher matcher = pattern.matcher(response);
+        String errData = "";
+        if (matcher.find() && matcher.groupCount() > 0) {
+            errData = matcher.group(1);
+        }
+        return errData;
+    }
+    
+    protected static List<String> getErrorDetails(String response) {
+        List<String> errorList = new ArrayList<String>();
+        
+        //Find a group of messages in the format: "Errors":["error message 1", "error message 2", "error message 3"]
+        String pattern = "(?:\\\"Errors\\\")(?:[^\\[]\\[)([^\\]]+)";
+
+        // Create a Pattern object
+        Pattern r = Pattern.compile(pattern);
+
+        // Now create matcher object.
+        Matcher m = r.matcher(response);
+
+        if (m.find() && m.groupCount() > 0) {
+            //Split up the list of error messages into individual messages
+            String errors = m.group(1);
+            String pattern2 = "(?:\")([^\"]+)(?:[^\"])(?:\")";
+            
+            // Create a Pattern object
+            Pattern r2 = Pattern.compile(pattern2);
+            
+            // Now create matcher object.
+            m = r2.matcher(errors);
+            while (m.find() && m.groupCount() > 0) {
+                //System.out.println("error: " + m.group(i));
+                errorList.add("\t" + m.group(1));
+            }
+        }    
+        return errorList;
+    }
+    
+    public static void main(String [ ] args) {
+        String testStr = "$(function() {        var errorData = {\"title\":\"Bad request\",\"message\":\"There was a problem with your request.\",\"details\":{\"ErrorMessage\":\"There was a problem with your request.\",\"Errors\":[\"Release '7.3.10' already exists for this project. Please use a different version, or look at using a mask to auto-increment the number.\", \"The other error msg\"]}};        $(\"#err-title\").text(errorData.title);    "; 
+        List<String> errors = OctopusApi.getErrorsFromResponse(testStr);
+        for (String s : errors) {
+            System.out.println(s);
+        }
+    }    
 }
