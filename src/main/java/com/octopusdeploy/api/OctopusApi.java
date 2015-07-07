@@ -68,7 +68,7 @@ public class OctopusApi {
         byte[] data = json.getBytes(Charset.forName(UTF8));
         AuthenticatedWebClient.WebResponse response = webClient.post("api/releases", data);
         if (response.isErrorCode()) {
-            String errorMsg = getErrorsFromResponse(response.getContent());
+            String errorMsg = ErrorParser.getErrorsFromResponse(response.getContent());
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), errorMsg));
         }
         return response.getContent();
@@ -86,7 +86,7 @@ public class OctopusApi {
         byte[] data = json.getBytes(Charset.forName(UTF8));
         AuthenticatedWebClient.WebResponse response = webClient.post("api/deployments", data);
         if (response.isErrorCode()) {
-            String errorMsg = getErrorsFromResponse(response.getContent());          
+            String errorMsg = ErrorParser.getErrorsFromResponse(response.getContent());          
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), errorMsg));
         }
         return response.getContent();
@@ -314,79 +314,5 @@ public class OctopusApi {
         String state = json.getString("State");
         boolean isCompleted = json.getBoolean("IsCompleted");
         return new Task(id, name, description, state, isCompleted);
-    }
-    
-    /**
-     * Parse any errors from the returned HTML/javascript from Octopus
-     * @param response The Octopus html response that may include error data
-     * @return A list of error strings
-     */
-    public static String getErrorsFromResponse(String response) {
-        List<String> errorStrings = new ArrayList<String>();        
-
-        //Get the error title and main message
-        String errorTitle = getErrorDataByFieldName("title", response);
-        if (!errorTitle.isEmpty()) {
-            errorStrings.add(String.format("%s", errorTitle));
-        }
-     
-        //Get the error details
-        String errorDetailMessage = getErrorDataByFieldName("ErrorMessage", response);
-        if (!errorDetailMessage.isEmpty()) {
-            errorStrings.add("\t" + errorDetailMessage);        
-        }
-        errorStrings.addAll(getErrorDetails(response));       
-
-        String errorMsg = "";
-        for (String err : errorStrings) {
-            errorMsg += String.format("%s\n", err);
-        }          
-        
-        return errorMsg;
-    }
-    
-    /**
-     * Grabs a single error data field from an Octopus html response
-     * @param fieldName The field name of the error string
-     * @param response The field data
-     * @return The error data
-     */
-    protected static String getErrorDataByFieldName(String fieldName, String response) {
-        //Get the next string in script parameter list: "var errorData = {<fieldName>:"Field value", ...
-        final String patternString = String.format(  "(?:errorData.+)(?:\"%s\")(?:[:\\[\"]+)([^\"]+)", fieldName);
-        
-        Pattern pattern = Pattern.compile(patternString);
-        Matcher matcher = pattern.matcher(response);
-        String errData = "";
-        if (matcher.find() && matcher.groupCount() > 0) {
-            errData = matcher.group(1);
-        }
-        return errData;
-    }
-    
-    /**
-     * Returns a list of "Errors" values from Octopus html response
-     * @param response The full Octopus html response
-     */
-    protected static List<String> getErrorDetails(String response) {
-        List<String> errorList = new ArrayList<String>();
-        
-        //Find a group of messages in the format: "Errors":["error message 1", "error message 2", "error message 3"]
-        String pattern = "(?:\\\"Errors\\\")(?:[^\\[]\\[)([^\\]]+)";
-
-        Pattern r = Pattern.compile(pattern);
-        Matcher m = r.matcher(response);
-        if (m.find() && m.groupCount() > 0) {
-            //Split up the list of error messages into individual messages
-            String errors = m.group(1);
-            String pattern2 = "(?:\\\")([^\\\"]+)*(?:\\\")";
-            
-            Pattern r2 = Pattern.compile(pattern2);
-            m = r2.matcher(errors);
-            while (m.find() && m.groupCount() > 0) {
-                errorList.add("\t" + m.group(1));
-            }
-        }    
-        return errorList;
-    } 
+    }   
 }
