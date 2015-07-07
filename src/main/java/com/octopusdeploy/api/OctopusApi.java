@@ -395,13 +395,5 @@ public class OctopusApi {
             }
         }    
         return errorList;
-    }
-    
-    public static void main(String [ ] args) {
-        String testStr = "$(function() {        var errorData = {\"title\":\"Bad request\",\"message\":\"There was a problem with your request.\",\"details\":{\"ErrorMessage\":\"There was a problem with your request.\",\"Errors\":[\"Release '7.3.10' already exists for this project. Please use a different version, or look at using a mask to auto-increment the number.\", \"The other error msg\"]}};        $(\"#err-title\").text(errorData.title);    "; 
-        List<String> errors = OctopusApi.getErrorsFromResponse(testStr);
-        for (String s : errors) {
-            System.out.println(s);
-        }
-    }    
+    } 
 }
