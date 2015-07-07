@@ -37,5 +37,5 @@ Each component provides a link to the Release or Deployment that it created. The
 ## Wait-for-Deployment ##
 The Deployment component can optionally wait for the completion of the Deployment, and record the status. If the status returns as failed, the Jenkins job will be marked as a failure.
 
-# Contact #
-Vistaprint Continuous Integration Squad
+## Autocomplete ##
+Some entry fields, like Project and Environment support auto-completion, pulling a list of names to choose from from the OctopusDeploy server.
