@@ -1,10 +1,10 @@
 # OctopusDeploy Jenkins Plugin #
-Connecting OctopusDeploy to the Jenkins workflow. Integration with OctopusDeploy is achieved via the REST API, not the Octo.exe tool.
+Connecting [OctopusDeploy](https://octopusdeploy.com/) to the [Jenkins](https://jenkins-ci.org/) workflow. Integration with OctopusDeploy is achieved via the REST API, not the Octo.exe tool.
 
 ## Compatibility ##
 Fully compatible with OctopusDeploy 2.6.
 
-+Untested+ against OctopusDeploy 3.0.
+**Untested** against OctopusDeploy 3.0.
 
 # Main Components #
 ## Post-build step - Create Release ##
