@@ -68,11 +68,7 @@ public class OctopusApi {
         byte[] data = json.getBytes(Charset.forName(UTF8));
         AuthenticatedWebClient.WebResponse response = webClient.post("api/releases", data);
         if (response.isErrorCode()) {
-            List<String> errorMsgs = getErrorsFromResponse(response.getContent());
-            String errorMsg = "";
-            for (String err : errorMsgs) {
-                errorMsg += String.format("%s\n", err);
-            }
+            String errorMsg = getErrorsFromResponse(response.getContent());
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), errorMsg));
         }
         return response.getContent();
@@ -90,11 +86,7 @@ public class OctopusApi {
         byte[] data = json.getBytes(Charset.forName(UTF8));
         AuthenticatedWebClient.WebResponse response = webClient.post("api/deployments", data);
         if (response.isErrorCode()) {
-            List<String> errorMsgs = getErrorsFromResponse(response.getContent());
-            String errorMsg = "";
-            for (String err : errorMsgs) {
-                errorMsg += String.format("%s\n", err);
-            }            
+            String errorMsg = getErrorsFromResponse(response.getContent());          
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), errorMsg));
         }
         return response.getContent();
@@ -329,7 +321,7 @@ public class OctopusApi {
      * @param response The Octopus html response that may include error data
      * @return A list of error strings
      */
-    public static List<String> getErrorsFromResponse(String response) {
+    public static String getErrorsFromResponse(String response) {
         List<String> errorStrings = new ArrayList<String>();        
 
         //Get the error title and main message
@@ -345,7 +337,12 @@ public class OctopusApi {
         }
         errorStrings.addAll(getErrorDetails(response));       
 
-        return errorStrings;
+        String errorMsg = "";
+        for (String err : errorStrings) {
+            errorMsg += String.format("%s\n", err);
+        }          
+        
+        return errorMsg;
     }
     
     /**
