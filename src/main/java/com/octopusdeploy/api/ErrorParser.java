@@ -12,11 +12,11 @@ import java.util.regex.Pattern;
 public class ErrorParser {
     
     /** Find a group of messages in the format: "Errors":["error message 1", "error message 2", "error message 3"] */    
-    protected static final String errDetailsOutsideString = "(?:\\\"Errors\\\")(?:[^\\[]\\[)([^\\]]+)";
+    protected static final String errDetailsOutsideString = "(?:\\\"Errors\\\")(?:[^\\[]\\[)(?<fullDetailString>[^\\]]+)";
     protected static Pattern errDetailsOutsidePattern = Pattern.compile(errDetailsOutsideString);
 
     /** Parse each individual message from "error message 1", "error message 2", "error message 3" */
-    protected static final String errDetailsInsideString = "(?:\\\")([^\\\"]+)*(?:\\\")";
+    protected static final String errDetailsInsideString = "(?:\\\")(?<singleError>[^\\\"]+)*(?:\\\")";
     protected static Pattern errDetailsInsidePattern = Pattern.compile(errDetailsInsideString);
     
     /**
@@ -56,13 +56,13 @@ public class ErrorParser {
      */
     protected static String getErrorDataByFieldName(String fieldName, String response) {
         //Get the next string in script parameter list: "var errorData = {<fieldName>:"Field value", ...
-        final String patternString = String.format("(?:errorData.+)(?:\"%s\")(?:[:\\[\"]+)([^\"]+)", fieldName);
+        final String patternString = String.format("(?:errorData.+)(?:\"%s\")(?:[:\\[\"]+)(?<fieldValue>[^\"]+)", fieldName);
         
         Pattern pattern = Pattern.compile(patternString);
         Matcher matcher = pattern.matcher(response);
         String errData = "";
         if (matcher.find() && matcher.groupCount() > 0) {
-            errData = matcher.group(1);
+            errData = matcher.group("fieldValue");
         }
         return errData;
     }
@@ -78,10 +78,10 @@ public class ErrorParser {
         Matcher m = errDetailsOutsidePattern.matcher(response);
         if (m.find() && m.groupCount() > 0) {
             //Split up the list of error messages into individual messages
-            String errors = m.group(1);
+            String errors = m.group("fullDetailString");
             m = errDetailsInsidePattern.matcher(errors);
             while (m.find() && m.groupCount() > 0) {
-                errorList.add("\t" + m.group(1));
+                errorList.add("\t" + m.group("singleError"));
             }
         }    
         return errorList;
