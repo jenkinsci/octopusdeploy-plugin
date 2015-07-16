@@ -7,13 +7,13 @@ task :default => :bundle
 
 
 task :build do 
-  raise 'Build failed' unless system 'mvn compile'
+  raise 'Build failed' unless system 'mvn enforcer:enforce compile'
 end
 
 task :bundle do
-  raise 'Packaging failed!' unless system 'mvn package'
+  raise 'Packaging failed!' unless system 'mvn enforcer:enforce package'
 end
 
 task :demo do
-  raise 'Starting demo failed!' unless system 'mvn hpi:run'
+  raise 'Starting demo failed!' unless system 'mvn enforcer:enforce hpi:run'
 end
