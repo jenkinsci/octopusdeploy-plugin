@@ -410,15 +410,17 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             while (currentBuild != build)
             {
                 String currBuildNotes = convertChangeSetToString(currentBuild);
-                if (!currBuildNotes.isEmpty())
+                if (!currBuildNotes.isEmpty()) {
                     notes.append(currBuildNotes);
+                }
                 
                 currentBuild = currentBuild.getNextBuild();
             }
             //Also include the current build
             String currBuildNotes = convertChangeSetToString(build);
-            if (!currBuildNotes.isEmpty())
+            if (!currBuildNotes.isEmpty()) {
                 notes.append(currBuildNotes);
+            }
         }
         
         return notes.toString();
