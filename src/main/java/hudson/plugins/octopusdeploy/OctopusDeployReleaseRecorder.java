@@ -409,17 +409,38 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         if (currentBuild != null) {
             while (currentBuild != build)
             {
-                ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = currentBuild.getChangeSet();
-                for(Object item : changeSet.getItems())
-                {
-                    ChangeLogSet.Entry entry = (ChangeLogSet.Entry)item;
-                    notes.append(entry.getMsg()).append("\n");
+                String currBuildNotes = convertChangeSetToString(currentBuild);
+                if (!currBuildNotes.isEmpty()) {
+                    notes.append(currBuildNotes);
                 }
+                
                 currentBuild = currentBuild.getNextBuild();
+            }
+            //Also include the current build
+            String currBuildNotes = convertChangeSetToString(build);
+            if (!currBuildNotes.isEmpty()) {
+                notes.append(currBuildNotes);
             }
         }
         
         return notes.toString();
+    }
+    
+    /**
+     * Convert a build's change set to a string, each entry on a new line
+     * @param build The build to poll changesets from
+     * @return The changeset as a string
+     */
+    private String convertChangeSetToString(AbstractBuild build) {
+        StringBuilder allChangeNotes = new StringBuilder();
+        if (build != null) {
+            ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = build.getChangeSet();
+            for (Object item : changeSet.getItems()) {
+                ChangeLogSet.Entry entry = (ChangeLogSet.Entry) item;
+                allChangeNotes.append(entry.getMsg()).append("\n");
+            }
+        }
+        return allChangeNotes.toString();
     }
     
     /**
