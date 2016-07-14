@@ -31,4 +31,10 @@ public class Variable {
         this.value = value;
         this.description = description;
     }
+
+    @Override
+    public String toString() {
+        return "Variable [name=" + name + ", value=" + value + ", id=" + id + ", description=" + description + "]";
+    }
+
 }

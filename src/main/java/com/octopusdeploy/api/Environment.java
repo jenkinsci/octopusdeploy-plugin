@@ -27,4 +27,9 @@ public class Environment {
         this.name = name;
         this.description = description;
     }
+
+    @Override
+    public String toString() {
+        return "Environment [name=" + name + ", id=" + id + ", description=" + description + "]";
+    }
 }
