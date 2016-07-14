@@ -8,6 +8,9 @@
   <f:entry title="Environment" field="environment">
     <f:combobox />
   </f:entry>
+  <f:entry title="Variables" field="variables">
+    <f:textarea />
+  </f:entry>
   <f:entry title="Wait for deployment to complete" field="waitForDeployment">
     <f:checkbox  value="false" />
   </f:entry>

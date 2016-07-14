@@ -260,7 +260,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
 
         if (success && deployThisRelease) {
-          OctopusDeployDeploymentRecorder deployment = new OctopusDeployDeploymentRecorder(project, releaseVersion, environment, waitForDeployment);
+          OctopusDeployDeploymentRecorder deployment = new OctopusDeployDeploymentRecorder(project, releaseVersion, environment, "", waitForDeployment);
           success = deployment.perform(build, launcher, listener);
         }
 

@@ -11,6 +11,7 @@ import hudson.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.sf.json.*;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.*;
 
 /**
@@ -43,6 +44,15 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
     }
     
     /**
+     * The variables to use for a deploy to in Octopus.
+     */
+    private final String variables;
+    public String getVariables() {
+        return variables;
+    }
+    
+    
+    /**
      * Whether or not perform will return control immediately, or wait until the Deployment
      * task is completed.
      */
@@ -52,10 +62,11 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
     }
     
     @DataBoundConstructor
-    public OctopusDeployDeploymentRecorder(String project, String releaseVersion, String environment, boolean waitForDeployment) {
+    public OctopusDeployDeploymentRecorder(String project, String releaseVersion, String environment, String variables, boolean waitForDeployment) {
         this.project = project.trim();
         this.releaseVersion = releaseVersion.trim();
         this.environment = environment.trim();
+        this.variables = variables.trim();
         this.waitForDeployment = waitForDeployment;
     }
 
@@ -92,6 +103,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         String project = envInjector.injectEnvironmentVariableValues(this.project);
         String releaseVersion = envInjector.injectEnvironmentVariableValues(this.releaseVersion);
         String environment = envInjector.injectEnvironmentVariableValues(this.environment);
+        String variables = envInjector.injectEnvironmentVariableValues(this.variables);
         
         com.octopusdeploy.api.Project p = null;
         try {
@@ -146,20 +158,29 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
             log.fatal(String.format("Unable to find release version %s for project %s", releaseVersion, project));
             return false;
         }
-        
+        Properties properties = new Properties();
+        try {
+            properties.load(new StringReader(variables));
+        } catch (Exception ex) {
+            log.fatal(String.format("Unable to load entry variables failed with message '%s'",
+                    ex.getMessage()));
+            success = false;
+        }
+
         // TODO: Can we tell if we need to call? For now I will always try and get variable and use if I find them
-        Set<com.octopusdeploy.api.Variable> variables = null;
+        Set<com.octopusdeploy.api.Variable> variablesForDeploy = null;
+
         try {
             String releaseId = releaseToDeploy.getId();
             String environmentId = env.getId();
-            variables = api.getVariablesByReleaseAndEnvironment(releaseId, environmentId);
+            variablesForDeploy = api.getVariablesByReleaseAndEnvironment(releaseId, environmentId, properties);
         } catch (Exception ex) {
             log.fatal(String.format("Retrieving variables for release '%s' to environment '%s' failed with message '%s'",
                     releaseToDeploy.getId(), env.getName(), ex.getMessage()));
             success = false;
         }
         try {
-            String results = api.executeDeployment(releaseToDeploy.getId(), env.getId());
+            String results = api.executeDeployment(releaseToDeploy.getId(), env.getId(), variablesForDeploy);
             if (isTaskJson(results)) {
                 JSON resultJson = JSONSerializer.toJSON(results);
                 String urlSuffix = ((JSONObject)resultJson).getJSONObject("Links").getString("Web");
