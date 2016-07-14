@@ -146,6 +146,18 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
             log.fatal(String.format("Unable to find release version %s for project %s", releaseVersion, project));
             return false;
         }
+        
+        // TODO: Can we tell if we need to call? For now I will always try and get variable and use if I find them
+        Set<com.octopusdeploy.api.Variable> variables = null;
+        try {
+            String releaseId = releaseToDeploy.getId();
+            String environmentId = env.getId();
+            variables = api.getVariablesByReleaseAndEnvironment(releaseId, environmentId);
+        } catch (Exception ex) {
+            log.fatal(String.format("Retrieving variables for release '%s' to environment '%s' failed with message '%s'",
+                    releaseToDeploy.getId(), env.getName(), ex.getMessage()));
+            success = false;
+        }
         try {
             String results = api.executeDeployment(releaseToDeploy.getId(), env.getId());
             if (isTaskJson(results)) {

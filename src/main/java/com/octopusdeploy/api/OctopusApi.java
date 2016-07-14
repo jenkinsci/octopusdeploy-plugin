@@ -199,6 +199,36 @@ public class OctopusApi {
     }
 
     /**
+     * Get the variables for a combination of release and environment, return null otherwise.
+     * @param releaseId The id of the Release.
+     * @param environmentId The id of the Environment.
+     * @return A set of all variables for a given Release and Environment combination.
+     * @throws IllegalArgumentException
+     * @throws IOException 
+     */
+    public Set<Variable> getVariablesByReleaseAndEnvironment(String releaseId, String environmentId) throws IllegalArgumentException, IOException {
+        Set<Variable> variables = new HashSet<Variable>();
+        
+        AuthenticatedWebClient.WebResponse response = webClient.get("api/releases/" + releaseId + "/deployments/preview/" + environmentId);
+        if (response.isErrorCode()) {
+            throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
+        }
+        JSONObject json = (JSONObject)JSONSerializer.toJSON(response.getContent());
+        JSONObject form = json.getJSONObject("Form");
+        if (form != null){
+            for (Object obj : form.getJSONArray("Elements")) {
+                JSONObject jsonObj = (JSONObject)obj;
+                String id = jsonObj.getString("Name");
+                String name = jsonObj.getJSONObject("Control").getString("Name");
+                String description = jsonObj.getJSONObject("Control").getString("Description");
+                variables.add(new Variable(id, name, "", description));
+            }
+        }
+      
+        return variables;
+    }
+
+    /**
      * Get all releases for a given project from the Octopus server;
      * @param projectId
      * @return A set of all releases for a given project
