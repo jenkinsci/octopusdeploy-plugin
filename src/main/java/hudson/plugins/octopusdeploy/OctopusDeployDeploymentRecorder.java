@@ -11,7 +11,6 @@ import hudson.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.sf.json.*;
-import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.*;
 
 /**
