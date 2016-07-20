@@ -30,4 +30,10 @@ public class Release {
         this.releaseNotes = releaseNotes;
         this.version = version;
     }
+
+    @Override
+    public String toString() {
+        return "Release [id=" + id + ", projectId=" + projectId + ", releaseNotes=" + releaseNotes + ", version=" + version + "]";
+    }
+
 }

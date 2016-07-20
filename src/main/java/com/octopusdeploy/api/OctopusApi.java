@@ -80,7 +80,34 @@ public class OctopusApi {
      * @throws IOException 
      */
     public String executeDeployment(String releaseId, String environmentId) throws IOException {
-        String json = String.format("{EnvironmentId:\"%s\",ReleaseId:\"%s\"}", environmentId, releaseId);
+          return  executeDeployment( releaseId,  environmentId, null);
+    }
+
+    /**
+     * Deploys a given release to provided environment.
+     * @param releaseId Release Id from Octopus to deploy.
+     * @param environmentId Environment Id from Octopus to deploy to.
+     * @param variables Variables used during deployment.
+     * @return the content of the web response.
+     * @throws IOException 
+     */
+    public String executeDeployment(String releaseId, String environmentId, Set<Variable> variables) throws IOException {
+
+        StringBuilder jsonBuilder = new StringBuilder();
+        jsonBuilder.append(String.format("{EnvironmentId:\"%s\",ReleaseId:\"%s\"", environmentId, releaseId));
+
+        if (variables != null && !variables.isEmpty()) {
+            jsonBuilder.append(",FormValues:{");
+            Set<String> variablesStrings = new HashSet<String>();
+            for (Variable v : variables) {
+                variablesStrings.add(String.format("\"%s\":\"%s\"", v.getId(), v.getValue()));
+            }
+            jsonBuilder.append(StringUtils.join(variablesStrings, ","));
+            jsonBuilder.append("}");
+        }
+        jsonBuilder.append("}");
+        String json = jsonBuilder.toString();
+
         byte[] data = json.getBytes(Charset.forName(UTF8));
         AuthenticatedWebClient.WebResponse response = webClient.post("api/deployments", data);
         if (response.isErrorCode()) {
@@ -196,6 +223,43 @@ public class OctopusApi {
             }
         }
         return null;
+    }
+
+    /**
+     * Get the variables for a combination of release and environment, return null otherwise.
+     * @param releaseId The id of the Release.
+     * @param environmentId The id of the Environment.
+     * @return A set of all variables for a given Release and Environment combination.
+     * @throws IllegalArgumentException
+     * @throws IOException 
+     */
+    public Set<Variable> getVariablesByReleaseAndEnvironment(String releaseId, String environmentId, Properties entryProperties) throws IllegalArgumentException, IOException {
+        Set<Variable> variables = new HashSet<Variable>();
+        
+        AuthenticatedWebClient.WebResponse response = webClient.get("api/releases/" + releaseId + "/deployments/preview/" + environmentId);
+        if (response.isErrorCode()) {
+            throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
+        }
+        JSONObject json = (JSONObject)JSONSerializer.toJSON(response.getContent());
+        JSONObject form = json.getJSONObject("Form");
+        if (form != null){
+            JSONObject formValues = form.getJSONObject("Values");
+            for (Object obj : form.getJSONArray("Elements")) {
+                JSONObject jsonObj = (JSONObject) obj;
+                String id = jsonObj.getString("Name");
+                String name = jsonObj.getJSONObject("Control").getString("Name");
+                String value = formValues.getString(id);
+
+                String entryValue = entryProperties.getProperty(name);
+                if (StringUtils.isNotEmpty(entryValue)) {
+                    value = entryValue;
+                }
+                String description = jsonObj.getJSONObject("Control").getString("Description");
+                variables.add(new Variable(id, name, value, description));
+            }
+        }
+      
+        return variables;
     }
 
     /**

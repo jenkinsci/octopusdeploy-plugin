@@ -26,4 +26,9 @@ public class DeploymentProcessStep {
         this.name = name;
         this.actions = actions;
     }
+
+    @Override
+    public String toString() {
+        return "DeploymentProcessStep [id=" + id + ", name=" + name + ", actions=" + actions + "]";
+    }
 }

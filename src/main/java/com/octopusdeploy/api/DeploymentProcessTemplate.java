@@ -26,4 +26,9 @@ public class DeploymentProcessTemplate {
         this.projectId = projectId;
         this.packages = packages;
     }
+
+    @Override
+    public String toString() {
+        return "DeploymentProcessTemplate [id=" + id + ", projectId=" + projectId + ", packages=" + packages + "]";
+    }
 }

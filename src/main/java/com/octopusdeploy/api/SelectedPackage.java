@@ -18,4 +18,10 @@ public class SelectedPackage {
         this.stepName = stepName;
         this.version = version;
     }
+
+    @Override
+    public String toString() {
+        return "SelectedPackage [stepName=" + stepName + ", version=" + version + "]";
+    }
+
 }

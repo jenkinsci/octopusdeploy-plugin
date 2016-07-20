@@ -26,4 +26,9 @@ public class DeploymentProcess {
         this.projectId = projectId;
         this.steps = steps;
     }
+
+    @Override
+    public String toString() {
+        return "DeploymentProcess [id=" + id + ", projectId=" + projectId + ", steps=" + steps + "]";
+    }
 }
