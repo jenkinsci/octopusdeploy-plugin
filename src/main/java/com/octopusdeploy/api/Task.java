@@ -38,4 +38,10 @@ public class Task {
         this.state = state;
         this.isCompleted = isCompleted;
     }
+
+    @Override
+    public String toString() {
+        return "Task [id=" + id + ", name=" + name + ", description=" + description + ", state=" + state + ", isCompleted=" + isCompleted + "]";
+    }
+    
 }

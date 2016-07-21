@@ -33,4 +33,9 @@ public class DeploymentProcessStepAction {
         this.actionType = actionType;
         this.properties = properties;
     }
+
+    @Override
+    public String toString() {
+        return "DeploymentProcessStepAction [id=" + id + ", name=" + name + ", actionType=" + actionType + ", properties=" + properties + "]";
+    }
 }

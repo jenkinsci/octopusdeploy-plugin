@@ -18,5 +18,9 @@ public class Project {
         this.id = id;
         this.name = name;
     }
-            
+
+    @Override
+    public String toString() {
+        return "Project [name=" + name + ", id=" + id + "]";
+    }
 }

@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringEscapeUtils;
+
 /**
  * Parses errors from Octopus html/javascript responses
  * @author jlabroad
@@ -81,7 +83,8 @@ public class ErrorParser {
             String errors = m.group("fullDetailString");
             m = errDetailsInsidePattern.matcher(errors);
             while (m.find() && m.groupCount() > 0) {
-                errorList.add("\t" + m.group("singleError"));
+                String singleError = StringEscapeUtils.unescapeJava(m.group("singleError"));
+                errorList.add("\t" + singleError);
             }
         }    
         return errorList;
