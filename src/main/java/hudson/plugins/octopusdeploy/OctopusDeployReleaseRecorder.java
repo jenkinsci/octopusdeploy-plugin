@@ -49,7 +49,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
     public boolean getReleaseNotes() {
         return releaseNotes;
     }
-    
+
     /**
      * Where are the release notes located?
      */
@@ -64,16 +64,24 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
     public boolean isReleaseNotesSourceScm() {
         return "scm".equals(releaseNotesSource);
     }
-    
+
     /**
-     * Write a link back to the originating Jenkins build to the 
+     * The Tenant to use for a deploy to in Octopus.
+     */
+    private final String tenant;
+    public String getTenant() {
+        return tenant;
+    }
+
+    /**
+     * Write a link back to the originating Jenkins build to the
      * Octopus release notes?
      */
     private final boolean releaseNotesJenkinsLinkback;
     public boolean getJenkinsUrlLinkback() {
         return releaseNotesJenkinsLinkback;
     }
-    
+
     /**
      * The file that the release notes are in.
      */
@@ -81,7 +89,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
     public String getReleaseNotesFile() {
         return releaseNotesFile;
     }
-    
+
     /**
      * If we are deploying, should we wait for it to complete?
      */
@@ -89,15 +97,15 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
     public boolean getWaitForDeployment() {
         return waitForDeployment;
     }
-    
-    /** 
+
+    /**
      * The environment to deploy to, if we are deploying.
      */
     private final String environment;
     public String getEnvironment() {
         return environment;
     }
-    
+
     /**
      * Should this release be deployed right after it is created?
      */
@@ -125,13 +133,13 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
     public String getDefaultPackageVersion() {
         return defaultPackageVersion;
     }
-    
+
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
     public OctopusDeployReleaseRecorder(
-            String project, String releaseVersion, 
-            boolean releaseNotes, String releaseNotesSource, String releaseNotesFile, 
-            boolean deployThisRelease, String environment, boolean waitForDeployment,
+            String project, String releaseVersion,
+            boolean releaseNotes, String releaseNotesSource, String releaseNotesFile,
+            boolean deployThisRelease, String environment, String tenant, boolean waitForDeployment,
             List<PackageConfiguration> packageConfigs, boolean jenkinsUrlLinkback,
             String defaultPackageVersion) {
         this.project = project.trim();
@@ -142,11 +150,12 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         this.deployThisRelease = deployThisRelease;
         this.packageConfigs = packageConfigs;
         this.environment = environment.trim();
+        this.tenant = tenant.trim();
         this.waitForDeployment = waitForDeployment;
         this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
         this.defaultPackageVersion = defaultPackageVersion;
-    } 
-    
+    }
+
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
@@ -174,14 +183,15 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             return false;
         }
         EnvironmentVariableValueInjector envInjector = new EnvironmentVariableValueInjector(resolver, envVars);
-        
+
         // NOTE: hiding the member variables of the same name with their env-injected equivalents
         String project = envInjector.injectEnvironmentVariableValues(this.project);
         String releaseVersion = envInjector.injectEnvironmentVariableValues(this.releaseVersion);
         String releaseNotesFile = envInjector.injectEnvironmentVariableValues(this.releaseNotesFile);
         String environment = envInjector.injectEnvironmentVariableValues(this.environment);
+        String tenant = envInjector.injectEnvironmentVariableValues(this.tenant);
         String defaultPackageVersion = envInjector.injectEnvironmentVariableValues(this.defaultPackageVersion);
-        
+
         com.octopusdeploy.api.Project p = null;
         try {
             p = api.getProjectByName(project);
@@ -194,22 +204,22 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             log.fatal("Project was not found.");
             success = false;
         }
-      
+
         // Check packageVersion
         String releaseNotesContent = "";
-        
+
         // Prepend Release Notes with Jenkins URL?
         // Do this regardless if Release Notes are specified
         if (releaseNotesJenkinsLinkback) {
             final String buildUrlVar = "${BUILD_URL}";
-          
+
             // Use env vars
-            String resolvedBuildUrlVar = envInjector.injectEnvironmentVariableValues(buildUrlVar);          
-            releaseNotesContent = String.format("Created by: <a href=\"%s\">%s</a>\n", 
+            String resolvedBuildUrlVar = envInjector.injectEnvironmentVariableValues(buildUrlVar);
+            releaseNotesContent = String.format("Created by: <a href=\"%s\">%s</a>\n",
                 resolvedBuildUrlVar,
                 resolvedBuildUrlVar);
         }
-   
+
         if (releaseNotes) {
             if (isReleaseNotesSourceFile()) {
                 try {
@@ -225,7 +235,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
                 success = false;
             }
         }
-      
+
         if (!success) { // Early exit
             return success;
         }
@@ -244,7 +254,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         try {
             //Sanitize the release notes in preparation for JSON
             releaseNotesContent = JSONSanitizer.getInstance().sanitize(releaseNotesContent);
-            
+
             String results = api.createRelease(p.getId(), releaseVersion, releaseNotesContent, selectedPackages);
             JSONObject json = (JSONObject)JSONSerializer.toJSON(results);
             String urlSuffix = json.getJSONObject("Links").getString("Web");
@@ -260,17 +270,17 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
 
         if (success && deployThisRelease) {
-          OctopusDeployDeploymentRecorder deployment = new OctopusDeployDeploymentRecorder(project, releaseVersion, environment, "", waitForDeployment);
+          OctopusDeployDeploymentRecorder deployment = new OctopusDeployDeploymentRecorder(project, releaseVersion, environment, tenant, "", waitForDeployment);
           success = deployment.perform(build, launcher, listener);
         }
 
         return success;
     }
-    
+
     private DescriptorImpl getDescriptorImpl() {
         return ((DescriptorImpl)getDescriptor());
     }
-    
+
     /**
      * Write the startup header for the logs to show what our inputs are.
      * @param log The logger
@@ -300,7 +310,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
         log.info("=======================");
     }
-    
+
     /**
      * Gets a package list that is a combination of the default packages (taken from the Octopus template)
      * and the packages selected. Selected package version overwrite the default package version for a given package
@@ -315,7 +325,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             String defaultPackageVersion, Log log)
     {
         List<PackageConfiguration> combinedList = new ArrayList<PackageConfiguration>();
-        
+
         //Get all selected package names for easier lookup later
         Set<String> selectedNames = new HashSet<String>();
         if (selectedPackages != null) {
@@ -323,9 +333,9 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
                 selectedNames.add(pkgConfig.getPackageName());
             }
             //Start with the selected packages
-            combinedList.addAll(selectedPackages);            
-        }     
-        
+            combinedList.addAll(selectedPackages);
+        }
+
         DeploymentProcessTemplate defaultPackages = null;
         //If not default version specified, ignore all default packages
         try {
@@ -334,11 +344,11 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             //Default package retrieval unsuccessful
             log.info(String.format("Could not retrieve default package list for project id: %s. No default packages will be used", projectId));
         }
-        
+
         if (defaultPackages != null) {
             for (SelectedPackage selPkg : defaultPackages.getSteps()) {
                 String name = selPkg.getStepName();
-                
+
                 //Only add if it was not a selected package
                 if (!selectedNames.contains(name)) {
                     //Get the default version, if not specified, warn
@@ -351,29 +361,29 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
                 }
             }
         }
-        
+
         return combinedList;
     }
-    
+
     /**
      * Return the release notes contents from a file.
      * @param build our build
      * @return string contents of file
      * @throws IOException
-     * @throws InterruptedException 
+     * @throws InterruptedException
      */
     private String getReleaseNotesFromFile(AbstractBuild build, String releaseNotesFilename) throws IOException, InterruptedException {
         FilePath path = new FilePath(build.getWorkspace(), releaseNotesFilename);
-        return path.act(new ReadFileCallable());        
+        return path.act(new ReadFileCallable());
     }
-    
+
     /**
      * This callable allows us to read files from other nodes - ie. Jenkins slaves.
      */
     private static final class ReadFileCallable implements FileCallable<String> {
         public final static String ERROR_READING = "<Error Reading File>";
-        
-        @Override 
+
+        @Override
         public String invoke(File f, VirtualChannel channel) {
             try {
                 return StringUtils.join(Files.readAllLines(f.toPath(), StandardCharsets.UTF_8), "\n");
@@ -384,14 +394,14 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
 
         @Override
         public void checkRoles(RoleChecker rc) throws SecurityException {
-            
+
         }
     }
-    
+
     /**
      * Attempt to load release notes info from SCM.
      * @param build
-     * @return 
+     * @return
      */
     private String getReleaseNotesFromScm(AbstractBuild build) {
         StringBuilder notes = new StringBuilder();
@@ -413,7 +423,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
                 if (!currBuildNotes.isEmpty()) {
                     notes.append(currBuildNotes);
                 }
-                
+
                 currentBuild = currentBuild.getNextBuild();
             }
             //Also include the current build
@@ -422,10 +432,10 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
                 notes.append(currBuildNotes);
             }
         }
-        
+
         return notes.toString();
     }
-    
+
     /**
      * Convert a build's change set to a string, each entry on a new line
      * @param build The build to poll changesets from
@@ -442,7 +452,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
         return allChangeNotes.toString();
     }
-    
+
     /**
      * Descriptor for {@link OctopusDeployReleaseRecorder}. Used as a singleton.
      * The class is marked as public so that it can be accessed from views.
@@ -454,11 +464,11 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         private boolean loadedConfig;
         private OctopusApi api;
         private static final String PROJECT_RELEASE_VALIDATION_MESSAGE = "Project must be set to validate release.";
-        
+
         public DescriptorImpl() {
             load();
         }
-        
+
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             return true;
@@ -474,40 +484,40 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             save();
             return true;
         }
-               
+
         /**
         * Loads the OctopusDeployPlugin descriptor and pulls configuration from it
         * for API Key, and Host.
         */
         private void setGlobalConfiguration() {
-            // NOTE  - This method is not being called from the constructor due 
+            // NOTE  - This method is not being called from the constructor due
             // to a circular dependency issue on startup
-            if (!loadedConfig) { 
+            if (!loadedConfig) {
                 updateGlobalConfiguration();
             }
         }
-        
+
         public void updateGlobalConfiguration() {
-            OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl) 
+            OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl)
                     Jenkins.getInstance().getDescriptor(OctopusDeployPlugin.class);
              apiKey = descriptor.getApiKey();
              octopusHost = descriptor.getOctopusHost();
              api = new OctopusApi(octopusHost, apiKey);
              loadedConfig = true;
         }
-        
+
         /**
          * Check that the project field is not empty and represents an actual project.
          * @param project The name of the project.
          * @return FormValidation message if not ok.
          */
         public FormValidation doCheckProject(@QueryParameter String project) {
-            setGlobalConfiguration(); 
-            project = project.trim(); 
+            setGlobalConfiguration();
+            project = project.trim();
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateProject(project);
         }
-        
+
         /**
          * Check that the releaseVersion field is not empty.
          * @param releaseVersion release version.
@@ -529,11 +539,11 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             } catch (Exception ex) {
                 return FormValidation.warning(PROJECT_RELEASE_VALIDATION_MESSAGE);
             }
-            
+
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateRelease(releaseVersion, p.getId(), OctopusValidator.ReleaseExistenceRequirement.MustNotExist);
         }
-        
+
         /**
          * Check that the releaseNotesFile field is not empty.
          * @param releaseNotesFile The path to the release notes file, relative to the WS.
@@ -546,7 +556,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
 
             return FormValidation.ok();
         }
-        
+
         /**
          * Check that the environment field is not empty, and represents a real environment.
          * @param environment The name of the environment.
@@ -554,19 +564,19 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
          */
         public FormValidation doCheckEnvironment(@QueryParameter String environment) {
             setGlobalConfiguration();
-            environment = environment.trim(); 
+            environment = environment.trim();
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateEnvironment(environment);
         }
-        
+
         /**
          * Data binding that returns all possible environment names to be used in the environment autocomplete.
-         * @return 
+         * @return
          */
         public ComboBoxModel doFillEnvironmentItems() {
             setGlobalConfiguration();
             ComboBoxModel names = new ComboBoxModel();
-            
+
             try {
                 Set<com.octopusdeploy.api.Environment> environments = api.getAllEnvironments();
                 for (com.octopusdeploy.api.Environment env : environments) {
@@ -577,10 +587,10 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             }
             return names;
         }
-        
+
         /**
          * Data binding that returns all possible project names to be used in the project autocomplete.
-         * @return 
+         * @return
          */
         public ComboBoxModel doFillProjectItems() {
             setGlobalConfiguration();
