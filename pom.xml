@@ -35,14 +35,14 @@ THE SOFTWARE.
   <version>1.5.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <url>https://wiki.jenkins-ci.org/display/JENKINS/OctopusDeploy+Plugin</url>
-  
+
   <scm>
     <connection>scm:git:https://github.com/jenkinsci/octopusdeploy-plugin.git</connection>
     <developerConnection>scm:git:https://git@github.com/jenkinsci/octopusdeploy-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/octopusdeploy-plugin</url>
-    <tag>octopusdeploy-1.4.0</tag>
+    <tag>octopusdeploy-1.5.0</tag>
   </scm>
-  
+
   <developers>
     <developer>
       <id>badriance</id>
@@ -60,7 +60,7 @@ THE SOFTWARE.
       <email>lteixeira@vistaprint.com</email>
     </developer>
   </developers>
-  
+
   <profiles>
     <profile>
         <id>buildServer</id>
@@ -69,11 +69,11 @@ THE SOFTWARE.
         </build>
     </profile>
   </profiles>
-  
+
   <properties>
     <jdk.version>1.7</jdk.version>
   </properties>
-  
+
   <dependencies>
   </dependencies>
 

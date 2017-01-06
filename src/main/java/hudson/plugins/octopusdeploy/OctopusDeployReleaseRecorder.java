@@ -589,6 +589,24 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
 
         /**
+         * Data binding that returns all possible tenant names to be used in the tenant autocomplete.
+         * @return
+         */
+        public ComboBoxModel doFillTenantItems() {
+            setGlobalConfiguration();
+            ComboBoxModel names = new ComboBoxModel();
+            try {
+                Set<com.octopusdeploy.api.Tenant> tenants = api.getAllTenants();
+                for (com.octopusdeploy.api.Tenant ten : tenants) {
+                    names.add(ten.getName());
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(OctopusDeployDeploymentRecorder.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            return names;
+        }
+        
+        /**
          * Data binding that returns all possible project names to be used in the project autocomplete.
          * @return
          */
