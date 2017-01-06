@@ -99,7 +99,7 @@ public class OctopusApi {
         jsonBuilder.append(String.format("{EnvironmentId:\"%s\",ReleaseId:\"%s\"", environmentId, releaseId));
 
         if (tenantID != null && !tenantID.isEmpty()) {
-            jsonBuilder.append(String.format("TenantId:\"%s\"", tenantID));
+            jsonBuilder.append(String.format(",TenantId:\"%s\"", tenantID));
         }
         if (variables != null && !variables.isEmpty()) {
             jsonBuilder.append(",FormValues:{");
