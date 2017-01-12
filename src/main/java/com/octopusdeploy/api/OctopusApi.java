@@ -80,8 +80,8 @@ public class OctopusApi {
      * @return the content of the web response.
      * @throws IOException
      */
-    public String executeDeployment(String releaseId, String environmentId, String tenantID) throws IOException {
-          return  executeDeployment( releaseId,  environmentId, tenantID, null);
+    public String executeDeployment(String releaseId, String environmentId, String tenantId) throws IOException {
+          return  executeDeployment( releaseId,  environmentId, tenantId, null);
     }
 
     /**
@@ -93,13 +93,13 @@ public class OctopusApi {
      * @return the content of the web response.
      * @throws IOException
      */
-    public String executeDeployment(String releaseId, String environmentId, String tenantID, Set<Variable> variables) throws IOException {
+    public String executeDeployment(String releaseId, String environmentId, String tenantId, Set<Variable> variables) throws IOException {
 
         StringBuilder jsonBuilder = new StringBuilder();
         jsonBuilder.append(String.format("{EnvironmentId:\"%s\",ReleaseId:\"%s\"", environmentId, releaseId));
 
-        if (tenantID != null && !tenantID.isEmpty()) {
-            jsonBuilder.append(String.format(",TenantId:\"%s\"", tenantID));
+        if (tenantId != null && !tenantId.isEmpty()) {
+            jsonBuilder.append(String.format(",TenantId:\"%s\"", tenantId));
         }
         if (variables != null && !variables.isEmpty()) {
             jsonBuilder.append(",FormValues:{");

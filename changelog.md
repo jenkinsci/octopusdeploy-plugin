@@ -1,5 +1,8 @@
 # Change Log #
 
+## 1.5.0 ##
+* define tenant for Deployment
+
 ## 1.3.0 ##
 * Better error parsing from Octopus error page responses
 
