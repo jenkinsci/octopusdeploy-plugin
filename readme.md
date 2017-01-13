@@ -4,7 +4,7 @@ Connecting [OctopusDeploy](https://octopusdeploy.com/) to the [Jenkins](https://
 ## Compatibility ##
 Fully compatible with OctopusDeploy 2.6.
 
-Tested against OctopusDeploy 3.7.
+Tested against OctopusDeploy 3.0 - 3.7.
 
 # Main Components #
 ## Post-build step - Create Release ##
@@ -39,3 +39,9 @@ The Deployment component can optionally wait for the completion of the Deploymen
 
 ## Autocomplete ##
 Some entry fields, like Project and Environment support auto-completion, pulling a list of names to choose from from the OctopusDeploy server.
+
+## Octopus variables ##
+As of 1.4.0, this plugin can set Octopus variables for use in deployment.
+
+## Multi tenant support ##
+As of 1.5.0, this plugin can submit a Tenant to the deployment step for use in Octopus' multi-tenant mode.
