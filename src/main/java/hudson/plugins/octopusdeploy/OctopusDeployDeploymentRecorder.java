@@ -17,7 +17,7 @@ import org.kohsuke.stapler.*;
  * Executes deployments of releases.
  */
 public class OctopusDeployDeploymentRecorder extends Recorder implements Serializable {
-    
+
     /**
      * The Project name of the project as defined in Octopus.
      */
@@ -25,7 +25,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
     public String getProject() {
         return project;
     }
-    
+
     /**
      * The release version number in Octopus.
      */
@@ -33,7 +33,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
     public String getReleaseVersion() {
         return releaseVersion;
     }
-    
+
     /**
      * The environment to deploy to in Octopus.
      */
@@ -41,7 +41,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
     public String getEnvironment() {
         return environment;
     }
-    
+
     /**
      * The variables to use for a deploy to in Octopus.
      */
@@ -49,7 +49,14 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
     public String getVariables() {
         return variables;
     }
-    
+
+    /**
+     * The Tenant to use for a deploy to in Octopus.
+     */
+    private final String tenant;
+    public String getTenant() {
+        return tenant;
+    }
     
     /**
      * Whether or not perform will return control immediately, or wait until the Deployment
@@ -59,12 +66,13 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
     public boolean getWaitForDeployment() {
         return waitForDeployment;
     }
-    
+
     @DataBoundConstructor
-    public OctopusDeployDeploymentRecorder(String project, String releaseVersion, String environment, String variables, boolean waitForDeployment) {
+    public OctopusDeployDeploymentRecorder(String project, String releaseVersion, String environment, String tenant, String variables, boolean waitForDeployment) {
         this.project = project.trim();
         this.releaseVersion = releaseVersion.trim();
         this.environment = environment.trim();
+        this.tenant = tenant.trim();
         this.variables = variables.trim();
         this.waitForDeployment = waitForDeployment;
     }
@@ -83,12 +91,12 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
             log.info("Not deploying due to job being in FAILED state.");
             return success;
         }
-        
+
         logStartHeader(log);
         // todo: getting from descriptor is ugly. refactor?
         getDescriptorImpl().setGlobalConfiguration();
         OctopusApi api = getDescriptorImpl().api;
-        
+
         VariableResolver resolver = build.getBuildVariableResolver();
         EnvVars envVars;
         try {
@@ -102,8 +110,9 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         String project = envInjector.injectEnvironmentVariableValues(this.project);
         String releaseVersion = envInjector.injectEnvironmentVariableValues(this.releaseVersion);
         String environment = envInjector.injectEnvironmentVariableValues(this.environment);
+        String tenant = envInjector.injectEnvironmentVariableValues(this.tenant);
         String variables = envInjector.injectEnvironmentVariableValues(this.variables);
-        
+
         com.octopusdeploy.api.Project p = null;
         try {
             p = api.getProjectByName(project);
@@ -120,6 +129,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
                     environment, ex.getMessage()));
             success = false;
         }
+
         if (p == null) {
             log.fatal("Project was not found.");
             success = false;
@@ -132,6 +142,25 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         {
             return success;
         }
+
+        String tenantId = null;
+        if (tenant!=null && !tenant.isEmpty()) {
+            com.octopusdeploy.api.Tenant ten = null;
+            try {
+                ten = api.getTenantByName(tenant);
+                if (ten!=null){
+                    tenantId = ten.getId();
+                } else {
+                    log.fatal(String.format("Retrieving tenant name '%s' failed with message 'not found'", tenant));
+                    return false;
+                }
+            } catch (Exception ex) {
+                log.fatal(String.format("Retrieving tenant name '%s' failed with message '%s'",
+                        tenant, ex.getMessage()));
+                return false;
+            }
+        }
+
         Set<com.octopusdeploy.api.Release> releases = null;
         try {
             releases = api.getReleasesForProject(p.getId());
@@ -179,7 +208,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
             success = false;
         }
         try {
-            String results = api.executeDeployment(releaseToDeploy.getId(), env.getId(), variablesForDeploy);
+            String results = api.executeDeployment(releaseToDeploy.getId(), env.getId(), tenantId, variablesForDeploy);
             if (isTaskJson(results)) {
                 JSON resultJson = JSONSerializer.toJSON(results);
                 String urlSuffix = ((JSONObject)resultJson).getJSONObject("Links").getString("Web");
@@ -208,15 +237,15 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
             log.fatal("Failed to deploy: " + ex.getMessage());
             success = false;
         }
-        
+
         return success;
     }
-    
+
     private DescriptorImpl getDescriptorImpl() {
         return ((DescriptorImpl)getDescriptor());
     }
-            
-    
+
+
     /**
      * Write the startup header for the logs to show what our inputs are.
      * @param log The logger
@@ -227,11 +256,14 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         log.info("Project: " + project);
         log.info("Version: " + releaseVersion);
         log.info("Environment: " + environment);
+        if (tenant!=null && !tenant.isEmpty()) {
+            log.info("Tenant: " + tenant);
+        }
         log.info("======================");
     }
-    
+
     /**
-     * Attempts to parse the string as JSON. 
+     * Attempts to parse the string as JSON.
      * returns true on success
      * @param possiblyJson A string that may be JSON
      * @return true or false. True if string is valid JSON.
@@ -245,11 +277,11 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
             return false;
         }
     }
-    
+
     /**
      * Returns control when task is complete.
      * @param json
-     * @param logger 
+     * @param logger
      */
     private String waitForDeploymentCompletion(JSON json, OctopusApi api, Log logger) {
         final long WAIT_TIME = 5000;
@@ -264,7 +296,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
             logger.error("Error getting task: " + ex.getMessage());
             return null;
         }
-        
+
         logger.info("Task info:");
         logger.info("\tId: " + task.getId());
         logger.info("\tName: " + task.getName());
@@ -280,7 +312,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
                 logger.error("Error getting task: " + ex.getMessage());
                 return null;
             }
-            
+
             completed = task.getIsCompleted();
             lastState = task.getState();
             logger.info("Task state: " + lastState);
@@ -310,11 +342,11 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         private boolean loadedConfig;
         private OctopusApi api;
         private static final String PROJECT_RELEASE_VALIDATION_MESSAGE = "Project must be set to validate release.";
-        
+
         public DescriptorImpl() {
             load();
         }
-        
+
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             return true;
@@ -330,40 +362,40 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
             save();
             return true;
         }
-        
+
         /**
         * Loads the OctopusDeployPlugin descriptor and pulls configuration from it
         * for API Key, and Host.
         */
         private void setGlobalConfiguration() {
-            // NOTE  - This method is not being called from the constructor due 
+            // NOTE  - This method is not being called from the constructor due
             // to a circular dependency issue on startup
-            if (!loadedConfig) { 
+            if (!loadedConfig) {
                 updateGlobalConfiguration();
             }
         }
-        
+
         public void updateGlobalConfiguration() {
-            OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl) 
+            OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl)
                     Jenkins.getInstance().getDescriptor(OctopusDeployPlugin.class);
              apiKey = descriptor.getApiKey();
              octopusHost = descriptor.getOctopusHost();
              api = new OctopusApi(octopusHost, apiKey);
              loadedConfig = true;
         }
-        
+
         /**
          * Check that the project field is not empty and is a valid project.
          * @param project The name of the project.
          * @return Ok if not empty, error otherwise.
          */
         public FormValidation doCheckProject(@QueryParameter String project) {
-            setGlobalConfiguration(); 
-            project = project.trim(); 
+            setGlobalConfiguration();
+            project = project.trim();
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateProject(project);
         }
-        
+
         /**
          * Check that the releaseVersion field is not empty.
          * @param releaseVersion The release version of the package.
@@ -385,12 +417,12 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
             } catch (Exception ex) {
                 return FormValidation.warning(PROJECT_RELEASE_VALIDATION_MESSAGE);
             }
-            
+
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateRelease(releaseVersion, p.getId(), OctopusValidator.ReleaseExistenceRequirement.MustExist);
         }
-        
-        
+
+
         /**
          * Check that the environment field is not empty.
          * @param environment The name of the project.
@@ -398,19 +430,19 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
          */
         public FormValidation doCheckEnvironment(@QueryParameter String environment) {
             setGlobalConfiguration();
-            environment = environment.trim(); 
+            environment = environment.trim();
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateEnvironment(environment);
         }
-        
+
         /**
          * Data binding that returns all possible environment names to be used in the environment autocomplete.
-         * @return 
+         * @return
          */
         public ComboBoxModel doFillEnvironmentItems() {
             setGlobalConfiguration();
             ComboBoxModel names = new ComboBoxModel();
-            
+
             try {
                 Set<com.octopusdeploy.api.Environment> environments = api.getAllEnvironments();
                 for (com.octopusdeploy.api.Environment env : environments) {
@@ -421,10 +453,10 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
             }
             return names;
         }
-        
+
         /**
          * Data binding that returns all possible project names to be used in the project autocomplete.
-         * @return 
+         * @return
          */
         public ComboBoxModel doFillProjectItems() {
             setGlobalConfiguration();
@@ -433,6 +465,24 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
                 Set<com.octopusdeploy.api.Project> projects = api.getAllProjects();
                 for (com.octopusdeploy.api.Project proj : projects) {
                     names.add(proj.getName());
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(OctopusDeployDeploymentRecorder.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            return names;
+        }
+
+        /**
+         * Data binding that returns all possible tenant names to be used in the tenant autocomplete.
+         * @return
+         */
+        public ComboBoxModel doFillTenantItems() {
+            setGlobalConfiguration();
+            ComboBoxModel names = new ComboBoxModel();
+            try {
+                Set<com.octopusdeploy.api.Tenant> tenants = api.getAllTenants();
+                for (com.octopusdeploy.api.Tenant ten : tenants) {
+                    names.add(ten.getName());
                 }
             } catch (Exception ex) {
                 Logger.getLogger(OctopusDeployDeploymentRecorder.class.getName()).log(Level.SEVERE, null, ex);

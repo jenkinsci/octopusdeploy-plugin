@@ -4,11 +4,11 @@ Connecting [OctopusDeploy](https://octopusdeploy.com/) to the [Jenkins](https://
 ## Compatibility ##
 Fully compatible with OctopusDeploy 2.6.
 
-**Untested** against OctopusDeploy 3.0.
+Tested against OctopusDeploy 3.7.
 
 # Main Components #
 ## Post-build step - Create Release ##
-Creates a new release entry for a given project. 
+Creates a new release entry for a given project.
 Optionally also deploys the newly created release to a given environment.
 
 This component will only run if the build has been successful up until the point the post-build step is invoked.
