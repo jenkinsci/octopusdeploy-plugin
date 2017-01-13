@@ -1,7 +1,13 @@
 # Change Log #
 
 ## 1.5.0 ##
-* define tenant for Deployment
+* Define tenant for Deployment
+
+## 1.4.0 ##
+* Set octopus variables for deployment
+
+## 1.3.1 ##
+* Bugfix - Release notes from SCM now properly include changeset from current build
 
 ## 1.3.0 ##
 * Better error parsing from Octopus error page responses
