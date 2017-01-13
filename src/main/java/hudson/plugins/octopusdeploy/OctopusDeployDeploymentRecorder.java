@@ -144,11 +144,11 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         }
 
         String tenantId = null;
-        if (tenant!=null && !tenant.isEmpty()) {
+        if (tenant != null && !tenant.isEmpty()) {
             com.octopusdeploy.api.Tenant ten = null;
             try {
                 ten = api.getTenantByName(tenant);
-                if (ten!=null){
+                if (ten != null) {
                     tenantId = ten.getId();
                 } else {
                     log.fatal(String.format("Retrieving tenant name '%s' failed with message 'not found'", tenant));
@@ -233,7 +233,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
                     }
                 }
             }
-        } catch(IOException ex) {
+        } catch (IOException ex) {
             log.fatal("Failed to deploy: " + ex.getMessage());
             success = false;
         }
@@ -272,16 +272,16 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         try {
             JSONSerializer.toJSON(possiblyJson);
             return true;
-        } catch (JSONException ex)
-        {
+        } catch (JSONException ex) {
             return false;
         }
     }
 
     /**
      * Returns control when task is complete.
-     * @param json
-     * @param logger
+     * @param json json input
+     * @param api octopus api
+     * @param logger logger
      */
     private String waitForDeploymentCompletion(JSON json, OctopusApi api, Log logger) {
         final long WAIT_TIME = 5000;
@@ -437,7 +437,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
 
         /**
          * Data binding that returns all possible environment names to be used in the environment autocomplete.
-         * @return
+         * @return ComboBoxModel
          */
         public ComboBoxModel doFillEnvironmentItems() {
             setGlobalConfiguration();
@@ -456,7 +456,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
 
         /**
          * Data binding that returns all possible project names to be used in the project autocomplete.
-         * @return
+         * @return ComboBoxModel
          */
         public ComboBoxModel doFillProjectItems() {
             setGlobalConfiguration();
@@ -474,7 +474,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
 
         /**
          * Data binding that returns all possible tenant names to be used in the tenant autocomplete.
-         * @return
+         * @return ComboBoxModel
          */
         public ComboBoxModel doFillTenantItems() {
             setGlobalConfiguration();

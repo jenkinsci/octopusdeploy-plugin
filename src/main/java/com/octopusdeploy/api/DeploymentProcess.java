@@ -3,7 +3,7 @@ package com.octopusdeploy.api;
 import java.util.Set;
 
 /**
- * 
+ * Deployment process is an Octopus concept that ties a project to the project's individual steps.
  */
 public class DeploymentProcess {
     private final String id;

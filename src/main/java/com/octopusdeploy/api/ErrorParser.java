@@ -72,7 +72,7 @@ public class ErrorParser {
     /**
      * Returns a list of "Errors" values from Octopus html response
      * @param response The full Octopus html response
-     * @return 
+     * @return a list of error details
      */
     protected static List<String> getErrorDetails(String response) {
         List<String> errorList = new ArrayList<String>();
