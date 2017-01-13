@@ -19,7 +19,7 @@ public class OctopusApi {
      * @param project The project id
      * @param releaseVersion The version number for this release.
      * @return content from the API post
-     * @throws java.io.IOException
+     * @throws java.io.IOException When the AuthenticatedWebClient receives and error response code
      */
     public String createRelease(String project, String releaseVersion) throws IOException {
         return createRelease(project, releaseVersion, null);
@@ -31,7 +31,7 @@ public class OctopusApi {
      * @param releaseVersion The version number for this release.
      * @param releaseNotes Release notes to be associated with this release.
      * @return content from the API post
-     * @throws java.io.IOException
+     * @throws java.io.IOException When the AuthenticatedWebClient receives and error response code
      */
     public String createRelease(String project, String releaseVersion, String releaseNotes) throws IOException {
         return createRelease(project, releaseVersion, releaseNotes, null);
@@ -44,7 +44,7 @@ public class OctopusApi {
      * @param releaseNotes Release notes to be associated with this release.
      * @param selectedPackages Packages to be deployed with this release.
      * @return content from the API post
-     * @throws java.io.IOException
+     * @throws java.io.IOException When the AuthenticatedWebClient receives and error response code
      */
     public String createRelease(String project, String releaseVersion, String releaseNotes, Set<SelectedPackage> selectedPackages) throws IOException {
         StringBuilder jsonBuilder = new StringBuilder();
@@ -78,10 +78,10 @@ public class OctopusApi {
      * @param environmentId Environment Id from Octopus to deploy to.
      * @param tenantID Tenant Id from Octopus to deploy to.
      * @return the content of the web response.
-     * @throws IOException
+     * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public String executeDeployment(String releaseId, String environmentId, String tenantId) throws IOException {
-          return  executeDeployment( releaseId,  environmentId, tenantId, null);
+          return executeDeployment( releaseId,  environmentId, tenantId, null);
     }
 
     /**
@@ -91,7 +91,7 @@ public class OctopusApi {
      * @param tenantID Tenant Id from Octopus to deploy to.
      * @param variables Variables used during deployment.
      * @return the content of the web response.
-     * @throws IOException
+     * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public String executeDeployment(String releaseId, String environmentId, String tenantId, Set<Variable> variables) throws IOException {
 
@@ -126,8 +126,8 @@ public class OctopusApi {
      * Uses the authenticated web client to pull all projects from the api and
      * convert them to POJOs
      * @return a Set of Projects (may be empty)
-     * @throws IllegalArgumentException
-     * @throws IOException
+     * @throws IllegalArgumentException when the web client receives a bad parameter
+     * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public Set<Project> getAllProjects() throws IllegalArgumentException, IOException {
         HashSet<Project> projects = new HashSet<Project>();
@@ -150,8 +150,8 @@ public class OctopusApi {
      * Only selects the project if the name is an exact match (including case)
      * @param name name of the project to select
      * @return the named project or null if no such project exists
-     * @throws IllegalArgumentException
-     * @throws IOException
+     * @throws IllegalArgumentException when the web client receives a bad parameter
+     * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public Project getProjectByName(String name)  throws IllegalArgumentException, IOException {
         return getProjectByName(name, false);
@@ -162,8 +162,8 @@ public class OctopusApi {
      * @param name name of the project to select
      * @param ignoreCase when true uses equalsIgnoreCase in the name check
      * @return the named project or null if no such project exists
-     * @throws IllegalArgumentException
-     * @throws IOException
+     * @throws IllegalArgumentException when the web client receives a bad parameter
+     * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public Project getProjectByName(String name, boolean ignoreCase)  throws IllegalArgumentException, IOException {
         Set<Project> allProjects = getAllProjects();
@@ -179,8 +179,8 @@ public class OctopusApi {
     /**
      * Get all environments from the Octopus server as Environment objects.
      * @return A set of all environments on the Octopus server.
-     * @throws IllegalArgumentException
-     * @throws IOException
+     * @throws IllegalArgumentException when the web client receives a bad parameter
+     * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public Set<Environment> getAllEnvironments() throws IllegalArgumentException, IOException {
         HashSet<Environment> environments = new HashSet<Environment>();
@@ -204,8 +204,8 @@ public class OctopusApi {
      * Only selects the environment if the name is an exact match (including case)
      * @param name The name of the Environment to find.
      * @return The Environment with that name.
-     * @throws IllegalArgumentException
-     * @throws IOException
+     * @throws IllegalArgumentException when the web client receives a bad parameter
+     * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public Environment getEnvironmentByName(String name) throws IllegalArgumentException, IOException {
         return getEnvironmentByName(name, false);
@@ -216,8 +216,8 @@ public class OctopusApi {
      * @param name The name of the Environment to find.
      * @param ignoreCase when true uses equalsIgnoreCase in the name check
      * @return The Environment with that name.
-     * @throws IllegalArgumentException
-     * @throws IOException
+     * @throws IllegalArgumentException when the web client receives a bad parameter
+     * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public Environment getEnvironmentByName(String name, boolean ignoreCase) throws IllegalArgumentException, IOException {
         Set<Environment> environments = getAllEnvironments();
@@ -234,8 +234,8 @@ public class OctopusApi {
      * Uses the authenticated web client to pull all tenants from the api and
      * convert them to POJOs
      * @return a Set of Projects (may be empty)
-     * @throws IllegalArgumentException
-     * @throws IOException
+     * @throws IllegalArgumentException when the web client receives a bad parameter
+     * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public Set<Tenant> getAllTenants() throws IllegalArgumentException, IOException {
         HashSet<Tenant> tenants = new HashSet<Tenant>();
@@ -258,8 +258,8 @@ public class OctopusApi {
      * Only selects the tenant if the name is an exact match (including case)
      * @param name The name of the Tenant to find.
      * @return The Tenant with that name.
-     * @throws IllegalArgumentException
-     * @throws IOException
+     * @throws IllegalArgumentException when the web client receives a bad parameter
+     * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public Tenant getTenantByName(String name) throws IllegalArgumentException, IOException {
         return getTenantByName(name, false);
@@ -270,8 +270,8 @@ public class OctopusApi {
      * @param name The name of the Tenant to find.
      * @param ignoreCase when true uses equalsIgnoreCase in the name check
      * @return The Environment with that name.
-     * @throws IllegalArgumentException
-     * @throws IOException
+     * @throws IllegalArgumentException when the web client receives a bad parameter
+     * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public Tenant getTenantByName(String name, boolean ignoreCase) throws IllegalArgumentException, IOException {
         Set<Tenant> tenants = getAllTenants();
@@ -289,8 +289,8 @@ public class OctopusApi {
      * @param releaseId The id of the Release.
      * @param environmentId The id of the Environment.
      * @return A set of all variables for a given Release and Environment combination.
-     * @throws IllegalArgumentException
-     * @throws IOException
+     * @throws IllegalArgumentException when the web client receives a bad parameter
+     * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public Set<Variable> getVariablesByReleaseAndEnvironment(String releaseId, String environmentId, Properties entryProperties) throws IllegalArgumentException, IOException {
         Set<Variable> variables = new HashSet<Variable>();
@@ -323,10 +323,10 @@ public class OctopusApi {
 
     /**
      * Get all releases for a given project from the Octopus server;
-     * @param projectId
+     * @param projectId the id of the project to get the releases for
      * @return A set of all releases for a given project
-     * @throws IllegalArgumentException
-     * @throws IOException
+     * @throws IllegalArgumentException when the web client receives a bad parameter
+     * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public Set<Release> getReleasesForProject(String projectId) throws IllegalArgumentException, IOException {
         HashSet<Release> releases = new HashSet<Release>();
@@ -347,10 +347,10 @@ public class OctopusApi {
 
     /**
      * Return a representation of a deployment process for a given project.
-     * @param projectId
-     * @return DeploymentProcess
-     * @throws IllegalArgumentException
-     * @throws IOException
+     * @param projectId the id of the project to get the process for.
+     * @return DeploymentProcess a representation of the process
+     * @throws IllegalArgumentException when the web client receives a bad parameter
+     * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public DeploymentProcess getDeploymentProcessForProject(String projectId) throws IllegalArgumentException, IOException {
         // TODO: refactor/method extract/clean up
@@ -390,10 +390,10 @@ public class OctopusApi {
 
     /**
      * Return a representation of a deployment process for a given project.
-     * @param projectId
-     * @return DeploymentProcessTemplate
-     * @throws IllegalArgumentException
-     * @throws IOException
+     * @param projectId project id
+     * @return DeploymentProcessTemplate deployment process template
+     * @throws IllegalArgumentException when the web client receives a bad parameter
+     * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public DeploymentProcessTemplate getDeploymentProcessTemplateForProject(String projectId) throws IllegalArgumentException, IOException {
         AuthenticatedWebClient.WebResponse response = webClient.get("api/deploymentprocesses/deploymentprocess-" + projectId + "/template");
@@ -419,11 +419,12 @@ public class OctopusApi {
 
     /**
      * Retrieves a task by its id.
-     * @param taskId
+     * @param taskId task id
      * @return a Task object
-     * @throws IOException
+     * @throws IllegalArgumentException  when the web client receives a bad parameter
+     * @throws IOException  When the AuthenticatedWebClient receives and error response code
      */
-    public Task getTask(String taskId) throws IOException {
+    public Task getTask(String taskId) throws IllegalArgumentException, IOException {
         AuthenticatedWebClient.WebResponse response = webClient.get("api/tasks/" + taskId);
         if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));

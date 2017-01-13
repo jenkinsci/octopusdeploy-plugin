@@ -34,8 +34,9 @@ public class AuthenticatedWebClient {
      * @param resource the URL to the resource (omitting the host portion)
      * @param data an encoded data array of the data to post
      * @return JSON blob representing the response from the server.
-     * @throws ProtocolException
+     * @throws ProtocolException if the operation is performed on a URL that is not HTTP or HTTPS
      * @throws IOException 
+     * @throws IllegalArgumentException When data to post is null
      */
     public WebResponse post(String resource, byte[] data) throws ProtocolException, IOException
     {
@@ -44,7 +45,7 @@ public class AuthenticatedWebClient {
             throw new IllegalArgumentException("Data to post can not be null");
         }
         URLConnection connection = getConnection(POST, resource, null);
-        connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");		
+        connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");        
         connection.setRequestProperty("Content-Length", Integer.toString(data.length));
         connection.setDoOutput(true);
         connection.connect();
@@ -83,7 +84,7 @@ public class AuthenticatedWebClient {
      * Encodes all values using UTF-8 URL encoding.
      * @param queryParametersMap a map of keys and values for query parameters
      * @return a string of form "key1=value1&key2=value2"
-     * @throws UnsupportedEncodingException 
+     * @throws UnsupportedEncodingException when/if the url encoding to UTF8 fails.
      */
     private String mapToQueryParameters(Map<String, String> queryParametersMap) throws UnsupportedEncodingException {
         Set<String> parameterKeyValuePairs = new HashSet<String>();
@@ -103,12 +104,13 @@ public class AuthenticatedWebClient {
      * @param endpoint the resource endpoint to connect to
      * @param queryParameters query parameters string to use in GET requests
      * @return the URLConnection (may be HTTP or HTTPS)
-     * @throws MalformedURLException
-     * @throws ProtocolException
-     * @throws IOException 
+     * @throws MalformedURLException if the supplied url is not a valid url
+     * @throws ProtocolException if the supplied url is not http or https
+     * @throws IOException if there is a failure establishing an http connection
+     * @throws IllegalArgumentException if the provided method is not GET or POST
      */
     private URLConnection getConnection(String method, String endpoint, String queryParameters) 
-        throws MalformedURLException, ProtocolException, IOException {
+        throws MalformedURLException, ProtocolException, IOException, IllegalArgumentException {
         if (!GET.equals(method) && !POST.equals(method)) {
             throw new IllegalArgumentException(String.format("Unsupported method '%s'.", method));
         }
@@ -131,9 +133,10 @@ public class AuthenticatedWebClient {
      * Use the connection to read a response from the server.
      * @param connection an instantiated URLConnection object.
      * @return JSON blob representing the response from the server.
-     * @throws IOException 
+     * @throws IOException if there is an issue when connecting or reading the response
+     * @throws IllegalArgumentException if the connection is null
      */
-    private WebResponse getResponse(URLConnection connection) throws IOException  {
+    private WebResponse getResponse(URLConnection connection) throws IOException, IllegalArgumentException  {
         int responseCode = -1;
         if (connection == null)
         {
@@ -172,7 +175,7 @@ public class AuthenticatedWebClient {
     * @return true or false
     */
    public final static boolean isErrorCode(final int code) {
-       return  code >= 400;
+       return code >= 400;
    }
     
     /**

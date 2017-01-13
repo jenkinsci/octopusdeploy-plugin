@@ -86,7 +86,7 @@ public class OctopusValidator {
      * @param releaseVersion the release version.
      * @param projectId the project's Id that this release is for.
      * @param existanceCheckReq the requirement for the existence of the release.
-     * @return 
+     * @return FormValidation response
      */
     public FormValidation validateRelease(String releaseVersion, String projectId, ReleaseExistenceRequirement existanceCheckReq) {
         if (releaseVersion.isEmpty()) {

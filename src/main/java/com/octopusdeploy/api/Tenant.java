@@ -1,7 +1,7 @@
 package com.octopusdeploy.api;
 
 /**
- * Represents an Tenant.
+ * Represents a Tenant.
  */
 public class Tenant {
     private final String name;

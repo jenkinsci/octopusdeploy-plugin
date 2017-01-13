@@ -252,7 +252,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
 
         try {
-            //Sanitize the release notes in preparation for JSON
+            // Sanitize the release notes in preparation for JSON
             releaseNotesContent = JSONSanitizer.getInstance().sanitize(releaseNotesContent);
 
             String results = api.createRelease(p.getId(), releaseVersion, releaseNotesContent, selectedPackages);
@@ -318,8 +318,6 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
      * @param selectedPackages
      * @param defaultPackageVersion
      * @return A list that combines the default packages and selected packages
-     * @throws IllegalArgumentException
-     * @throws IOException
      */
     private List<PackageConfiguration> getCombinedPackageList(String projectId, List<PackageConfiguration> selectedPackages,
             String defaultPackageVersion, Log log)
@@ -356,8 +354,9 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
                         combinedList.add(new PackageConfiguration(name, defaultPackageVersion));
                         log.info(String.format("Using default version (%s) of package %s", defaultPackageVersion, name));
                     }
-                    else
+                    else {
                         log.error(String.format("Required package %s not included because package is not in Package Configuration list and no default package version defined", name));
+                    }
                 }
             }
         }
@@ -369,8 +368,8 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
      * Return the release notes contents from a file.
      * @param build our build
      * @return string contents of file
-     * @throws IOException
-     * @throws InterruptedException
+     * @throws IOException if there was a file read io problem
+     * @throws InterruptedException if the action for reading was interrupted
      */
     private String getReleaseNotesFromFile(AbstractBuild build, String releaseNotesFilename) throws IOException, InterruptedException {
         FilePath path = new FilePath(build.getWorkspace(), releaseNotesFilename);
@@ -400,8 +399,8 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
 
     /**
      * Attempt to load release notes info from SCM.
-     * @param build
-     * @return
+     * @param build the jenkins build
+     * @return release notes as a single string
      */
     private String getReleaseNotesFromScm(AbstractBuild build) {
         StringBuilder notes = new StringBuilder();
@@ -426,7 +425,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
 
                 currentBuild = currentBuild.getNextBuild();
             }
-            //Also include the current build
+            // Also include the current build
             String currBuildNotes = convertChangeSetToString(build);
             if (!currBuildNotes.isEmpty()) {
                 notes.append(currBuildNotes);
@@ -571,7 +570,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
 
         /**
          * Data binding that returns all possible environment names to be used in the environment autocomplete.
-         * @return
+         * @return ComboBoxModel
          */
         public ComboBoxModel doFillEnvironmentItems() {
             setGlobalConfiguration();
@@ -590,7 +589,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
 
         /**
          * Data binding that returns all possible tenant names to be used in the tenant autocomplete.
-         * @return
+         * @return ComboBoxModel
          */
         public ComboBoxModel doFillTenantItems() {
             setGlobalConfiguration();
@@ -608,7 +607,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         
         /**
          * Data binding that returns all possible project names to be used in the project autocomplete.
-         * @return
+         * @return ComboBoxModel
          */
         public ComboBoxModel doFillProjectItems() {
             setGlobalConfiguration();
