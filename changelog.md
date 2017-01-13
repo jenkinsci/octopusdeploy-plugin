@@ -2,6 +2,7 @@
 
 ## 1.5.0 ##
 * Define tenant for Deployment
+* Updated javadocs
 
 ## 1.4.0 ##
 * Set octopus variables for deployment
