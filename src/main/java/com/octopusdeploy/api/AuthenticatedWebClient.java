@@ -35,7 +35,7 @@ public class AuthenticatedWebClient {
      * @param data an encoded data array of the data to post
      * @return JSON blob representing the response from the server.
      * @throws ProtocolException if the operation is performed on a URL that is not HTTP or HTTPS
-     * @throws IOException 
+     * @throws IOException if there are errors establishing a web connection OR reading the output stream
      * @throws IllegalArgumentException When data to post is null
      */
     public WebResponse post(String resource, byte[] data) throws ProtocolException, IOException
@@ -60,7 +60,7 @@ public class AuthenticatedWebClient {
      * Executes a get request against the resource provided.
      * @param resource the URL to the resource (omitting the host portion)
      * @return JSON blob representing the response from the server.
-     * @throws IOException 
+     * @throws IOException if establishing the web connection fails
      */
     public WebResponse get(String resource) throws IOException {
         return get(resource, null);
@@ -71,7 +71,7 @@ public class AuthenticatedWebClient {
      * @param resource the URL to the resource (omitting the host portion)
      * @param queryParameters a map of keys and values to include in the get. 
      * @return JSON blob representing the response from the server.
-     * @throws IOException 
+     * @throws IOException if establishing the web connection fails
      */
     public WebResponse get(String resource, Map<String, String> queryParameters) throws IOException {
         String encodedParameterString = mapToQueryParameters(queryParameters);
