@@ -337,8 +337,8 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
      */
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
-        private String octopusHost;
-        private String apiKey;
+        private String octopusHost = "";
+        private String apiKey = "";
         private boolean loadedConfig;
         private OctopusApi api;
         private static final String PROJECT_RELEASE_VALIDATION_MESSAGE = "Project must be set to validate release.";
@@ -376,12 +376,15 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         }
 
         public void updateGlobalConfiguration() {
-            OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl)
-                    Jenkins.getInstance().getDescriptor(OctopusDeployPlugin.class);
-             apiKey = descriptor.getApiKey();
-             octopusHost = descriptor.getOctopusHost();
-             api = new OctopusApi(octopusHost, apiKey);
-             loadedConfig = true;
+            Jenkins jenkinsInstance = Jenkins.getInstance();
+            if (jenkinsInstance != null) {
+                OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl)
+                    jenkinsInstance.getDescriptor(OctopusDeployPlugin.class);
+                apiKey = descriptor.getApiKey();
+                octopusHost = descriptor.getOctopusHost();
+            }
+            api = new OctopusApi(octopusHost, apiKey);
+            loadedConfig = true;
         }
 
         /**
