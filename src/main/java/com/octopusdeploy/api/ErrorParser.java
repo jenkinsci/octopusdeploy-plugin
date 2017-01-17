@@ -15,11 +15,11 @@ public class ErrorParser {
     
     /** Find a group of messages in the format: "Errors":["error message 1", "error message 2", "error message 3"] */    
     protected static final String errDetailsOutsideString = "(?:\\\"Errors\\\")(?:[^\\[]\\[)(?<fullDetailString>[^\\]]+)";
-    protected static Pattern errDetailsOutsidePattern = Pattern.compile(errDetailsOutsideString);
+    protected static final Pattern errDetailsOutsidePattern = Pattern.compile(errDetailsOutsideString);
 
     /** Parse each individual message from "error message 1", "error message 2", "error message 3" */
     protected static final String errDetailsInsideString = "(?:\\\")(?<singleError>[^\\\"]+)*(?:\\\")";
-    protected static Pattern errDetailsInsidePattern = Pattern.compile(errDetailsInsideString);
+    protected static final Pattern errDetailsInsidePattern = Pattern.compile(errDetailsInsideString);
     
     /**
      * Parse any errors from the returned HTML/javascript from Octopus
@@ -42,12 +42,12 @@ public class ErrorParser {
         }
         errorStrings.addAll(getErrorDetails(response));       
 
-        String errorMsg = "";
+        StringBuilder errorMsg = new StringBuilder();
         for (String err : errorStrings) {
-            errorMsg += String.format("%s\n", err);
+            errorMsg.append(String.format("%s%n", err));
         }          
         
-        return errorMsg;
+        return errorMsg.toString();
     }
     
     /**

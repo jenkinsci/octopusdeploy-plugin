@@ -178,7 +178,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         try {
             envVars = build.getEnvironment(listener);
         } catch (Exception ex) {
-            log.fatal(String.format("Failed to retrieve environment variables for this build - '%s'",
+            log.fatal(String.format("Failed to retrieve environment variables for this project '%s' - '%s'",
                     project, ex.getMessage()));
             return false;
         }
@@ -215,7 +215,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
 
             // Use env vars
             String resolvedBuildUrlVar = envInjector.injectEnvironmentVariableValues(buildUrlVar);
-            releaseNotesContent = String.format("Created by: <a href=\"%s\">%s</a>\n",
+            releaseNotesContent = String.format("Created by: <a href=\"%s\">%s</a>%n",
                 resolvedBuildUrlVar,
                 resolvedBuildUrlVar);
         }
@@ -458,8 +458,8 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
      */
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
-        private String octopusHost;
-        private String apiKey;
+        private String octopusHost = "";
+        private String apiKey = "";
         private boolean loadedConfig;
         private OctopusApi api;
         private static final String PROJECT_RELEASE_VALIDATION_MESSAGE = "Project must be set to validate release.";
@@ -497,12 +497,15 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
 
         public void updateGlobalConfiguration() {
-            OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl)
-                    Jenkins.getInstance().getDescriptor(OctopusDeployPlugin.class);
-             apiKey = descriptor.getApiKey();
-             octopusHost = descriptor.getOctopusHost();
-             api = new OctopusApi(octopusHost, apiKey);
-             loadedConfig = true;
+            Jenkins jenkinsInstance = Jenkins.getInstance();
+            if (jenkinsInstance != null) {
+                OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl)
+                    jenkinsInstance.getDescriptor(OctopusDeployPlugin.class);
+                apiKey = descriptor.getApiKey();
+                octopusHost = descriptor.getOctopusHost();
+            }
+            api = new OctopusApi(octopusHost, apiKey);
+            loadedConfig = true;
         }
 
         /**

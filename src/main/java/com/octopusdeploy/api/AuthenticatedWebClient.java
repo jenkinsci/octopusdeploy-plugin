@@ -2,6 +2,7 @@ package com.octopusdeploy.api;
 
 import java.io.*;
 import java.net.*;
+import java.nio.charset.Charset;
 import java.util.*;
 import org.apache.commons.lang.StringUtils;
 
@@ -154,7 +155,7 @@ public class AuthenticatedWebClient {
         if (streamToRead == null) {
             streamToRead = connection.getInputStream();
         }
-        BufferedReader reader = new BufferedReader(new InputStreamReader(streamToRead));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(streamToRead, Charset.forName(UTF8)));
         String inputLine;
         StringBuilder response = new StringBuilder();
 
@@ -181,7 +182,7 @@ public class AuthenticatedWebClient {
     /**
      * A web response code (HTTP Response code) and content from the web request.
      */
-    public class WebResponse {
+    public static class WebResponse {
         private final int code;
         /**
          * The HTTP response code.
