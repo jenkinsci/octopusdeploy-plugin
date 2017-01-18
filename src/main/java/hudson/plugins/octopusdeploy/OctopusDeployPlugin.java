@@ -60,7 +60,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
                 Logger.getLogger(OctopusDeployPlugin.class.getName()).log(Level.WARNING, INVALID_URL, ex);
                 return FormValidation.error(INVALID_URL);
             }
-            
+
             try {
                 URLConnection connection = url.openConnection();
                 if (connection instanceof HttpURLConnection) {
@@ -78,7 +78,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
                 Logger.getLogger(OctopusDeployPlugin.class.getName()).log(Level.WARNING, UNABLE_TO_CONNECT, ex);
                 return FormValidation.error("%s - %s", UNABLE_TO_CONNECT, ex.getMessage());
             }
-            
+
             return FormValidation.ok();
         }
         
@@ -90,13 +90,15 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
             
             save();
             // update the other plugin components when this changes!
-            OctopusDeployReleaseRecorder.DescriptorImpl releaseDescriptor = (OctopusDeployReleaseRecorder.DescriptorImpl) 
-                    Jenkins.getInstance().getDescriptor(OctopusDeployReleaseRecorder.class);
-            OctopusDeployDeploymentRecorder.DescriptorImpl deployDescriptor = (OctopusDeployDeploymentRecorder.DescriptorImpl) 
-                    Jenkins.getInstance().getDescriptor(OctopusDeployDeploymentRecorder.class);
-            releaseDescriptor.updateGlobalConfiguration();
-            deployDescriptor.updateGlobalConfiguration();
-            
+            Jenkins jenkinsInstance = Jenkins.getInstance();
+            if (jenkinsInstance != null) {
+                OctopusDeployReleaseRecorder.DescriptorImpl releaseDescriptor = (OctopusDeployReleaseRecorder.DescriptorImpl) 
+                        jenkinsInstance.getDescriptor(OctopusDeployReleaseRecorder.class);
+                OctopusDeployDeploymentRecorder.DescriptorImpl deployDescriptor = (OctopusDeployDeploymentRecorder.DescriptorImpl) 
+                        jenkinsInstance.getDescriptor(OctopusDeployDeploymentRecorder.class);
+                releaseDescriptor.updateGlobalConfiguration();
+                deployDescriptor.updateGlobalConfiguration();
+            }
             return super.configure(req, formData);
         }
     }

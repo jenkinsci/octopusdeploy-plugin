@@ -26,13 +26,13 @@ THE SOFTWARE.
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>1.612</version><!-- which version of Jenkins is this plugin built against? -->
+    <version>2.5</version>
   </parent>
 
   <name>OctopusDeploy Plugin</name>
   <groupId>hudson.plugins.octopusdeploy</groupId>
   <artifactId>octopusdeploy</artifactId>
-  <version>1.5.1-SNAPSHOT</version>
+  <version>1.6.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <url>https://wiki.jenkins-ci.org/display/JENKINS/OctopusDeploy+Plugin</url>
 
@@ -61,17 +61,11 @@ THE SOFTWARE.
     </developer>
   </developers>
 
-  <profiles>
-    <profile>
-        <id>buildServer</id>
-        <build>
-            <directory>target/${project.version}-${env.BUILD_NUMBER}</directory>
-        </build>
-    </profile>
-  </profiles>
-
   <properties>
-    <jdk.version>1.7</jdk.version>
+    <jenkins.version>1.625.3</jenkins.version>
+	<java.level>7</java.level>
+	<jenkins-test-harness.version>2.13</jenkins-test-harness.version>
+	<hpi-plugin.version>1.121</hpi-plugin.version>
   </properties>
 
   <dependencies>
@@ -80,14 +74,14 @@ THE SOFTWARE.
   <repositories>
     <repository>
       <id>repo.jenkins-ci.org</id>
-      <url>http://repo.jenkins-ci.org/public/</url>
+      <url>https://repo.jenkins-ci.org/public/</url>
     </repository>
   </repositories>
 
   <pluginRepositories>
     <pluginRepository>
       <id>repo.jenkins-ci.org</id>
-      <url>http://repo.jenkins-ci.org/public/</url>
+      <url>https://repo.jenkins-ci.org/public/</url>
     </pluginRepository>
   </pluginRepositories>
 

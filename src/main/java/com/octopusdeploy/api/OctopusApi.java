@@ -76,7 +76,7 @@ public class OctopusApi {
      * Deploys a given release to provided environment.
      * @param releaseId Release Id from Octopus to deploy.
      * @param environmentId Environment Id from Octopus to deploy to.
-     * @param tenantID Tenant Id from Octopus to deploy to.
+     * @param tenantId Tenant Id from Octopus to deploy to.
      * @return the content of the web response.
      * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
@@ -88,7 +88,7 @@ public class OctopusApi {
      * Deploys a given release to provided environment.
      * @param releaseId Release Id from Octopus to deploy.
      * @param environmentId Environment Id from Octopus to deploy to.
-     * @param tenantID Tenant Id from Octopus to deploy to.
+     * @param tenantId Tenant Id from Octopus to deploy to.
      * @param variables Variables used during deployment.
      * @return the content of the web response.
      * @throws IOException When the AuthenticatedWebClient receives and error response code
@@ -288,6 +288,7 @@ public class OctopusApi {
      * Get the variables for a combination of release and environment, return null otherwise.
      * @param releaseId The id of the Release.
      * @param environmentId The id of the Environment.
+     * @param entryProperties entry properties
      * @return A set of all variables for a given Release and Environment combination.
      * @throws IllegalArgumentException when the web client receives a bad parameter
      * @throws IOException When the AuthenticatedWebClient receives and error response code
