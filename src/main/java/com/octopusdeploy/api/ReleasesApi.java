@@ -38,21 +38,25 @@ public class ReleasesApi {
      * @throws java.io.IOException When the AuthenticatedWebClient receives and error response code
      */
     public String createRelease(String project, String releaseVersion, String releaseNotes) throws IOException {
-        return createRelease(project, releaseVersion, releaseNotes, null);
+        return createRelease(project, releaseVersion, null, releaseNotes, null);
     }
 
     /**
      * Creates a release in octopus deploy.
      * @param project The project id
      * @param releaseVersion The version number for this release.
+     * @param channelId The channel to create the release on.
      * @param releaseNotes Release notes to be associated with this release.
      * @param selectedPackages Packages to be deployed with this release.
      * @return content from the API post
      * @throws java.io.IOException When the AuthenticatedWebClient receives and error response code
      */
-    public String createRelease(String project, String releaseVersion, String releaseNotes, Set<SelectedPackage> selectedPackages) throws IOException {
+    public String createRelease(String project, String releaseVersion, String channelId, String releaseNotes, Set<SelectedPackage> selectedPackages) throws IOException {
         StringBuilder jsonBuilder = new StringBuilder();
         jsonBuilder.append(String.format("{ProjectId:\"%s\",Version:\"%s\"", project, releaseVersion));
+        if (channelId != null && !channelId.isEmpty()) {
+            jsonBuilder.append(String.format(",ChannelId:\"%s\"", channelId));
+        }
         if (releaseNotes != null && !releaseNotes.isEmpty()) {
             jsonBuilder.append(String.format(",ReleaseNotes:\"%s\"", releaseNotes));
         }
@@ -94,8 +98,9 @@ public class ReleasesApi {
             JSONObject jsonObj = (JSONObject)obj;
             String id = jsonObj.getString("Id");
             String version = jsonObj.getString("Version");
+            String channelId = jsonObj.getString("ChannelId");
             String ReleaseNotes = jsonObj.getString("ReleaseNotes");
-            releases.add(new Release(id, projectId, ReleaseNotes, version));
+            releases.add(new Release(id, projectId, channelId, ReleaseNotes, version));
         }
         return releases;
     }

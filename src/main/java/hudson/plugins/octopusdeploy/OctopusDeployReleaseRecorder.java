@@ -43,7 +43,6 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         return releaseVersion;
     }
 
-
     /**
      * Are there release notes for this release?
      */
@@ -63,6 +62,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
     public boolean isReleaseNotesSourceFile() {
         return "file".equals(releaseNotesSource);
     }
+
     public boolean isReleaseNotesSourceScm() {
         return "scm".equals(releaseNotesSource);
     }
@@ -73,6 +73,11 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
     private final String tenant;
     public String getTenant() {
         return tenant;
+    }
+    
+    private final String channel;
+    public String getChannel() {
+        return channel;
     }
 
     /**
@@ -141,7 +146,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
     public OctopusDeployReleaseRecorder(
             String project, String releaseVersion,
             boolean releaseNotes, String releaseNotesSource, String releaseNotesFile,
-            boolean deployThisRelease, String environment, String tenant, boolean waitForDeployment,
+            boolean deployThisRelease, String environment, String tenant, String channel, boolean waitForDeployment,
             List<PackageConfiguration> packageConfigs, boolean jenkinsUrlLinkback,
             String defaultPackageVersion) {
         this.project = project.trim();
@@ -153,6 +158,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         this.packageConfigs = packageConfigs;
         this.environment = environment.trim();
         this.tenant = tenant.trim();
+        this.channel = channel.trim();
         this.waitForDeployment = waitForDeployment;
         this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
         this.defaultPackageVersion = defaultPackageVersion;
@@ -192,6 +198,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         String releaseNotesFile = envInjector.injectEnvironmentVariableValues(this.releaseNotesFile);
         String environment = envInjector.injectEnvironmentVariableValues(this.environment);
         String tenant = envInjector.injectEnvironmentVariableValues(this.tenant);
+        String channel = envInjector.injectEnvironmentVariableValues(this.channel);
         String defaultPackageVersion = envInjector.injectEnvironmentVariableValues(this.defaultPackageVersion);
 
         com.octopusdeploy.api.data.Project p = null;
@@ -199,10 +206,23 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             p = api.getProjectsApi().getProjectByName(project);
         } catch (Exception ex) {
             log.fatal(String.format("Retrieving project name '%s' failed with message '%s'",
-                    project, ex.getMessage()));
+                project, ex.getMessage()));
             success = false;
         }
         if (p == null) {
+            log.fatal("Project was not found.");
+            success = false;
+        }
+        
+        com.octopusdeploy.api.data.Channel c = null;
+        try {
+            c = api.getChannelsApi().getChannelByName(project, channel);
+        } catch (Exception ex) {
+            log.fatal(String.format("Retrieving channel name '%s' from project '%s' failed with message '%s'",
+                channel, project, ex.getMessage()));
+            success = false;
+        }
+        if (c == null) {
             log.fatal("Project was not found.");
             success = false;
         }
@@ -257,7 +277,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             // Sanitize the release notes in preparation for JSON
             releaseNotesContent = JSONSanitizer.getInstance().sanitize(releaseNotesContent);
 
-            String results = api.getReleasesApi().createRelease(p.getId(), releaseVersion, releaseNotesContent, selectedPackages);
+            String results = api.getReleasesApi().createRelease(p.getId(), releaseVersion, c.getId(), releaseNotesContent, selectedPackages);
             JSONObject json = (JSONObject)JSONSerializer.toJSON(results);
             String urlSuffix = json.getJSONObject("Links").getString("Web");
             String url = getDescriptorImpl().octopusHost;
