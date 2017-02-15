@@ -1,5 +1,5 @@
 
-package com.octopusdeploy.api;
+package com.octopusdeploy.api.data;
 
 /**
  * Task.
