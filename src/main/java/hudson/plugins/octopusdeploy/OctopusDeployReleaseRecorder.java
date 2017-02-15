@@ -1,5 +1,7 @@
 package hudson.plugins.octopusdeploy;
 
+import com.octopusdeploy.api.data.SelectedPackage;
+import com.octopusdeploy.api.data.DeploymentProcessTemplate;
 import com.octopusdeploy.api.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -179,7 +181,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             envVars = build.getEnvironment(listener);
         } catch (Exception ex) {
             log.fatal(String.format("Failed to retrieve environment variables for this project '%s' - '%s'",
-                    project, ex.getMessage()));
+                project, ex.getMessage()));
             return false;
         }
         EnvironmentVariableValueInjector envInjector = new EnvironmentVariableValueInjector(resolver, envVars);
@@ -192,9 +194,9 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         String tenant = envInjector.injectEnvironmentVariableValues(this.tenant);
         String defaultPackageVersion = envInjector.injectEnvironmentVariableValues(this.defaultPackageVersion);
 
-        com.octopusdeploy.api.Project p = null;
+        com.octopusdeploy.api.data.Project p = null;
         try {
-            p = api.getProjectByName(project);
+            p = api.getProjectsApi().getProjectByName(project);
         } catch (Exception ex) {
             log.fatal(String.format("Retrieving project name '%s' failed with message '%s'",
                     project, ex.getMessage()));
@@ -255,7 +257,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             // Sanitize the release notes in preparation for JSON
             releaseNotesContent = JSONSanitizer.getInstance().sanitize(releaseNotesContent);
 
-            String results = api.createRelease(p.getId(), releaseVersion, releaseNotesContent, selectedPackages);
+            String results = api.getReleasesApi().createRelease(p.getId(), releaseVersion, releaseNotesContent, selectedPackages);
             JSONObject json = (JSONObject)JSONSerializer.toJSON(results);
             String urlSuffix = json.getJSONObject("Links").getString("Web");
             String url = getDescriptorImpl().octopusHost;
@@ -337,7 +339,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         DeploymentProcessTemplate defaultPackages = null;
         //If not default version specified, ignore all default packages
         try {
-            defaultPackages = this.getDescriptorImpl().api.getDeploymentProcessTemplateForProject(projectId);
+            defaultPackages = this.getDescriptorImpl().api.getDeploymentsApi().getDeploymentProcessTemplateForProject(projectId);
         } catch (Exception ex) {
             //Default package retrieval unsuccessful
             log.info(String.format("Could not retrieve default package list for project id: %s. No default packages will be used", projectId));
@@ -532,9 +534,9 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             if (project == null || project.isEmpty()) {
                 return FormValidation.warning(PROJECT_RELEASE_VALIDATION_MESSAGE);
             }
-            com.octopusdeploy.api.Project p;
+            com.octopusdeploy.api.data.Project p;
             try {
-                p = api.getProjectByName(project);
+                p = api.getProjectsApi().getProjectByName(project);
                 if (p == null) {
                     return FormValidation.warning(PROJECT_RELEASE_VALIDATION_MESSAGE);
                 }
@@ -580,8 +582,8 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             ComboBoxModel names = new ComboBoxModel();
 
             try {
-                Set<com.octopusdeploy.api.Environment> environments = api.getAllEnvironments();
-                for (com.octopusdeploy.api.Environment env : environments) {
+                Set<com.octopusdeploy.api.data.Environment> environments = api.getEnvironmentsApi().getAllEnvironments();
+                for (com.octopusdeploy.api.data.Environment env : environments) {
                     names.add(env.getName());
                 }
             } catch (Exception ex) {
@@ -598,8 +600,8 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             setGlobalConfiguration();
             ComboBoxModel names = new ComboBoxModel();
             try {
-                Set<com.octopusdeploy.api.Tenant> tenants = api.getAllTenants();
-                for (com.octopusdeploy.api.Tenant ten : tenants) {
+                Set<com.octopusdeploy.api.data.Tenant> tenants = api.getTenantsApi().getAllTenants();
+                for (com.octopusdeploy.api.data.Tenant ten : tenants) {
                     names.add(ten.getName());
                 }
             } catch (Exception ex) {
@@ -616,8 +618,8 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             setGlobalConfiguration();
             ComboBoxModel names = new ComboBoxModel();
             try {
-                Set<com.octopusdeploy.api.Project> projects = api.getAllProjects();
-                for (com.octopusdeploy.api.Project proj : projects) {
+                Set<com.octopusdeploy.api.data.Project> projects = api.getProjectsApi().getAllProjects();
+                for (com.octopusdeploy.api.data.Project proj : projects) {
                     names.add(proj.getName());
                 }
             } catch (Exception ex) {

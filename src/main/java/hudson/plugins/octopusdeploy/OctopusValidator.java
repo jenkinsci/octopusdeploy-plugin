@@ -1,5 +1,6 @@
 package hudson.plugins.octopusdeploy;
 
+import com.octopusdeploy.api.data.Release;
 import com.octopusdeploy.api.*;
 import hudson.util.FormValidation;
 import java.io.IOException;
@@ -29,7 +30,7 @@ public class OctopusValidator {
             return FormValidation.error("Please provide a project name.");
         }
         try {
-            com.octopusdeploy.api.Project p = api.getProjectByName(projectName, true);
+            com.octopusdeploy.api.data.Project p = api.getProjectsApi().getProjectByName(projectName, true);
             if (p == null)
             {
                 return FormValidation.error("Project not found.");
@@ -60,7 +61,7 @@ public class OctopusValidator {
             return FormValidation.error("Please provide an environment name.");
         }
         try {
-            com.octopusdeploy.api.Environment env = api.getEnvironmentByName(environmentName, true);
+            com.octopusdeploy.api.data.Environment env = api.getEnvironmentsApi().getEnvironmentByName(environmentName, true);
             if (env == null)
             {
                 return FormValidation.error("Environment not found.");
@@ -93,7 +94,7 @@ public class OctopusValidator {
             return FormValidation.error("Please provide a release version.");
         }
         try {
-            Set<Release> releases = api.getReleasesForProject(projectId);
+            Set<Release> releases = api.getReleasesApi().getReleasesForProject(projectId);
             boolean found = false;
             for (Release release : releases) {
                 if (releaseVersion.equals(release.getVersion()) ) {
