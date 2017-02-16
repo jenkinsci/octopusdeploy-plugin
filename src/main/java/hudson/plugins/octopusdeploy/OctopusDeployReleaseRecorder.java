@@ -215,18 +215,19 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
         
         com.octopusdeploy.api.data.Channel c = null;
-        try {
-            c = api.getChannelsApi().getChannelByName(project, channel);
-        } catch (Exception ex) {
-            log.fatal(String.format("Retrieving channel name '%s' from project '%s' failed with message '%s'",
-                channel, project, ex.getMessage()));
-            success = false;
+        if (channel != null && !channel.isEmpty()) {
+            try {
+                c = api.getChannelsApi().getChannelByName(p.getId(), channel);
+            } catch (Exception ex) {
+                log.fatal(String.format("Retrieving channel name '%s' from project '%s' failed with message '%s'",
+                    channel, project, ex.getMessage()));
+                success = false;
+            }
+            if (c == null) {
+                log.fatal("Channel was not found.");
+                success = false;
+            }
         }
-        if (c == null) {
-            log.fatal("Project was not found.");
-            success = false;
-        }
-
         // Check packageVersion
         String releaseNotesContent = "";
 
