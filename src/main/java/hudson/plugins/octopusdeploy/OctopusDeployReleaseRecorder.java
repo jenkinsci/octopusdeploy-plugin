@@ -277,8 +277,11 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         try {
             // Sanitize the release notes in preparation for JSON
             releaseNotesContent = JSONSanitizer.getInstance().sanitize(releaseNotesContent);
-
-            String results = api.getReleasesApi().createRelease(p.getId(), releaseVersion, c.getId(), releaseNotesContent, selectedPackages);
+            String channelId = null;
+            if (c != null) {
+                channelId = c.getId();
+            }
+            String results = api.getReleasesApi().createRelease(p.getId(), releaseVersion, channelId, releaseNotesContent, selectedPackages);
             JSONObject json = (JSONObject)JSONSerializer.toJSON(results);
             String urlSuffix = json.getJSONObject("Links").getString("Web");
             String url = getDescriptorImpl().octopusHost;
