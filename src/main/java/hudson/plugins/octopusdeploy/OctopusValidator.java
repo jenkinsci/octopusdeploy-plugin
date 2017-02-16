@@ -77,8 +77,10 @@ public class OctopusValidator {
                 {
                     return FormValidation.warning("Project must be set to validate this field.");
                 }
-            } catch (Exception ex) {
-                return FormValidation.warning("There was a problem validating this field.");
+            } catch (IllegalArgumentException ex) {
+                return FormValidation.warning("Unable to validate field - " + ex.getMessage());
+            } catch (IOException ex) {
+                return FormValidation.warning("Unable to validate field - " + ex.getMessage());
             }
         }
         return FormValidation.ok();
