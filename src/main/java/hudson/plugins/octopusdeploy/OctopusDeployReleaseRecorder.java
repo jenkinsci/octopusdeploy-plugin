@@ -312,6 +312,9 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         log.info("=======================");
         log.info("Project: " + project);
         log.info("Release Version: " + releaseVersion);
+        if (channel != null && !channel.isEmpty()) {
+            log.info("Channe: " + channel);
+        }
         log.info("Include Release Notes?: " + releaseNotes);
         if (releaseNotes) {
             log.info("\tRelease Notes Source: " + releaseNotesSource);
