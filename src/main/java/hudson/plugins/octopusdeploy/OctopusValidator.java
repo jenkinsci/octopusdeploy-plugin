@@ -48,6 +48,43 @@ public class OctopusValidator {
     }
     
     /**
+     * Provides validation on a Channel.
+     * Validates:
+     *  Project is not empty.
+     *  Project exists in Octopus.
+     *  Project is appropriate case.
+     *  Channel is either empty or exists in Octopus
+     * @param channelName name of the channel to validate
+     * @param projectName name of the project to validate.
+     * @return a form validation.
+     */
+    public FormValidation validateChannel(String channelName, String projectName) {
+        if (channelName != null && !channelName.isEmpty()) {
+            if (projectName == null || projectName.isEmpty()) {
+                return FormValidation.warning("Project must be set to validate this field.");
+            }
+            com.octopusdeploy.api.data.Project project;
+            com.octopusdeploy.api.data.Channel channel;
+            try {
+                project = api.getProjectsApi().getProjectByName(projectName);
+                if (project != null) {
+                    channel = api.getChannelsApi().getChannelByName(project.getId(), channelName);
+                    if (channel == null) {
+                        return FormValidation.error("Channel not found.");
+                    }
+                }
+                else
+                {
+                    return FormValidation.warning("Project must be set to validate this field.");
+                }
+            } catch (Exception ex) {
+                return FormValidation.warning("There was a problem validating this field.");
+            }
+        }
+        return FormValidation.ok();
+    }
+    
+    /**
      * Provides validation on an environment.
      * Validates:
      *  Environment is not empty.

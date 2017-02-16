@@ -8,6 +8,10 @@
     <f:textbox />
   </f:entry>
 
+  <f:entry title="Channel" field="channel">
+    <f:combobox />
+  </f:entry>
+
   <f:entry title="Include Jenkins URL?" field="jenkinsUrlLinkback">
     <f:checkbox />
   </f:entry>

@@ -543,6 +543,20 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
 
         /**
+         * Check that the Channel field is either not set (default) or set to a real channel.
+         * @param channel release channel.
+         * @param project  The name of the project.
+         * @return Ok if not empty, error otherwise.
+         */
+        public FormValidation doCheckChannel(@QueryParameter String channel, @QueryParameter String project) {
+            setGlobalConfiguration();
+            channel = channel.trim();
+            project = project.trim();
+            OctopusValidator validator = new OctopusValidator(api);
+            return validator.validateChannel(channel, project);
+        }
+        
+        /**
          * Check that the releaseVersion field is not empty.
          * @param releaseVersion release version.
          * @param project  The name of the project.
@@ -644,6 +658,30 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
                 }
             } catch (Exception ex) {
                 Logger.getLogger(OctopusDeployReleaseRecorder.class.getName()).log(Level.SEVERE, "Filling projects combo failed!", ex);
+            }
+            return names;
+        }
+        
+        /**
+         * Data binding that returns all possible channels names to be used in the channel autocomplete.
+         * @param project the project name
+         * @return ComboBoxModel
+         */
+        public ComboBoxModel doFillChannelItems(@QueryParameter String project) {
+            setGlobalConfiguration();
+            ComboBoxModel names = new ComboBoxModel();
+            if (project != null && !project.isEmpty()) {
+                try {
+                    com.octopusdeploy.api.data.Project p = api.getProjectsApi().getProjectByName(project);
+                    if (p != null) {
+                        Set<com.octopusdeploy.api.data.Channel> channels = api.getChannelsApi().getChannelsByProjectId(p.getId());
+                        for (com.octopusdeploy.api.data.Channel channel : channels) {
+                            names.add(channel.getName());
+                        }
+                    }
+                } catch (Exception ex) {
+                    Logger.getLogger(OctopusDeployReleaseRecorder.class.getName()).log(Level.SEVERE, "Filling Channel combo failed!", ex);
+                }
             }
             return names;
         }
