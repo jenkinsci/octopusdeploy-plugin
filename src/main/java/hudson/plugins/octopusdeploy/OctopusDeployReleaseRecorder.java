@@ -1,5 +1,7 @@
 package hudson.plugins.octopusdeploy;
 
+import com.octopusdeploy.api.data.SelectedPackage;
+import com.octopusdeploy.api.data.DeploymentProcessTemplate;
 import com.octopusdeploy.api.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -41,7 +43,6 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         return releaseVersion;
     }
 
-
     /**
      * Are there release notes for this release?
      */
@@ -61,6 +62,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
     public boolean isReleaseNotesSourceFile() {
         return "file".equals(releaseNotesSource);
     }
+
     public boolean isReleaseNotesSourceScm() {
         return "scm".equals(releaseNotesSource);
     }
@@ -71,6 +73,11 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
     private final String tenant;
     public String getTenant() {
         return tenant;
+    }
+    
+    private final String channel;
+    public String getChannel() {
+        return channel;
     }
 
     /**
@@ -139,7 +146,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
     public OctopusDeployReleaseRecorder(
             String project, String releaseVersion,
             boolean releaseNotes, String releaseNotesSource, String releaseNotesFile,
-            boolean deployThisRelease, String environment, String tenant, boolean waitForDeployment,
+            boolean deployThisRelease, String environment, String tenant, String channel, boolean waitForDeployment,
             List<PackageConfiguration> packageConfigs, boolean jenkinsUrlLinkback,
             String defaultPackageVersion) {
         this.project = project.trim();
@@ -151,6 +158,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         this.packageConfigs = packageConfigs;
         this.environment = environment.trim();
         this.tenant = tenant.trim();
+        this.channel = channel.trim();
         this.waitForDeployment = waitForDeployment;
         this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
         this.defaultPackageVersion = defaultPackageVersion;
@@ -179,7 +187,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             envVars = build.getEnvironment(listener);
         } catch (Exception ex) {
             log.fatal(String.format("Failed to retrieve environment variables for this project '%s' - '%s'",
-                    project, ex.getMessage()));
+                project, ex.getMessage()));
             return false;
         }
         EnvironmentVariableValueInjector envInjector = new EnvironmentVariableValueInjector(resolver, envVars);
@@ -190,21 +198,36 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         String releaseNotesFile = envInjector.injectEnvironmentVariableValues(this.releaseNotesFile);
         String environment = envInjector.injectEnvironmentVariableValues(this.environment);
         String tenant = envInjector.injectEnvironmentVariableValues(this.tenant);
+        String channel = envInjector.injectEnvironmentVariableValues(this.channel);
         String defaultPackageVersion = envInjector.injectEnvironmentVariableValues(this.defaultPackageVersion);
 
-        com.octopusdeploy.api.Project p = null;
+        com.octopusdeploy.api.data.Project p = null;
         try {
-            p = api.getProjectByName(project);
+            p = api.getProjectsApi().getProjectByName(project);
         } catch (Exception ex) {
             log.fatal(String.format("Retrieving project name '%s' failed with message '%s'",
-                    project, ex.getMessage()));
+                project, ex.getMessage()));
             success = false;
         }
         if (p == null) {
             log.fatal("Project was not found.");
             success = false;
         }
-
+        
+        com.octopusdeploy.api.data.Channel c = null;
+        if (channel != null && !channel.isEmpty()) {
+            try {
+                c = api.getChannelsApi().getChannelByName(p.getId(), channel);
+            } catch (Exception ex) {
+                log.fatal(String.format("Retrieving channel name '%s' from project '%s' failed with message '%s'",
+                    channel, project, ex.getMessage()));
+                success = false;
+            }
+            if (c == null) {
+                log.fatal("Channel was not found.");
+                success = false;
+            }
+        }
         // Check packageVersion
         String releaseNotesContent = "";
 
@@ -254,8 +277,11 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         try {
             // Sanitize the release notes in preparation for JSON
             releaseNotesContent = JSONSanitizer.getInstance().sanitize(releaseNotesContent);
-
-            String results = api.createRelease(p.getId(), releaseVersion, releaseNotesContent, selectedPackages);
+            String channelId = null;
+            if (c != null) {
+                channelId = c.getId();
+            }
+            String results = api.getReleasesApi().createRelease(p.getId(), releaseVersion, channelId, releaseNotesContent, selectedPackages);
             JSONObject json = (JSONObject)JSONSerializer.toJSON(results);
             String urlSuffix = json.getJSONObject("Links").getString("Web");
             String url = getDescriptorImpl().octopusHost;
@@ -290,6 +316,9 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         log.info("=======================");
         log.info("Project: " + project);
         log.info("Release Version: " + releaseVersion);
+        if (channel != null && !channel.isEmpty()) {
+            log.info("Channel: " + channel);
+        }
         log.info("Include Release Notes?: " + releaseNotes);
         if (releaseNotes) {
             log.info("\tRelease Notes Source: " + releaseNotesSource);
@@ -337,7 +366,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         DeploymentProcessTemplate defaultPackages = null;
         //If not default version specified, ignore all default packages
         try {
-            defaultPackages = this.getDescriptorImpl().api.getDeploymentProcessTemplateForProject(projectId);
+            defaultPackages = this.getDescriptorImpl().api.getDeploymentsApi().getDeploymentProcessTemplateForProject(projectId);
         } catch (Exception ex) {
             //Default package retrieval unsuccessful
             log.info(String.format("Could not retrieve default package list for project id: %s. No default packages will be used", projectId));
@@ -521,6 +550,20 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
 
         /**
+         * Check that the Channel field is either not set (default) or set to a real channel.
+         * @param channel release channel.
+         * @param project  The name of the project.
+         * @return Ok if not empty, error otherwise.
+         */
+        public FormValidation doCheckChannel(@QueryParameter String channel, @QueryParameter String project) {
+            setGlobalConfiguration();
+            channel = channel.trim();
+            project = project.trim();
+            OctopusValidator validator = new OctopusValidator(api);
+            return validator.validateChannel(channel, project);
+        }
+        
+        /**
          * Check that the releaseVersion field is not empty.
          * @param releaseVersion release version.
          * @param project  The name of the project.
@@ -532,9 +575,9 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             if (project == null || project.isEmpty()) {
                 return FormValidation.warning(PROJECT_RELEASE_VALIDATION_MESSAGE);
             }
-            com.octopusdeploy.api.Project p;
+            com.octopusdeploy.api.data.Project p;
             try {
-                p = api.getProjectByName(project);
+                p = api.getProjectsApi().getProjectByName(project);
                 if (p == null) {
                     return FormValidation.warning(PROJECT_RELEASE_VALIDATION_MESSAGE);
                 }
@@ -580,8 +623,8 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             ComboBoxModel names = new ComboBoxModel();
 
             try {
-                Set<com.octopusdeploy.api.Environment> environments = api.getAllEnvironments();
-                for (com.octopusdeploy.api.Environment env : environments) {
+                Set<com.octopusdeploy.api.data.Environment> environments = api.getEnvironmentsApi().getAllEnvironments();
+                for (com.octopusdeploy.api.data.Environment env : environments) {
                     names.add(env.getName());
                 }
             } catch (Exception ex) {
@@ -598,8 +641,8 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             setGlobalConfiguration();
             ComboBoxModel names = new ComboBoxModel();
             try {
-                Set<com.octopusdeploy.api.Tenant> tenants = api.getAllTenants();
-                for (com.octopusdeploy.api.Tenant ten : tenants) {
+                Set<com.octopusdeploy.api.data.Tenant> tenants = api.getTenantsApi().getAllTenants();
+                for (com.octopusdeploy.api.data.Tenant ten : tenants) {
                     names.add(ten.getName());
                 }
             } catch (Exception ex) {
@@ -616,12 +659,36 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             setGlobalConfiguration();
             ComboBoxModel names = new ComboBoxModel();
             try {
-                Set<com.octopusdeploy.api.Project> projects = api.getAllProjects();
-                for (com.octopusdeploy.api.Project proj : projects) {
+                Set<com.octopusdeploy.api.data.Project> projects = api.getProjectsApi().getAllProjects();
+                for (com.octopusdeploy.api.data.Project proj : projects) {
                     names.add(proj.getName());
                 }
             } catch (Exception ex) {
                 Logger.getLogger(OctopusDeployReleaseRecorder.class.getName()).log(Level.SEVERE, "Filling projects combo failed!", ex);
+            }
+            return names;
+        }
+        
+        /**
+         * Data binding that returns all possible channels names to be used in the channel autocomplete.
+         * @param project the project name
+         * @return ComboBoxModel
+         */
+        public ComboBoxModel doFillChannelItems(@QueryParameter String project) {
+            setGlobalConfiguration();
+            ComboBoxModel names = new ComboBoxModel();
+            if (project != null && !project.isEmpty()) {
+                try {
+                    com.octopusdeploy.api.data.Project p = api.getProjectsApi().getProjectByName(project);
+                    if (p != null) {
+                        Set<com.octopusdeploy.api.data.Channel> channels = api.getChannelsApi().getChannelsByProjectId(p.getId());
+                        for (com.octopusdeploy.api.data.Channel channel : channels) {
+                            names.add(channel.getName());
+                        }
+                    }
+                } catch (Exception ex) {
+                    Logger.getLogger(OctopusDeployReleaseRecorder.class.getName()).log(Level.SEVERE, "Filling Channel combo failed!", ex);
+                }
             }
             return names;
         }

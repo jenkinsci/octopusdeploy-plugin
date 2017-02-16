@@ -1,5 +1,7 @@
 package hudson.plugins.octopusdeploy;
 
+import com.octopusdeploy.api.data.Task;
+import com.octopusdeploy.api.data.Release;
 import com.octopusdeploy.api.*;
 import java.io.*;
 import java.util.*;
@@ -113,17 +115,17 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         String tenant = envInjector.injectEnvironmentVariableValues(this.tenant);
         String variables = envInjector.injectEnvironmentVariableValues(this.variables);
 
-        com.octopusdeploy.api.Project p = null;
+        com.octopusdeploy.api.data.Project p = null;
         try {
-            p = api.getProjectByName(project);
+            p = api.getProjectsApi().getProjectByName(project);
         } catch (Exception ex) {
             log.fatal(String.format("Retrieving project name '%s' failed with message '%s'",
                     project, ex.getMessage()));
             success = false;
         }
-        com.octopusdeploy.api.Environment env = null;
+        com.octopusdeploy.api.data.Environment env = null;
         try {
-            env = api.getEnvironmentByName(environment);
+            env = api.getEnvironmentsApi().getEnvironmentByName(environment);
         } catch (Exception ex) {
             log.fatal(String.format("Retrieving environment name '%s' failed with message '%s'",
                     environment, ex.getMessage()));
@@ -145,9 +147,9 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
 
         String tenantId = null;
         if (tenant != null && !tenant.isEmpty()) {
-            com.octopusdeploy.api.Tenant ten = null;
+            com.octopusdeploy.api.data.Tenant ten = null;
             try {
-                ten = api.getTenantByName(tenant);
+                ten = api.getTenantsApi().getTenantByName(tenant);
                 if (ten != null) {
                     tenantId = ten.getId();
                 } else {
@@ -161,9 +163,9 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
             }
         }
 
-        Set<com.octopusdeploy.api.Release> releases = null;
+        Set<com.octopusdeploy.api.data.Release> releases = null;
         try {
-            releases = api.getReleasesForProject(p.getId());
+            releases = api.getReleasesApi().getReleasesForProject(p.getId());
         } catch (Exception ex) {
             log.fatal(String.format("Retrieving releases for project '%s' failed with message '%s'",
                     project, ex.getMessage()));
@@ -196,19 +198,19 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         }
 
         // TODO: Can we tell if we need to call? For now I will always try and get variable and use if I find them
-        Set<com.octopusdeploy.api.Variable> variablesForDeploy = null;
+        Set<com.octopusdeploy.api.data.Variable> variablesForDeploy = null;
 
         try {
             String releaseId = releaseToDeploy.getId();
             String environmentId = env.getId();
-            variablesForDeploy = api.getVariablesByReleaseAndEnvironment(releaseId, environmentId, properties);
+            variablesForDeploy = api.getVariablesApi().getVariablesByReleaseAndEnvironment(releaseId, environmentId, properties);
         } catch (Exception ex) {
             log.fatal(String.format("Retrieving variables for release '%s' to environment '%s' failed with message '%s'",
                     releaseToDeploy.getId(), env.getName(), ex.getMessage()));
             success = false;
         }
         try {
-            String results = api.executeDeployment(releaseToDeploy.getId(), env.getId(), tenantId, variablesForDeploy);
+            String results = api.getDeploymentsApi().executeDeployment(releaseToDeploy.getId(), env.getId(), tenantId, variablesForDeploy);
             if (isTaskJson(results)) {
                 JSON resultJson = JSONSerializer.toJSON(results);
                 String urlSuffix = ((JSONObject)resultJson).getJSONObject("Links").getString("Web");
@@ -291,7 +293,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         Task task = null;
         String lastState = "Unknown";
         try {
-            task = api.getTask(id);
+            task = api.getTasksApi().getTask(id);
         } catch (IOException ex) {
             logger.error("Error getting task: " + ex.getMessage());
             return null;
@@ -307,7 +309,7 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
         while (!completed)
         {
             try {
-                task = api.getTask(id);
+                task = api.getTasksApi().getTask(id);
             } catch (IOException ex) {
                 logger.error("Error getting task: " + ex.getMessage());
                 return null;
@@ -411,9 +413,9 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
             if (project == null || project.isEmpty()) {
                 return FormValidation.warning(PROJECT_RELEASE_VALIDATION_MESSAGE);
             }
-            com.octopusdeploy.api.Project p;
+            com.octopusdeploy.api.data.Project p;
             try {
-                p = api.getProjectByName(project);
+                p = api.getProjectsApi().getProjectByName(project);
                 if (p == null) {
                     return FormValidation.warning(PROJECT_RELEASE_VALIDATION_MESSAGE);
                 }
@@ -447,8 +449,8 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
             ComboBoxModel names = new ComboBoxModel();
 
             try {
-                Set<com.octopusdeploy.api.Environment> environments = api.getAllEnvironments();
-                for (com.octopusdeploy.api.Environment env : environments) {
+                Set<com.octopusdeploy.api.data.Environment> environments = api.getEnvironmentsApi().getAllEnvironments();
+                for (com.octopusdeploy.api.data.Environment env : environments) {
                     names.add(env.getName());
                 }
             } catch (Exception ex) {
@@ -465,8 +467,8 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
             setGlobalConfiguration();
             ComboBoxModel names = new ComboBoxModel();
             try {
-                Set<com.octopusdeploy.api.Project> projects = api.getAllProjects();
-                for (com.octopusdeploy.api.Project proj : projects) {
+                Set<com.octopusdeploy.api.data.Project> projects = api.getProjectsApi().getAllProjects();
+                for (com.octopusdeploy.api.data.Project proj : projects) {
                     names.add(proj.getName());
                 }
             } catch (Exception ex) {
@@ -483,8 +485,8 @@ public class OctopusDeployDeploymentRecorder extends Recorder implements Seriali
             setGlobalConfiguration();
             ComboBoxModel names = new ComboBoxModel();
             try {
-                Set<com.octopusdeploy.api.Tenant> tenants = api.getAllTenants();
-                for (com.octopusdeploy.api.Tenant ten : tenants) {
+                Set<com.octopusdeploy.api.data.Tenant> tenants = api.getTenantsApi().getAllTenants();
+                for (com.octopusdeploy.api.data.Tenant ten : tenants) {
                     names.add(ten.getName());
                 }
             } catch (Exception ex) {

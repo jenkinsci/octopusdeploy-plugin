@@ -1,4 +1,4 @@
-package com.octopusdeploy.api;
+package com.octopusdeploy.api.data;
 
 /**
  * Represents a SelectedPackage, part of a Release.
