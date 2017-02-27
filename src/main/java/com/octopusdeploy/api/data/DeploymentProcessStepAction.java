@@ -1,4 +1,4 @@
-package com.octopusdeploy.api;
+package com.octopusdeploy.api.data;
 
 import java.util.Map;
 

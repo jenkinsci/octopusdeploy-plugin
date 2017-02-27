@@ -27,7 +27,7 @@ public class EnvironmentVariableValueInjector {
      * @return a new string with all possible tokens replaced with values.
      */
     public String injectEnvironmentVariableValues(String candidate) {
-        if (!candidate.contains("${")) { // Early exit
+        if (candidate == null || candidate.isEmpty() || !candidate.contains("${")) { // Early exit
             return candidate;
         }
         String resolved = candidate;

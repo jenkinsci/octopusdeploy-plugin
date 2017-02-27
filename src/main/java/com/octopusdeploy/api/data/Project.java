@@ -1,4 +1,4 @@
-package com.octopusdeploy.api;
+package com.octopusdeploy.api.data;
 
 /**
  * Represents a project from the OctopusDeploy API.

@@ -1,5 +1,6 @@
 package hudson.plugins.octopusdeploy;
 
+import com.octopusdeploy.api.data.Release;
 import com.octopusdeploy.api.*;
 import hudson.util.FormValidation;
 import java.io.IOException;
@@ -29,7 +30,7 @@ public class OctopusValidator {
             return FormValidation.error("Please provide a project name.");
         }
         try {
-            com.octopusdeploy.api.Project p = api.getProjectByName(projectName, true);
+            com.octopusdeploy.api.data.Project p = api.getProjectsApi().getProjectByName(projectName, true);
             if (p == null)
             {
                 return FormValidation.error("Project not found.");
@@ -42,6 +43,45 @@ public class OctopusValidator {
             return FormValidation.error(ex.getMessage());
         } catch (IOException ex) {
             return FormValidation.error(ex.getMessage());
+        }
+        return FormValidation.ok();
+    }
+    
+    /**
+     * Provides validation on a Channel.
+     * Validates:
+     *  Project is not empty.
+     *  Project exists in Octopus.
+     *  Project is appropriate case.
+     *  Channel is either empty or exists in Octopus
+     * @param channelName name of the channel to validate
+     * @param projectName name of the project to validate.
+     * @return a form validation.
+     */
+    public FormValidation validateChannel(String channelName, String projectName) {
+        if (channelName != null && !channelName.isEmpty()) {
+            if (projectName == null || projectName.isEmpty()) {
+                return FormValidation.warning("Project must be set to validate this field.");
+            }
+            com.octopusdeploy.api.data.Project project;
+            com.octopusdeploy.api.data.Channel channel;
+            try {
+                project = api.getProjectsApi().getProjectByName(projectName);
+                if (project != null) {
+                    channel = api.getChannelsApi().getChannelByName(project.getId(), channelName);
+                    if (channel == null) {
+                        return FormValidation.error("Channel not found.");
+                    }
+                }
+                else
+                {
+                    return FormValidation.warning("Project must be set to validate this field.");
+                }
+            } catch (IllegalArgumentException ex) {
+                return FormValidation.warning("Unable to validate field - " + ex.getMessage());
+            } catch (IOException ex) {
+                return FormValidation.warning("Unable to validate field - " + ex.getMessage());
+            }
         }
         return FormValidation.ok();
     }
@@ -60,7 +100,7 @@ public class OctopusValidator {
             return FormValidation.error("Please provide an environment name.");
         }
         try {
-            com.octopusdeploy.api.Environment env = api.getEnvironmentByName(environmentName, true);
+            com.octopusdeploy.api.data.Environment env = api.getEnvironmentsApi().getEnvironmentByName(environmentName, true);
             if (env == null)
             {
                 return FormValidation.error("Environment not found.");
@@ -93,7 +133,7 @@ public class OctopusValidator {
             return FormValidation.error("Please provide a release version.");
         }
         try {
-            Set<Release> releases = api.getReleasesForProject(projectId);
+            Set<Release> releases = api.getReleasesApi().getReleasesForProject(projectId);
             boolean found = false;
             for (Release release : releases) {
                 if (releaseVersion.equals(release.getVersion()) ) {
