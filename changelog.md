@@ -1,7 +1,11 @@
 # Change Log #
 
+## 1.6.0 ##
+* Implemented support for Channels
+* Refactored API 
+
 ## 1.5.0 ##
-* Define tenant for Deployment
+* Implemented support for multi-Tenant Deployment
 * Updated javadocs
 
 ## 1.4.0 ##
