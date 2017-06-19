@@ -7,7 +7,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
-import jenkins.model.*;
+
 import hudson.*;
 import hudson.FilePath.FileCallable;
 import hudson.model.*;
@@ -26,14 +26,9 @@ import org.kohsuke.stapler.export.*;
 /**
  * Creates a release and optionally deploys it.
  */
-public class OctopusDeployReleaseRecorder extends Recorder implements Serializable {
-    /**
-     * The project name as defined in Octopus.
-     */
-    private final String project;
-    public String getProject() {
-        return project;
-    }
+public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder implements Serializable {
+
+
 
     /**
      * The release version as defined in Octopus.
@@ -66,14 +61,6 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
     public boolean isReleaseNotesSourceScm() {
         return "scm".equals(releaseNotesSource);
     }
-
-    /**
-     * The Tenant to use for a deploy to in Octopus.
-     */
-    private final String tenant;
-    public String getTenant() {
-        return tenant;
-    }
     
     private final String channel;
     public String getChannel() {
@@ -95,14 +82,6 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
     private final String releaseNotesFile;
     public String getReleaseNotesFile() {
         return releaseNotesFile;
-    }
-
-    /**
-     * If we are deploying, should we wait for it to complete?
-     */
-    private final boolean waitForDeployment;
-    public boolean getWaitForDeployment() {
-        return waitForDeployment;
     }
 
     /**
@@ -144,11 +123,13 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
     public OctopusDeployReleaseRecorder(
-            String project, String releaseVersion,
+            String serverId, String project, String releaseVersion,
             boolean releaseNotes, String releaseNotesSource, String releaseNotesFile,
             boolean deployThisRelease, String environment, String tenant, String channel, boolean waitForDeployment,
             List<PackageConfiguration> packageConfigs, boolean jenkinsUrlLinkback,
             String defaultPackageVersion) {
+
+        this.serverId = serverId.trim();
         this.project = project.trim();
         this.releaseVersion = releaseVersion.trim();
         this.releaseNotes = releaseNotes;
@@ -178,9 +159,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             return success;
         }
         logStartHeader(log);
-        // todo: getting from descriptor is ugly. refactor?
-        getDescriptorImpl().setGlobalConfiguration();
-        OctopusApi api = getDescriptorImpl().api;
+
         VariableResolver resolver = build.getBuildVariableResolver();
         EnvVars envVars;
         try {
@@ -203,7 +182,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
 
         com.octopusdeploy.api.data.Project p = null;
         try {
-            p = api.getProjectsApi().getProjectByName(project);
+            p = getApi().getProjectsApi().getProjectByName(project);
         } catch (Exception ex) {
             log.fatal(String.format("Retrieving project name '%s' failed with message '%s'",
                 project, ex.getMessage()));
@@ -217,7 +196,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         com.octopusdeploy.api.data.Channel c = null;
         if (channel != null && !channel.isEmpty()) {
             try {
-                c = api.getChannelsApi().getChannelByName(p.getId(), channel);
+                c = getApi().getChannelsApi().getChannelByName(p.getId(), channel);
             } catch (Exception ex) {
                 log.fatal(String.format("Retrieving channel name '%s' from project '%s' failed with message '%s'",
                     channel, project, ex.getMessage()));
@@ -281,10 +260,10 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             if (c != null) {
                 channelId = c.getId();
             }
-            String results = api.getReleasesApi().createRelease(p.getId(), releaseVersion, channelId, releaseNotesContent, selectedPackages);
+            String results = getApi().getReleasesApi().createRelease(p.getId(), releaseVersion, channelId, releaseNotesContent, selectedPackages);
             JSONObject json = (JSONObject)JSONSerializer.toJSON(results);
             String urlSuffix = json.getJSONObject("Links").getString("Web");
-            String url = getDescriptorImpl().octopusHost;
+            String url = getOctopusDeployServer().getUrl();
             if (url.endsWith("/")) {
                 url = url.substring(0, url.length() - 2);
             }
@@ -296,7 +275,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         }
 
         if (success && deployThisRelease) {
-          OctopusDeployDeploymentRecorder deployment = new OctopusDeployDeploymentRecorder(project, releaseVersion, environment, tenant, "", waitForDeployment);
+          OctopusDeployDeploymentRecorder deployment = new OctopusDeployDeploymentRecorder(getServerId(), project, releaseVersion, environment, tenant, "", waitForDeployment);
           success = deployment.perform(build, launcher, listener);
         }
 
@@ -366,7 +345,7 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         DeploymentProcessTemplate defaultPackages = null;
         //If not default version specified, ignore all default packages
         try {
-            defaultPackages = this.getDescriptorImpl().api.getDeploymentsApi().getDeploymentProcessTemplateForProject(projectId);
+            defaultPackages = getApi().getDeploymentsApi().getDeploymentProcessTemplateForProject(projectId);
         } catch (Exception ex) {
             //Default package retrieval unsuccessful
             log.info(String.format("Could not retrieve default package list for project id: %s. No default packages will be used", projectId));
@@ -487,17 +466,9 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
      */
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
-        private String octopusHost = "";
-        private String apiKey = "";
-        private boolean loadedConfig;
-        private OctopusApi api;
         private static final String PROJECT_RELEASE_VALIDATION_MESSAGE = "Project must be set to validate release.";
+        private static final String SERVER_ID_VALIDATION_MESSAGE = "Could not validate without a valid Server ID.";
 
-        public DescriptorImpl() {
-            load();
-        }
-
-        @Override
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             return true;
         }
@@ -513,38 +484,49 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
             return true;
         }
 
-        /**
-        * Loads the OctopusDeployPlugin descriptor and pulls configuration from it
-        * for API Key, and Host.
-        */
-        private void setGlobalConfiguration() {
-            // NOTE  - This method is not being called from the constructor due
-            // to a circular dependency issue on startup
-            if (!loadedConfig) {
-                updateGlobalConfiguration();
-            }
+        private OctopusApi getApiByServerId(String serverId){
+            return AbstractOctopusDeployRecorder.getOctopusDeployServer(serverId).getApi();
         }
 
-        public void updateGlobalConfiguration() {
-            Jenkins jenkinsInstance = Jenkins.getInstance();
-            if (jenkinsInstance != null) {
-                OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl)
-                    jenkinsInstance.getDescriptor(OctopusDeployPlugin.class);
-                apiKey = descriptor.getApiKey();
-                octopusHost = descriptor.getOctopusHost();
+        private List<OctopusDeployServer> getOctopusDeployServers(){
+            return AbstractOctopusDeployRecorder.getOctopusDeployServers();
+        }
+
+        /**
+         * Check that the serverId field is not empty.
+         * @param serverId The id of OctopusDeployServer in the configuration.
+         * @return Ok if not empty, error otherwise.
+         */
+        public FormValidation doCheckServerId(@QueryParameter String serverId) {
+            serverId = serverId.trim();
+            if (serverId==null || serverId.isEmpty()) {
+                return FormValidation.error("Please set a Server Id");
             }
-            api = new OctopusApi(octopusHost, apiKey);
-            loadedConfig = true;
+            List<String> ids = getOctopusDeployServersIds();
+            if (ids.isEmpty()){
+                return FormValidation.error("There are no OctopusDeploy servers configured.");
+            }
+            if (!ids.contains(serverId)) {
+                return FormValidation.error("There are no OctopusDeploy servers configured with this Server ID.");
+            }
+            return FormValidation.ok();
         }
 
         /**
          * Check that the project field is not empty and represents an actual project.
          * @param project The name of the project.
+         * @param serverId The id of OctopusDeployServer in the configuration.
          * @return FormValidation message if not ok.
          */
-        public FormValidation doCheckProject(@QueryParameter String project) {
-            setGlobalConfiguration();
+        public FormValidation doCheckProject(@QueryParameter String project, @QueryParameter String serverId) {
             project = project.trim();
+
+            serverId = serverId.trim();
+            if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
+                return FormValidation.warning(SERVER_ID_VALIDATION_MESSAGE);
+            }
+
+            OctopusApi api = getApiByServerId(serverId);
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateProject(project);
         }
@@ -553,12 +535,19 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
          * Check that the Channel field is either not set (default) or set to a real channel.
          * @param channel release channel.
          * @param project  The name of the project.
+         * @param serverId The id of OctopusDeployServer in the configuration.
          * @return Ok if not empty, error otherwise.
          */
-        public FormValidation doCheckChannel(@QueryParameter String channel, @QueryParameter String project) {
-            setGlobalConfiguration();
+        public FormValidation doCheckChannel(@QueryParameter String channel, @QueryParameter String project, @QueryParameter String serverId) {
             channel = channel.trim();
             project = project.trim();
+
+            serverId = serverId.trim();
+            if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
+                return FormValidation.warning(SERVER_ID_VALIDATION_MESSAGE);
+            }
+
+            OctopusApi api = getApiByServerId(serverId);
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateChannel(channel, project);
         }
@@ -567,11 +556,18 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
          * Check that the releaseVersion field is not empty.
          * @param releaseVersion release version.
          * @param project  The name of the project.
+         * @param serverId The id of OctopusDeployServer in the configuration.
          * @return Ok if not empty, error otherwise.
          */
-        public FormValidation doCheckReleaseVersion(@QueryParameter String releaseVersion, @QueryParameter String project) {
-            setGlobalConfiguration();
+        public FormValidation doCheckReleaseVersion(@QueryParameter String releaseVersion, @QueryParameter String project, @QueryParameter String serverId) {
             releaseVersion = releaseVersion.trim();
+
+
+            if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
+                return FormValidation.warning(SERVER_ID_VALIDATION_MESSAGE);
+            }
+
+            OctopusApi api = getApiByServerId(serverId);
             if (project == null || project.isEmpty()) {
                 return FormValidation.warning(PROJECT_RELEASE_VALIDATION_MESSAGE);
             }
@@ -605,23 +601,44 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         /**
          * Check that the environment field is not empty, and represents a real environment.
          * @param environment The name of the environment.
+         * @param serverId The id of OctopusDeployServer in the configuration.
          * @return FormValidation message if not ok.
          */
-        public FormValidation doCheckEnvironment(@QueryParameter String environment) {
-            setGlobalConfiguration();
+        public FormValidation doCheckEnvironment(@QueryParameter String environment, @QueryParameter String serverId) {
             environment = environment.trim();
+
+
+            if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
+                return FormValidation.warning(SERVER_ID_VALIDATION_MESSAGE);
+            }
+
+            OctopusApi api = getApiByServerId(serverId);
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateEnvironment(environment);
         }
 
         /**
-         * Data binding that returns all possible environment names to be used in the environment autocomplete.
+         * Data binding that returns all configured Octopus server ids to be used in the serverId drop-down list.
          * @return ComboBoxModel
          */
-        public ComboBoxModel doFillEnvironmentItems() {
-            setGlobalConfiguration();
+        public ComboBoxModel doFillServerIdItems() {
+            return new ComboBoxModel(getOctopusDeployServersIds());
+        }
+
+        /**
+         * Data binding that returns all possible environment names to be used in the environment autocomplete.
+         * @param serverId The id of OctopusDeployServer in the configuration.
+         * @return ComboBoxModel
+         */
+        public ComboBoxModel doFillEnvironmentItems(@QueryParameter String serverId) {
+
             ComboBoxModel names = new ComboBoxModel();
 
+            if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
+                return names;
+            }
+
+            OctopusApi api = getApiByServerId(serverId);
             try {
                 Set<com.octopusdeploy.api.data.Environment> environments = api.getEnvironmentsApi().getAllEnvironments();
                 for (com.octopusdeploy.api.data.Environment env : environments) {
@@ -635,11 +652,18 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
 
         /**
          * Data binding that returns all possible tenant names to be used in the tenant autocomplete.
+         * @param serverId The id of OctopusDeployServer in the configuration.
          * @return ComboBoxModel
          */
-        public ComboBoxModel doFillTenantItems() {
-            setGlobalConfiguration();
+        public ComboBoxModel doFillTenantItems(@QueryParameter String serverId) {
+
             ComboBoxModel names = new ComboBoxModel();
+
+            if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
+                return names;
+            }
+
+            OctopusApi api = getApiByServerId(serverId);
             try {
                 Set<com.octopusdeploy.api.data.Tenant> tenants = api.getTenantsApi().getAllTenants();
                 for (com.octopusdeploy.api.data.Tenant ten : tenants) {
@@ -653,11 +677,18 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         
         /**
          * Data binding that returns all possible project names to be used in the project autocomplete.
+         * @param serverId The id of OctopusDeployServer in the configuration.
          * @return ComboBoxModel
          */
-        public ComboBoxModel doFillProjectItems() {
-            setGlobalConfiguration();
+        public ComboBoxModel doFillProjectItems(@QueryParameter String serverId) {
+
             ComboBoxModel names = new ComboBoxModel();
+
+            if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
+                return names;
+            }
+
+            OctopusApi api = getApiByServerId(serverId);
             try {
                 Set<com.octopusdeploy.api.data.Project> projects = api.getProjectsApi().getAllProjects();
                 for (com.octopusdeploy.api.data.Project proj : projects) {
@@ -672,11 +703,18 @@ public class OctopusDeployReleaseRecorder extends Recorder implements Serializab
         /**
          * Data binding that returns all possible channels names to be used in the channel autocomplete.
          * @param project the project name
+         * @param serverId The id of OctopusDeployServer in the configuration.
          * @return ComboBoxModel
          */
-        public ComboBoxModel doFillChannelItems(@QueryParameter String project) {
-            setGlobalConfiguration();
+        public ComboBoxModel doFillChannelItems(@QueryParameter String project, @QueryParameter String serverId) {
+
             ComboBoxModel names = new ComboBoxModel();
+
+            if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
+                return names;
+            }
+
+            OctopusApi api = getApiByServerId(serverId);
             if (project != null && !project.isEmpty()) {
                 try {
                     com.octopusdeploy.api.data.Project p = api.getProjectsApi().getProjectByName(project);
