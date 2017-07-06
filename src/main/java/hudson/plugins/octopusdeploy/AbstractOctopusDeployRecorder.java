@@ -1,8 +1,6 @@
 package hudson.plugins.octopusdeploy;
 
 import com.octopusdeploy.api.OctopusApi;
-
-import com.thoughtworks.xstream.annotations.XStreamOmitField;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Recorder;
 import jenkins.model.Jenkins;
@@ -17,9 +15,9 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
 
     /**
      * Cache for OctopusDeployServer instance used in deployment
+     * transient keyword prevents leaking API key to Job configuration
      */
-    @XStreamOmitField //Prevent leaking API key to Job configuration
-    protected OctopusDeployServer octopusDeployServer;
+    protected transient OctopusDeployServer octopusDeployServer;
 
     public OctopusDeployServer getOctopusDeployServer() {
         ///TODO use better approach to achieve Laziness
@@ -36,6 +34,7 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
     public String getServerId() {
         return serverId;
     }
+
     /**
      * The project name as defined in Octopus.
      */
@@ -69,6 +68,19 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
         return waitForDeployment;
     }
 
+
+    /**
+     * Get the default OctopusDeployServer from OctopusDeployPlugin configuration
+     * */
+    protected static OctopusDeployServer getDefaultOctopusDeployServer() {
+        Jenkins jenkinsInstance = Jenkins.getInstance();
+        if (jenkinsInstance == null) {
+            throw new IllegalStateException("Jenkins instance is null");
+        }
+        OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl) jenkinsInstance.getDescriptor(OctopusDeployPlugin.class);
+        return descriptor.getDefaultOctopusDeployServer();
+    }
+
     /**
      * Get the list of OctopusDeployServer from OctopusDeployPlugin configuration
      * */
@@ -95,6 +107,9 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
      * Get the instance of OctopusDeployServer by serverId
      * */
     public static OctopusDeployServer getOctopusDeployServer(String serverId) {
+        if (serverId == null || serverId.isEmpty()){
+            return getDefaultOctopusDeployServer();
+        }
         for(OctopusDeployServer server : getOctopusDeployServers()) {
             if(server.getId().equals(serverId)) {
                 return server;

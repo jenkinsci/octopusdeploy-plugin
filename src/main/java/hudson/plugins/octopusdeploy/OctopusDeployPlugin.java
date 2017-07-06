@@ -1,13 +1,21 @@
 package hudson.plugins.octopusdeploy;
 
-import jenkins.model.*;
-import org.kohsuke.stapler.*;
-import net.sf.json.JSONObject;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
+import jenkins.model.GlobalConfiguration;
+import jenkins.model.GlobalPluginConfiguration;
+import net.sf.json.JSONObject;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
+
 import java.io.IOException;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,10 +30,32 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
     @Extension
     public static final class DescriptorImpl extends Descriptor<GlobalConfiguration> {
 
-        private List<OctopusDeployServer> octopusDeployServers;
+        private transient String apiKey;
 
+        private transient String octopusHost;
+
+        /**
+         * Get the default OctopusDeployServer instance
+         */
+        public OctopusDeployServer getDefaultOctopusDeployServer() {
+
+            for (OctopusDeployServer s : getOctopusDeployServers()) {
+                if (s.isDefault()) {
+                    return s;
+                }
+            }
+            if(!getOctopusDeployServers().isEmpty()) {
+                return getOctopusDeployServers().get(0);
+            }
+            return null;
+        }
+
+        private List<OctopusDeployServer> octopusDeployServers;
         public List<OctopusDeployServer> getOctopusDeployServers() {
-            return octopusDeployServers;
+            if (octopusDeployServers != null) {
+                return octopusDeployServers;
+            }
+            return Collections.emptyList();
         }
 
         private void setOctopusDeployServers(List<OctopusDeployServer> servers) {
@@ -34,8 +64,27 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
 
         public DescriptorImpl() {
             load();
+            loadLegacyOctopusDeployServerConfig();
         }
-        
+
+        /**
+         * Load legacy OctopusPlugin configuration format
+         */
+        private void loadLegacyOctopusDeployServerConfig() {
+            if (isLegacyOctopusDeployServerExist()){
+                OctopusDeployServer server = new OctopusDeployServer("default",octopusHost,apiKey,true);
+                if(octopusDeployServers == null)
+                {
+                    octopusDeployServers = new ArrayList<>();
+                }
+                octopusDeployServers.add(0,server);
+            }
+        }
+
+        private boolean isLegacyOctopusDeployServerExist() {
+            return octopusHost != null && apiKey !=null;
+        }
+
         @Override
         public String getDisplayName() {
             return "OctopusDeploy Plugin";
@@ -43,20 +92,21 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
 
         /**
          * Validate that serverId is:
+         *  - Not empty
          *  - Unique
          * @param serverId the uniqueId for an octopus deploy instance
-         * @param url the host URL for an octopus deploy instance
          * @return Form validation to present on the Jenkins UI
          */
-        public FormValidation doCheckServerId(@QueryParameter String serverId, @QueryParameter String url) {
+        public FormValidation doCheckServerId(@QueryParameter String serverId,@QueryParameter String url,@QueryParameter String apiKey) {
             serverId = serverId.trim();
-
-            for (OctopusDeployServer s:octopusDeployServers){
-                if (serverId.equals(s.getId()) && !url.equals(s.getUrl())){
+            if (serverId.isEmpty()) {
+                return FormValidation.warning("Please set a ServerID");
+            }
+            for (OctopusDeployServer s:getOctopusDeployServers()){
+                if (serverId.equals(s.getId()) && !url.equals(s.getUrl()) && !apiKey.equals(s.getApiKey())){
                     return FormValidation.error("The Server ID you entered already exists.");
                 }
             }
-
             return FormValidation.ok();
         }
 
@@ -104,7 +154,6 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
          * Validate that the apiKey is:
          *  - Not empty
          *  - has a valid OctopusDeploy API Key format: API-XXXXXXXXX
-         *  - A real location that we can connect to
          * @param apiKey Octopus API Key used for deployment
          * @return Form validation to present on the Jenkins UI
          */
@@ -113,7 +162,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
             if (apiKey.isEmpty()) {
                 return FormValidation.warning("Please set a API Key generated from OctopusDeploy Server.");
             }
-            if (!apiKey.matches("API\\-\\w{27}")) {
+            if (!apiKey.matches("API\\-\\w{25,27}")) {
                 return FormValidation.error("Supplied Octopus API Key format is invalid. It should look like API-XXXXXXXXXXXXXXXXXXXXXXXXXXX");
             }
             return FormValidation.ok();
@@ -128,6 +177,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
                 servers = req.bindJSONToList(OctopusDeployServer.class, json.get("servers"));
             }
             setOctopusDeployServers(servers);
+
             
             save();
             return super.configure(req, formData);

@@ -327,8 +327,13 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             return AbstractOctopusDeployRecorder.getOctopusDeployServer(serverId).getApi();
         }
 
-        private List<OctopusDeployServer> getOctopusDeployServers(){
-            return AbstractOctopusDeployRecorder.getOctopusDeployServers();
+        public String getDefaultOctopusDeployServerId() {
+
+            OctopusDeployServer server = AbstractOctopusDeployRecorder.getDefaultOctopusDeployServer();
+            if(server != null){
+                return server.getId();
+            }
+            return null;
         }
 
         /**
@@ -339,18 +344,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         public FormValidation doCheckServerId(@QueryParameter String serverId) {
 
             serverId = serverId.trim();
-            if (serverId==null || serverId.isEmpty()) {
-                return FormValidation.error("Please set a Server Id");
-            }
-            List<String> ids = getOctopusDeployServersIds();
-            if (ids.isEmpty()){
-                return FormValidation.error("There are no OctopusDeploy servers configured.");
-            }
-
-            if (!ids.contains(serverId)) {
-                return FormValidation.error("There are no OctopusDeploy servers configured with this Server ID.");
-            }
-            return FormValidation.ok();
+            return OctopusValidator.validateServerId(serverId);
         }
 
         /**
@@ -427,6 +421,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
          * @return ComboBoxModel
          */
         public ComboBoxModel doFillServerIdItems() {
+
             return new ComboBoxModel(getOctopusDeployServersIds());
         }
 

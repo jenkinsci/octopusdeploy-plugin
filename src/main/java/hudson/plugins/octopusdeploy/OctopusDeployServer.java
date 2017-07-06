@@ -2,8 +2,8 @@ package hudson.plugins.octopusdeploy;
 
 
 import com.octopusdeploy.api.OctopusApi;
-import com.thoughtworks.xstream.annotations.XStreamOmitField;
 import org.kohsuke.stapler.DataBoundConstructor;
+
 import java.io.Serializable;
 
 /**
@@ -11,6 +11,11 @@ import java.io.Serializable;
  */
 
 public class OctopusDeployServer implements Serializable {
+
+    private final boolean isDefault;
+    public boolean isDefault() {
+        return isDefault;
+    }
 
     private String id;
     public String getId() {
@@ -27,8 +32,7 @@ public class OctopusDeployServer implements Serializable {
         return apiKey;
     }
 
-    @XStreamOmitField
-    private OctopusApi api;
+    private transient OctopusApi api;
     public OctopusApi getApi() {
         ///TODO use better approach to achieve Laziness
         if (api == null) {
@@ -37,10 +41,15 @@ public class OctopusDeployServer implements Serializable {
         return api;
     }
 
-    @DataBoundConstructor
-    public OctopusDeployServer(String serverId, String url, String apiKey) {
+    public OctopusDeployServer(String serverId, String url, String apiKey, boolean isDefault) {
         this.id = serverId;
         this.url = url;
         this.apiKey = apiKey;
+        this.isDefault = isDefault;
+    }
+
+    @DataBoundConstructor
+    public OctopusDeployServer(String serverId, String url, String apiKey) {
+        this(serverId,url,apiKey,false);
     }
 }

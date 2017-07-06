@@ -488,28 +488,23 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
             return AbstractOctopusDeployRecorder.getOctopusDeployServer(serverId).getApi();
         }
 
-        private List<OctopusDeployServer> getOctopusDeployServers(){
-            return AbstractOctopusDeployRecorder.getOctopusDeployServers();
+        public String getDefaultOctopusDeployServerId() {
+
+            OctopusDeployServer server = AbstractOctopusDeployRecorder.getDefaultOctopusDeployServer();
+            if(server != null){
+                return server.getId();
+            }
+            return null;
         }
 
         /**
-         * Check that the serverId field is not empty.
+         * Check that the serverId field is not empty and does exist.
          * @param serverId The id of OctopusDeployServer in the configuration.
          * @return Ok if not empty, error otherwise.
          */
         public FormValidation doCheckServerId(@QueryParameter String serverId) {
             serverId = serverId.trim();
-            if (serverId==null || serverId.isEmpty()) {
-                return FormValidation.error("Please set a Server Id");
-            }
-            List<String> ids = getOctopusDeployServersIds();
-            if (ids.isEmpty()){
-                return FormValidation.error("There are no OctopusDeploy servers configured.");
-            }
-            if (!ids.contains(serverId)) {
-                return FormValidation.error("There are no OctopusDeploy servers configured with this Server ID.");
-            }
-            return FormValidation.ok();
+            return OctopusValidator.validateServerId(serverId);
         }
 
         /**
