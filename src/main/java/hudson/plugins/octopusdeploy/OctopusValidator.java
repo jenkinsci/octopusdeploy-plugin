@@ -4,6 +4,7 @@ import com.octopusdeploy.api.data.Release;
 import com.octopusdeploy.api.*;
 import hudson.util.FormValidation;
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -154,7 +155,24 @@ public class OctopusValidator {
         }
         return FormValidation.ok();
     }
-    
+
+    public static FormValidation validateServerId(String serverId) {
+        if (serverId==null || serverId.isEmpty()) {
+            return FormValidation.error("Please set a Server Id");
+        }
+        if(serverId.equals("default")) {
+            return FormValidation.ok();
+        }
+        List<String> ids = AbstractOctopusDeployRecorder.getOctopusDeployServersIds();
+        if (ids.isEmpty()){
+            return FormValidation.error("There are no OctopusDeploy servers configured.");
+        }
+        if (!ids.contains(serverId)) {
+            return FormValidation.error("There are no OctopusDeploy servers configured with this Server ID.");
+        }
+        return FormValidation.ok();
+    }
+
     /**
      * Whether or not a release must exist or must not exist depending on the operation being done.
      */
