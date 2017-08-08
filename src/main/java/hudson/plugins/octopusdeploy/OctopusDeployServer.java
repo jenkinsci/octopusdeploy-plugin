@@ -1,6 +1,5 @@
 package hudson.plugins.octopusdeploy;
 
-
 import com.octopusdeploy.api.OctopusApi;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -9,9 +8,7 @@ import java.io.Serializable;
 /**
  * @author wbenayed
  */
-
 public class OctopusDeployServer implements Serializable {
-
     private final boolean isDefault;
     public boolean isDefault() {
         return isDefault;
@@ -36,20 +33,20 @@ public class OctopusDeployServer implements Serializable {
     public OctopusApi getApi() {
         ///TODO use better approach to achieve Laziness
         if (api == null) {
-            api = new OctopusApi(url,apiKey);
+            api = new OctopusApi(url, apiKey);
         }
         return api;
     }
 
     public OctopusDeployServer(String serverId, String url, String apiKey, boolean isDefault) {
-        this.id = serverId;
-        this.url = url;
-        this.apiKey = apiKey;
+        this.id = serverId.trim();
+        this.url = url.trim();
+        this.apiKey = apiKey.trim();
         this.isDefault = isDefault;
     }
 
     @DataBoundConstructor
     public OctopusDeployServer(String serverId, String url, String apiKey) {
-        this(serverId,url,apiKey,false);
+        this(serverId, url, apiKey, false);
     }
 }

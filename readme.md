@@ -1,5 +1,6 @@
 # OctopusDeploy Jenkins Plugin #
-Connecting [OctopusDeploy](https://octopusdeploy.com/) to the [Jenkins](https://jenkins-ci.org/) workflow. Integration with OctopusDeploy is achieved via the REST API, not the Octo.exe tool.
+Connecting [OctopusDeploy](https://octopusdeploy.com/) to the [Jenkins](https://jenkins-ci.org/) workflow. Integration with OctopusDeploy is achieved via the REST API,
+not the Octo.exe tool.
 
 ## Compatibility ##
 Tested and compatible with OctopusDeploy: 2.6 and 3.0 - 3.7.
@@ -22,18 +23,23 @@ This plugin implements part of the REST API for OctopusDeploy in order to retrie
 It makes use of an API Key which is configured in the Global Settings Jenkins configuration page. This API Key is used for all interactions with OctopusDeploy.
 
 ## Environment Variable Support ##
-Environment variables can be used in many fields in the Release and Deployment components of this plugin. Any variable, written as ${VARIABLE_NAME} will get replaced by that variable's value. If there is no value set for that variable, the token is not replaced.
+Environment variables can be used in many fields in the Release and Deployment components of this plugin. Any variable, written as ${VARIABLE_NAME} will get replaced
+by that variable's value. If there is no value set for that variable, the token is not replaced.
 
 ## Custom Release Notes ##
-The Release component allows Release Notes to be gathered from SCM, collecting commit messages from the current build all the way back to the last successful build, or it can load in Release Notes from a file.
+The Release component allows Release Notes to be gathered from SCM, collecting commit messages from the current build all the way back to the last successful build,
+or it can load in Release Notes from a file.
 
-There is also an option to provide a link back to the job run that created the release in the Release Notes, allowing easy navigation between Jenkins jobs and OctopusDeploy Releases.
+There is also an option to provide a link back to the job run that created the release in the Release Notes, allowing easy navigation between Jenkins jobs and
+OctopusDeploy Releases.
 
 ## Build Summary Links ##
-Each component provides a link to the Release or Deployment that it created. These links are provided in the console output of the job as well as showing up as a build badge, and in the Build Summary.
+Each component provides a link to the Release or Deployment that it created. These links are provided in the console output of the job as well as showing up as a build
+badge, and in the Build Summary.
 
 ## Wait-for-Deployment ##
-The Deployment component can optionally wait for the completion of the Deployment, and record the status. If the status returns as failed, the Jenkins job will be marked as a failure.
+The Deployment component can optionally wait for the completion of the Deployment, and record the status. If the status returns as failed, the Jenkins job will be marked
+as a failure.
 
 ## Autocomplete ##
 Some entry fields, like Project and Environment support auto-completion, pulling a list of names to choose from from the OctopusDeploy server.
@@ -46,3 +52,7 @@ As of 1.5.0, this plugin can submit a Tenant to the deployment step for use in O
 
 ## Creating release on specific Channels ##
 As of 1.6.0, this plugin can create releases on specific Channels as defined by users.
+
+## Multiple Octopus servers ##
+As of 1.7.0, this plugin now allows more than one Octopus server to be configured in the global Jenkins configuration. The selection of which Octopus server to use will be
+done by the plugin on a per-project basis (under Advanced Options). Note that unless otherwise specified, each project will use the first Octopus server listed.

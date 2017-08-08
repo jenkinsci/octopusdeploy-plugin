@@ -1,5 +1,8 @@
 # Change Log #
 
+## 1.7.0 ##
+* Introduced multiple Octopus servers
+
 ## 1.6.0 ##
 * Implemented support for Channels
 * Refactored API 

@@ -5,7 +5,7 @@
               <f:repeatable name="servers" var="server" items="${descriptor.octopusDeployServers}" minimum="1"
                                      header="OctopusDeploy" add="${%Add OctopusDeploy Server}">
               <table width="100%">
-            <f:entry title="Server ID" field="serverId">
+            <f:entry title="Server Id" field="serverId">
                 <f:textbox value="${server.id}"/>
             </f:entry>
             <f:entry title="URL" field="url">
@@ -22,6 +22,5 @@
                </table>
               </f:repeatable>
           </f:entry>
-
   </f:section>
 </j:jelly>
