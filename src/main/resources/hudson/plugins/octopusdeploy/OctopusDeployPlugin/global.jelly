@@ -22,6 +22,5 @@
                </table>
               </f:repeatable>
           </f:entry>
-
   </f:section>
 </j:jelly>
