@@ -5,7 +5,6 @@ import com.octopusdeploy.api.data.Release;
 import com.octopusdeploy.api.*;
 import java.io.*;
 import java.util.*;
-import jenkins.model.Jenkins;
 import hudson.*;
 import hudson.model.*;
 import hudson.tasks.*;
@@ -218,7 +217,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         log.info("Project: " + project);
         log.info("Version: " + releaseVersion);
         log.info("Environment: " + environment);
-        if (tenant!=null && !tenant.isEmpty()) {
+        if (tenant != null && !tenant.isEmpty()) {
             log.info("Tenant: " + tenant);
         }
         log.info("======================");
@@ -244,6 +243,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
      * @param json json input
      * @param api octopus api
      * @param logger logger
+     * @return the task state for the deployment
      */
     private String waitForDeploymentCompletion(JSON json, OctopusApi api, Log logger) {
         final long WAIT_TIME = 5000;

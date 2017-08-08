@@ -27,9 +27,6 @@ import org.kohsuke.stapler.export.*;
  * Creates a release and optionally deploys it.
  */
 public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder implements Serializable {
-
-
-
     /**
      * The release version as defined in Octopus.
      */
@@ -85,14 +82,6 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
     }
 
     /**
-     * The environment to deploy to, if we are deploying.
-     */
-    private final String environment;
-    public String getEnvironment() {
-        return environment;
-    }
-
-    /**
      * Should this release be deployed right after it is created?
      */
     private final boolean deployThisRelease;
@@ -138,8 +127,8 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         this.deployThisRelease = deployThisRelease;
         this.packageConfigs = packageConfigs;
         this.environment = environment.trim();
-        this.tenant = tenant.trim();
-        this.channel = channel.trim();
+        this.tenant = tenant == null ? null : tenant.trim();
+        this.channel = channel == null ? null : channel.trim();
         this.waitForDeployment = waitForDeployment;
         this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
         this.defaultPackageVersion = defaultPackageVersion;
@@ -280,10 +269,6 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         }
 
         return success;
-    }
-
-    private DescriptorImpl getDescriptorImpl() {
-        return ((DescriptorImpl)getDescriptor());
     }
 
     /**
@@ -489,7 +474,6 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         }
 
         public String getDefaultOctopusDeployServerId() {
-
             OctopusDeployServer server = AbstractOctopusDeployRecorder.getDefaultOctopusDeployServer();
             if(server != null){
                 return server.getId();
@@ -557,7 +541,6 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         public FormValidation doCheckReleaseVersion(@QueryParameter String releaseVersion, @QueryParameter String project, @QueryParameter String serverId) {
             releaseVersion = releaseVersion.trim();
 
-
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return FormValidation.warning(SERVER_ID_VALIDATION_MESSAGE);
             }
@@ -602,7 +585,6 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         public FormValidation doCheckEnvironment(@QueryParameter String environment, @QueryParameter String serverId) {
             environment = environment.trim();
 
-
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return FormValidation.warning(SERVER_ID_VALIDATION_MESSAGE);
             }
@@ -626,7 +608,6 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
          * @return ComboBoxModel
          */
         public ComboBoxModel doFillEnvironmentItems(@QueryParameter String serverId) {
-
             ComboBoxModel names = new ComboBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
@@ -651,7 +632,6 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
          * @return ComboBoxModel
          */
         public ComboBoxModel doFillTenantItems(@QueryParameter String serverId) {
-
             ComboBoxModel names = new ComboBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
@@ -676,7 +656,6 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
          * @return ComboBoxModel
          */
         public ComboBoxModel doFillProjectItems(@QueryParameter String serverId) {
-
             ComboBoxModel names = new ComboBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
@@ -702,7 +681,6 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
          * @return ComboBoxModel
          */
         public ComboBoxModel doFillChannelItems(@QueryParameter String project, @QueryParameter String serverId) {
-
             ComboBoxModel names = new ComboBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
