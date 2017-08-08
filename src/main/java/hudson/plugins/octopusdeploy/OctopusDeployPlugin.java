@@ -72,9 +72,9 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
         /**
          * Load legacy OctopusPlugin configuration format
          */
+		@SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "This is for backwards compatiblity on Jenkins plugin upgrade" )
         private void loadLegacyOctopusDeployServerConfig() {
             if (doesLegacyOctopusDeployServerExist()){
-                @SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "This is for backwards compatiblity on Jenkins plugin upgrade" )
                 OctopusDeployServer server = new OctopusDeployServer("default", octopusHost, apiKey, true);
                 if(octopusDeployServers == null)
                 {
