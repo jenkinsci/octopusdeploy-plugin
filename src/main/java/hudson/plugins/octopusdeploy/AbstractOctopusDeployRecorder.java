@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * The AbstractOctopusDeployRecorder tries to take care of most of the Octopus
+ * Deploy server access.
  * @author wbenayed
  */
 public abstract class AbstractOctopusDeployRecorder extends Recorder {
@@ -71,6 +73,7 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
 
     /**
      * Get the default OctopusDeployServer from OctopusDeployPlugin configuration
+     * @return the default server
      * */
     protected static OctopusDeployServer getDefaultOctopusDeployServer() {
         Jenkins jenkinsInstance = Jenkins.getInstance();
@@ -83,6 +86,7 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
 
     /**
      * Get the list of OctopusDeployServer from OctopusDeployPlugin configuration
+     * @return all configured servers
      * */
     public static List<OctopusDeployServer> getOctopusDeployServers() {
         Jenkins jenkinsInstance = Jenkins.getInstance();
@@ -105,6 +109,7 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
 
     /**
      * Get the instance of OctopusDeployServer by serverId
+     * @return the server by id
      * */
     public static OctopusDeployServer getOctopusDeployServer(String serverId) {
         if (serverId == null || serverId.isEmpty()){
@@ -121,6 +126,7 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
 
     /**
      * Get OctopusApi instance for this deployment
+     * @return the api for a given server
      */
     public OctopusApi getApi() {
         return getOctopusDeployServer().getApi();
