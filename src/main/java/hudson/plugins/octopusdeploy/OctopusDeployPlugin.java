@@ -1,5 +1,6 @@
 package hudson.plugins.octopusdeploy;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
@@ -36,6 +37,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
 
         /**
          * Get the default OctopusDeployServer instance
+         * @return the default server
          */
         public OctopusDeployServer getDefaultOctopusDeployServer() {
 
@@ -71,17 +73,18 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
          * Load legacy OctopusPlugin configuration format
          */
         private void loadLegacyOctopusDeployServerConfig() {
-            if (isLegacyOctopusDeployServerExist()){
-                OctopusDeployServer server = new OctopusDeployServer("default",octopusHost,apiKey,true);
+            if (doesLegacyOctopusDeployServerExist()){
+                @SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "This is for backwards compatiblity on Jenkins plugin upgrade" )
+                OctopusDeployServer server = new OctopusDeployServer("default", octopusHost, apiKey, true);
                 if(octopusDeployServers == null)
                 {
                     octopusDeployServers = new ArrayList<>();
                 }
-                octopusDeployServers.add(0,server);
+                octopusDeployServers.add(0, server);
             }
         }
 
-        private boolean isLegacyOctopusDeployServerExist() {
+        private boolean doesLegacyOctopusDeployServerExist() {
             return octopusHost != null && apiKey !=null;
         }
 
@@ -178,7 +181,6 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
             }
             setOctopusDeployServers(servers);
 
-            
             save();
             return super.configure(req, formData);
         }

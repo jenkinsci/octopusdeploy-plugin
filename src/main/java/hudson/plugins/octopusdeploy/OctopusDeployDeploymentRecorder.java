@@ -206,7 +206,6 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         return ((DescriptorImpl)getDescriptor());
     }
 
-
     /**
      * Write the startup header for the logs to show what our inputs are.
      * @param log The logger

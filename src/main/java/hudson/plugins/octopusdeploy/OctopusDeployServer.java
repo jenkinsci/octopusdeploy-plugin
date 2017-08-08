@@ -9,6 +9,9 @@ import java.io.Serializable;
  * @author wbenayed
  */
 public class OctopusDeployServer implements Serializable {
+    // This value should be incremented every time that this serializable's contract changes
+    private static final long serialVersionUID = 1;
+            
     private final boolean isDefault;
     public boolean isDefault() {
         return isDefault;
