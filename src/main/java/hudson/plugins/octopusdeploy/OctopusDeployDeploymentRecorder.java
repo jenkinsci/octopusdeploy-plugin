@@ -28,7 +28,6 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         return releaseVersion;
     }
 
-
     /**
      * The variables to use for a deploy to in Octopus.
      */
@@ -43,7 +42,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         this.project = project.trim();
         this.releaseVersion = releaseVersion.trim();
         this.environment = environment.trim();
-        this.tenant = tenant.trim();
+        this.tenant = tenant == null ? null : tenant.trim(); // Otherwise this can throw on plugin version upgrade
         this.variables = variables.trim();
         this.waitForDeployment = waitForDeployment;
     }
