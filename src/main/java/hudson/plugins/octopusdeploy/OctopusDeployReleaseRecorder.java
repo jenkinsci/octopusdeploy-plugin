@@ -231,16 +231,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
             return success;
         }
 
-        Set<SelectedPackage> selectedPackages = null;
-        List<PackageConfiguration> combinedPackageConfigs = getCombinedPackageList(p.getId(), packageConfigs, defaultPackageVersion, log);
-        if (combinedPackageConfigs != null && !combinedPackageConfigs.isEmpty()) {
-            selectedPackages = new HashSet<SelectedPackage>();
-            for (PackageConfiguration pc : combinedPackageConfigs) {
-                selectedPackages.add(new SelectedPackage(
-                    envInjector.injectEnvironmentVariableValues(pc.getPackageName()),
-                    envInjector.injectEnvironmentVariableValues(pc.getPackageVersion())));
-            }
-        }
+        Set<SelectedPackage> selectedPackages = getCombinedPackageList(p.getId(), packageConfigs, envInjector.injectEnvironmentVariableValues(defaultPackageVersion), log, envInjector);
 
         try {
             // Sanitize the release notes in preparation for JSON
@@ -310,21 +301,21 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
      * @param projectId
      * @param selectedPackages
      * @param defaultPackageVersion
-     * @return A list that combines the default packages and selected packages
+     * @return A set that combines the default packages and selected packages
      */
-    private List<PackageConfiguration> getCombinedPackageList(String projectId, List<PackageConfiguration> selectedPackages,
-            String defaultPackageVersion, Log log)
+    private Set<SelectedPackage> getCombinedPackageList(String projectId, List<PackageConfiguration> selectedPackages,
+            String defaultPackageVersion, Log log, EnvironmentVariableValueInjector envInjector)
     {
-        List<PackageConfiguration> combinedList = new ArrayList<PackageConfiguration>();
+        Set<SelectedPackage> combinedList = new HashSet<>();
 
         //Get all selected package names for easier lookup later
-        Set<String> selectedNames = new HashSet<String>();
+        Map<String, SelectedPackage> selectedNames = new HashMap<>();
         if (selectedPackages != null) {
             for (PackageConfiguration pkgConfig : selectedPackages) {
-                selectedNames.add(pkgConfig.getPackageName());
+                SelectedPackage sp = new SelectedPackage(envInjector.injectEnvironmentVariableValues(pkgConfig.getPackageName()), null, envInjector.injectEnvironmentVariableValues(pkgConfig.getPackageVersion()));
+                selectedNames.put(envInjector.injectEnvironmentVariableValues(pkgConfig.getPackageName()), sp);
+                combinedList.add(sp);
             }
-            //Start with the selected packages
-            combinedList.addAll(selectedPackages);
         }
 
         DeploymentProcessTemplate defaultPackages = null;
@@ -338,17 +329,24 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
 
         if (defaultPackages != null) {
             for (SelectedPackage selPkg : defaultPackages.getSteps()) {
-                String name = selPkg.getStepName();
+                String stepName = selPkg.getStepName();
+                String packageId = selPkg.getPackageId();
 
                 //Only add if it was not a selected package
-                if (!selectedNames.contains(name)) {
-                    //Get the default version, if not specified, warn
-                    if (defaultPackageVersion != null && !defaultPackageVersion.isEmpty()) {
-                        combinedList.add(new PackageConfiguration(name, defaultPackageVersion));
-                        log.info(String.format("Using default version (%s) of package %s", defaultPackageVersion, name));
-                    }
-                    else {
-                        log.error(String.format("Required package %s not included because package is not in Package Configuration list and no default package version defined", name));
+                if (!selectedNames.containsKey(stepName)) {
+                    //If packageId specified replace by stepName retrieved from DeploymentProcessTemplate
+                    //Emulates same behaviour as octo.client project https://octopus.com/docs/api-and-integration/octo.exe-command-line/creating-releases
+                    if (selectedNames.containsKey(packageId)) {
+                        SelectedPackage sc = selectedNames.get(packageId);
+                        sc.setStepName(stepName);
+                    } else {
+                        //Get the default version, if not specified, warn
+                        if (defaultPackageVersion != null && !defaultPackageVersion.isEmpty()) {
+                            combinedList.add(new SelectedPackage(stepName, null, defaultPackageVersion));
+                            log.info(String.format("Using default version (%s) of package %s", defaultPackageVersion, stepName));
+                        } else {
+                            log.error(String.format("Required package %s not included because package is not in Package Configuration list and no default package version defined", stepName));
+                        }
                     }
                 }
             }
