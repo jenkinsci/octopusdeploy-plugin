@@ -136,8 +136,9 @@ public class DeploymentsApi {
         for (Object pkgObj : pkgsJson) {
             JSONObject pkgJsonObj = (JSONObject) pkgObj;
             String name = pkgJsonObj.getString("StepName");
+            String packageId = pkgJsonObj.getString("PackageId");
             String version = pkgJsonObj.getString("VersionSelectedLastRelease");
-            packages.add(new SelectedPackage(name, version));
+            packages.add(new SelectedPackage(name, packageId, version));
         }
 
         DeploymentProcessTemplate template = new DeploymentProcessTemplate(deploymentId, projectId, packages);
