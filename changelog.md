@@ -1,5 +1,8 @@
 # Change Log #
 
+## 1.8.0 ##
+* Feature enhancement: Packages can now be specified by Package Name or Step Name
+
 ## 1.7.0 ##
 * Introduced multiple Octopus servers
 
