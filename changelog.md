@@ -1,4 +1,7 @@
 # Change Log #
+## 1.7.1 ##
+* Bugfix - When an Octopus url ended with / the url was truncated an extra character incorrectly
+
 
 ## 1.8.0 ##
 * Feature enhancement: Packages can now be specified by Package Name or Step Name
