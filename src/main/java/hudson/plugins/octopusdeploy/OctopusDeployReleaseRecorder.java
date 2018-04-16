@@ -245,7 +245,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
             String urlSuffix = json.getJSONObject("Links").getString("Web");
             String url = getOctopusDeployServer().getUrl();
             if (url.endsWith("/")) {
-                url = url.substring(0, url.length() - 2);
+                url = url.substring(0, url.length() - 1);
             }
             log.info("Release created: \n\t" + url + urlSuffix);
             build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Release, url + urlSuffix));
