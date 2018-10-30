@@ -64,7 +64,10 @@ public class ReleasesApi {
             jsonBuilder.append(",SelectedPackages:[");
             Set<String> selectedPackageStrings = new HashSet<String>();
             for (SelectedPackage selectedPackage : selectedPackages) {
-                selectedPackageStrings.add(String.format("{StepName:\"%s\",Version:\"%s\"}", selectedPackage.getStepName(), selectedPackage.getVersion()));
+                // StepName has been deprecated, ActionName should now be used. Continue passing StepName in case an older
+                // version of Octopus server is in use.
+                String actionName = selectedPackage.getStepName();
+                selectedPackageStrings.add(String.format("{StepName:\"%s\",ActionName:\"%s\",PackageReferenceName:\"%s\",Version:\"%s\"}", actionName, actionName, selectedPackage.getPackageReferenceName(), selectedPackage.getVersion()));
             }
             jsonBuilder.append(StringUtils.join(selectedPackageStrings, ","));
             jsonBuilder.append("]");

@@ -289,7 +289,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         } else {
             log.info("Package Configurations:");
             for (PackageConfiguration pc : packageConfigs) {
-                log.info("\t" + pc.getPackageName() + "\tv" + pc.getPackageVersion());
+                log.info("\t" + pc.getPackageName() + "\t" + pc.getPackageReferenceName() + "\tv" + pc.getPackageVersion());
             }
         }
         log.info("=======================");
@@ -312,7 +312,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         Map<String, SelectedPackage> selectedNames = new HashMap<>();
         if (selectedPackages != null) {
             for (PackageConfiguration pkgConfig : selectedPackages) {
-                SelectedPackage sp = new SelectedPackage(envInjector.injectEnvironmentVariableValues(pkgConfig.getPackageName()), null, envInjector.injectEnvironmentVariableValues(pkgConfig.getPackageVersion()));
+                SelectedPackage sp = new SelectedPackage(envInjector.injectEnvironmentVariableValues(pkgConfig.getPackageName()), null, pkgConfig.getPackageReferenceName(), envInjector.injectEnvironmentVariableValues(pkgConfig.getPackageVersion()));
                 selectedNames.put(envInjector.injectEnvironmentVariableValues(pkgConfig.getPackageName()), sp);
                 combinedList.add(sp);
             }
@@ -331,6 +331,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
             for (SelectedPackage selPkg : defaultPackages.getSteps()) {
                 String stepName = selPkg.getStepName();
                 String packageId = selPkg.getPackageId();
+                String packageReferenceName = selPkg.getPackageReferenceName();
 
                 //Only add if it was not a selected package
                 if (!selectedNames.containsKey(stepName)) {
@@ -342,7 +343,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
                     } else {
                         //Get the default version, if not specified, warn
                         if (defaultPackageVersion != null && !defaultPackageVersion.isEmpty()) {
-                            combinedList.add(new SelectedPackage(stepName, null, defaultPackageVersion));
+                            combinedList.add(new SelectedPackage(stepName, null, packageReferenceName, defaultPackageVersion));
                             log.info(String.format("Using default version (%s) of package %s", defaultPackageVersion, stepName));
                         } else {
                             log.error(String.format("Required package %s not included because package is not in Package Configuration list and no default package version defined", stepName));

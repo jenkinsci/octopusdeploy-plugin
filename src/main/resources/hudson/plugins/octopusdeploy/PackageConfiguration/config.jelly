@@ -3,6 +3,9 @@
   <f:entry field="packageName" title="Package">
       <f:textbox />
   </f:entry>
+  <f:entry field="packageReferenceName" title="Package Reference Name">
+      <f:textbox />
+  </f:entry>
   <f:entry field="packageVersion" title="Version">
       <f:textbox />
   </f:entry>
