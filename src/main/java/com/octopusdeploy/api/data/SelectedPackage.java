@@ -13,19 +13,23 @@ public class SelectedPackage {
 
     private final String packageId;
     public String getPackageId() { return packageId; }
-    
+
+    private final String packageReferenceName;
+    public String getPackageReferenceName() { return packageReferenceName; }
+
     private final String version;
     public String getVersion() { return version; }
 
-    public SelectedPackage(String stepName, String packageId, String version) {
+    public SelectedPackage(String stepName, String packageId, String packageReferenceName, String version) {
         this.stepName = stepName;
         this.packageId = packageId;
+        this.packageReferenceName = packageReferenceName;
         this.version = version;
     }
 
     @Override
     public String toString() {
-        return "SelectedPackage [stepName=" + stepName + ", packageId=" + packageId + ", version=" + version + "]";
+        return "SelectedPackage [stepName=" + stepName + ", packageId=" + packageId + ", packageReferenceName=" + packageReferenceName + ", version=" + version + "]";
     }
 
 }

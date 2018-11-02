@@ -20,7 +20,16 @@ public class PackageConfiguration extends AbstractDescribableImpl<PackageConfigu
     public String getPackageName() {
         return packageName;
     }
-    
+
+    /**
+     * The package reference's name.
+     */
+    private final String packageReferenceName;
+    @Exported
+    public String getPackageReferenceName() {
+        return packageReferenceName;
+    }
+
     /**
      * The version of the package to use.
      */
@@ -31,8 +40,9 @@ public class PackageConfiguration extends AbstractDescribableImpl<PackageConfigu
     }
     
     @DataBoundConstructor
-    public PackageConfiguration(String packageName, String packageVersion) {
+    public PackageConfiguration(String packageName, String packageReferenceName, String packageVersion) {
         this.packageName = packageName.trim();
+        this.packageReferenceName = packageReferenceName.trim();
         this.packageVersion = packageVersion.trim();
     }
     
