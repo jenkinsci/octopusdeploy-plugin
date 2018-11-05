@@ -1,4 +1,7 @@
 # Change Log #
+## 1.9.0 ##
+* Passes "reference name" for the package on a step, now that there can be multiple packages per step (octopus 2018.8).
+
 ## 1.8.1 ##
 * Bugfix - When an Octopus url ended with / the url was truncated an extra character incorrectly
 

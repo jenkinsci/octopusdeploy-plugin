@@ -4,11 +4,13 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
+import jenkins.model.Jenkins;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.GlobalPluginConfiguration;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -121,11 +123,12 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
          * @param url the host URL for the octopus deploy instance
          * @return Form validation to present on the Jenkins UI
          */
+        @RequirePOST
         public FormValidation doCheckUrl(@QueryParameter String url) {
             if (url.isEmpty()) {
                 return FormValidation.warning("Please enter a url to your OctopusDeploy Host");
             }
-
+            Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
             try {
 
                 URLConnection connection = new URL(url).openConnection();
