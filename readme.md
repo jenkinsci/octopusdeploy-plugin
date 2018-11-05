@@ -5,6 +5,8 @@ not the Octo.exe tool.
 ## Compatibility ##
 Tested and compatible with OctopusDeploy: 2.6 and 3.0 - 3.7.
 
+Tested and compatible with Octopus 2018.9 as of 1.9.0 of this plugin.
+
 # Main Components #
 ## Post-build step - Create Release ##
 Creates a new release entry for a given project.
