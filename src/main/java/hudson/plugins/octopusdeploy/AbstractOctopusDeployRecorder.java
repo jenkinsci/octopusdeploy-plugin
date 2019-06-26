@@ -92,6 +92,13 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
         return waitForDeployment;
     }
 
+    /**
+     * Whether or not to enable verbose logging
+     */
+    protected boolean verboseLogging;
+    public boolean getVerboseLogging() {
+        return verboseLogging;
+    }
 
     /**
      * Get the default OctopusDeployServer from OctopusDeployPlugin configuration
@@ -190,6 +197,11 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
         commands.add(apiKey);
         commands.add(OctoConstants.Commands.Arguments.PROJECT_NAME_ARGUMENT);
         commands.add(project);
+
+        if (verboseLogging) {
+            commands.add("--debug");
+        }
+
 
         return commands;
     }

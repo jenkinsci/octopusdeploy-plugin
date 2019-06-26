@@ -55,6 +55,12 @@
     </f:entry>
   </f:block>
 
+  <f:block>
+    <f:entry title="Verbose logging" field="verboseLogging">
+        <f:checkbox value="false" />
+    </f:entry>
+  </f:block>
+
   <f:section title="Advanced Options">
     <f:advanced>
        <f:entry title="Octopus Server" field="serverId">

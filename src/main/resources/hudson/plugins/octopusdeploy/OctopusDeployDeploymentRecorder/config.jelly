@@ -18,6 +18,9 @@
   <f:entry title="Wait for deployment to complete" field="waitForDeployment">
     <f:checkbox  value="false" />
   </f:entry>
+  <f:entry title="Verbose logging" field="verboseLogging">
+    <f:checkbox value="false" />
+  </f:entry>
   <f:section title="Advanced Options">
     <f:advanced>
        <f:entry title="Octopus Server" field="serverId">

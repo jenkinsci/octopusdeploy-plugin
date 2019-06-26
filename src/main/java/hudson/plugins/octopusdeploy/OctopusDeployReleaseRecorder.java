@@ -120,7 +120,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
             boolean releaseNotes, String releaseNotesSource, String releaseNotesFile,
             boolean deployThisRelease, String environment, String tenant, String channel, boolean waitForDeployment,
             List<PackageConfiguration> packageConfigs, boolean jenkinsUrlLinkback,
-            String defaultPackageVersion) {
+            String defaultPackageVersion, boolean verboseLogging) {
 
         this.serverId = serverId.trim();
         this.toolId = toolId.trim();
@@ -137,6 +137,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         this.waitForDeployment = waitForDeployment;
         this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
         this.defaultPackageVersion = defaultPackageVersion;
+        this.verboseLogging = verboseLogging;
     }
 
     @Override
