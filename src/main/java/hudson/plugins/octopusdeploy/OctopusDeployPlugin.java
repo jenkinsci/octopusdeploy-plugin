@@ -4,6 +4,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
+import hudson.util.Secret;
 import jenkins.model.Jenkins;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.GlobalPluginConfiguration;
@@ -77,7 +78,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
 		@SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "This is for backwards compatiblity on Jenkins plugin upgrade" )
         private void loadLegacyOctopusDeployServerConfig() {
             if (doesLegacyOctopusDeployServerExist()){
-                OctopusDeployServer server = new OctopusDeployServer("default", octopusHost, apiKey, true);
+                OctopusDeployServer server = new OctopusDeployServer("default", octopusHost, Secret.fromString(apiKey), true);
                 if(octopusDeployServers == null)
                 {
                     octopusDeployServers = new ArrayList<>();

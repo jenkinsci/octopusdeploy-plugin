@@ -12,7 +12,7 @@
                 <f:textbox value="${server.url}" checkMethod="post"/>
             </f:entry>
             <f:entry title="API Key" field="apiKey">
-                <f:textbox value="${server.apiKey}" />
+                <f:password value="${server.apiKey}" />
                   </f:entry>
                   <f:entry title="">
                       <div align="right">

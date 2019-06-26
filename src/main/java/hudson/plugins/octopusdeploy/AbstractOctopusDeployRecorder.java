@@ -177,7 +177,7 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
 
         OctopusDeployServer server = getOctopusDeployServer(this.serverId);
         String serverUrl = server.getUrl();
-        String apiKey = server.getApiKey();
+        String apiKey = server.getApiKey().getPlainText();
 
         checkState(StringUtils.isNotBlank(serverUrl), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus URL"));
         checkState(StringUtils.isNotBlank(apiKey), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "API Key"));
