@@ -1,2 +1,11 @@
+.idea
+*.class
+
+# Package Files #
+*.jar
+*.nupkg
+.idea
+*.iml
+
 /target/*
 /work/*
