@@ -1,12 +1,32 @@
 package hudson.plugins.octopusdeploy;
 
 import com.octopusdeploy.api.OctopusApi;
+import hudson.EnvVars;
+import hudson.Launcher;
+import hudson.Proc;
+import hudson.model.BuildListener;
+import hudson.model.Descriptor;
+import hudson.model.Result;
+import hudson.plugins.octopusdeploy.constants.OctoConstants;
+import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
+import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
+import hudson.util.ComboBoxModel;
+import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
+import net.sf.json.JSONObject;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.*;
+
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * The AbstractOctopusDeployRecorder tries to take care of most of the Octopus
@@ -37,6 +57,8 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
         return serverId;
     }
 
+    protected String toolId;
+    public String getToolId() {return toolId;}
     /**
      * The project name as defined in Octopus.
      */
@@ -107,6 +129,24 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
         return ids;
     }
 
+    public static OctoInstallation[] getOctopusToolInstallations() {
+        OctoInstallation.DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) Jenkins.getInstance().getDescriptor(OctoInstallation.class);
+        return descriptor.getInstallations();
+    }
+
+    public static List<String> getOctopusToolIds() {
+        List<String> ids = new ArrayList<>();
+        for (OctoInstallation i : getOctopusToolInstallations()) {
+            ids.add(i.getName());
+        }
+        return ids;
+    }
+
+    public static String getOctopusToolPath(String name) {
+        OctoInstallation.DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) Jenkins.getInstance().getDescriptor(OctoInstallation.class);
+        return descriptor.getInstallation(name).getPathToOctoExe();
+    }
+
     /**
      * Get the instance of OctopusDeployServer by serverId
      * @return the server by id
@@ -132,9 +172,149 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
         return getOctopusDeployServer().getApi();
     }
 
+    List<String> buildCommonCommandArguments(final String command) {
+        List<String> commands = new ArrayList<>();
+
+        OctopusDeployServer server = getOctopusDeployServer(this.serverId);
+        String serverUrl = server.getUrl();
+        String apiKey = server.getApiKey();
+
+        checkState(StringUtils.isNotBlank(serverUrl), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus URL"));
+        checkState(StringUtils.isNotBlank(apiKey), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "API Key"));
+
+        commands.add(command);
+
+        commands.add(OctoConstants.Commands.Arguments.SERVER_URL_ARGUMENT);
+        commands.add(serverUrl);
+        commands.add(OctoConstants.Commands.Arguments.API_KEY_ARGUMENT);
+        commands.add(apiKey);
+        commands.add(OctoConstants.Commands.Arguments.PROJECT_NAME_ARGUMENT);
+        commands.add(project);
+
+        return commands;
+    }
+
+    Boolean[] getMasks(List<String> commands, String... commandArgumentsToMask) {
+        final Boolean[] masks = new Boolean[commands.size()];
+        Arrays.fill(masks, Boolean.FALSE);
+        for(String commandArgumentToMask : commandArgumentsToMask) {
+            if(commands.contains(commandArgumentToMask)) {
+                masks[commands.indexOf(commandArgumentToMask) + 1] = Boolean.TRUE;
+            }
+        }
+        return masks;
+    }
+
+    public Result launchOcto(Launcher launcher, List<String> commands, Boolean[] masks, EnvVars environment, BuildListener listener) {
+        Log log = new Log(listener);
+        int exitCode = -1;
+        final String octopusCli = this.getToolId();
+
+        checkState(StringUtils.isNotBlank(octopusCli), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus CLI"));
+
+        final String cliPath = getOctopusToolPath(octopusCli);
+        if(StringUtils.isNotBlank(cliPath) && new File(cliPath).exists()) {
+            final List<String> cmdArgs = new ArrayList<>();
+            final List<Boolean> cmdMasks = new ArrayList<>();
+
+            cmdArgs.add(cliPath);
+            cmdArgs.addAll(commands);
+
+            cmdMasks.add(Boolean.FALSE);
+            cmdMasks.addAll(Arrays.asList(masks));
+
+            Proc process = null;
+            try {
+                //environment.put("OCTOEXTENSION", getClass().getPackage().getImplementationVersion());
+                environment.put("OCTOEXTENSION", "");
+                process = launcher
+                        .launch()
+                        .cmds(cmdArgs)
+                        .masks(ArrayUtils.toPrimitive(cmdMasks.toArray((Boolean[])Array.newInstance(Boolean.class, 0))))
+                        .stdout(listener)
+                        .envs(environment)
+                        .start();
+
+                exitCode = process.join();
+
+                log.info(String.format("Octo.exe exit code: %d", exitCode));
+
+            } catch (IOException e) {
+                final String message = "Error from Octo.exe: " + e.getMessage();
+                log.error(message);
+                return Result.FAILURE;
+            } catch (InterruptedException e) {
+                final String message = "Unable to wait for Octo.exe: " + e.getMessage();
+                log.error(message);
+                return Result.FAILURE;
+            }
+
+            if(exitCode == 0)
+                return Result.SUCCESS;
+
+            String message = "Unable to create or deploy release. Please check the build log for details on the error.";
+            log.error(message);
+            return Result.FAILURE;
+        }
+
+        log.error("OCTOPUS-JENKINS-INPUT-ERROR-0003: The path of \"" + cliPath + "\" for the selected Octopus CLI does not exist.");
+        return Result.FAILURE;
+    }
 
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
+    }
+
+    public static abstract class AbstractOctopusDeployDescriptorImpl extends BuildStepDescriptor<Publisher> {
+
+        @Override
+        public boolean configure(StaplerRequest req, JSONObject formData) throws Descriptor.FormException {
+            save();
+            return true;
+        }
+
+        protected OctopusApi getApiByServerId(String serverId){
+            return AbstractOctopusDeployRecorder.getOctopusDeployServer(serverId).getApi();
+        }
+
+        public String getDefaultOctopusDeployServerId() {
+            OctopusDeployServer server = AbstractOctopusDeployRecorder.getDefaultOctopusDeployServer();
+            if(server != null){
+                return server.getId();
+            }
+            return null;
+        }
+
+        public String getDefaultOctopusToolId() {
+            OctoInstallation tool = OctoInstallation.getDefaultInstallation();
+            if (tool != null) {
+                return tool.getName();
+            }
+            return null;
+        }
+
+        /**
+         * Check that the serverId field is not empty and does exist.
+         * @param serverId The id of OctopusDeployServer in the configuration.
+         * @return Ok if not empty, error otherwise.
+         */
+        public FormValidation doCheckServerId(@QueryParameter String serverId) {
+            serverId = serverId.trim();
+            return OctopusValidator.validateServerId(serverId);
+        }
+
+        /**
+         * Data binding that returns all configured Octopus server ids to be used in the serverId drop-down list.
+         * @return ComboBoxModel
+         */
+        public ComboBoxModel doFillServerIdItems() {
+            return new ComboBoxModel(getOctopusDeployServersIds());
+        }
+
+        public ComboBoxModel doFillToolIdItems() {
+            return new ComboBoxModel(getOctopusToolIds());
+        }
+
     }
 }
