@@ -109,7 +109,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
                 return FormValidation.warning("Please set a ServerID");
             }
             for (OctopusDeployServer s:getOctopusDeployServers()){
-                if (serverId.equals(s.getId()) && !url.equals(s.getUrl()) && !apiKey.equals(s.getApiKey())){
+                if (serverId.equals(s.getId()) && !url.equals(s.getUrl()) && !apiKey.equals(s.getApiKey().getEncryptedValue())){
                     return FormValidation.error("The Server ID you entered already exists.");
                 }
             }
@@ -169,7 +169,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
             if (apiKey.isEmpty()) {
                 return FormValidation.warning("Please set a API Key generated from OctopusDeploy Server.");
             }
-            if (!apiKey.matches("API\\-\\w{25,27}")) {
+            if (!Secret.decrypt(apiKey).getPlainText().matches("API\\-\\w{25,27}")) {
                 return FormValidation.error("Supplied Octopus API Key format is invalid. It should look like API-XXXXXXXXXXXXXXXXXXXXXXXXXXX");
             }
             return FormValidation.ok();
