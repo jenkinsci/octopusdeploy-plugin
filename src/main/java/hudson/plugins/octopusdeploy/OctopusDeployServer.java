@@ -33,6 +33,11 @@ public class OctopusDeployServer implements Serializable {
         return apiKey;
     }
 
+    private boolean ignoreSslErrors;
+    public boolean isIgnoreSslErrors() {
+        return ignoreSslErrors;
+    }
+
     private transient OctopusApi api;
     public OctopusApi getApi() {
         ///TODO use better approach to achieve Laziness
@@ -42,15 +47,16 @@ public class OctopusDeployServer implements Serializable {
         return api;
     }
 
-    public OctopusDeployServer(String serverId, String url, Secret apiKey, boolean isDefault) {
+    public OctopusDeployServer(String serverId, String url, Secret apiKey, boolean isDefault, boolean ignoreSslErrors) {
         this.id = serverId.trim();
         this.url = url.trim();
         this.apiKey = apiKey;
         this.isDefault = isDefault;
+        this.ignoreSslErrors = ignoreSslErrors;
     }
 
     @DataBoundConstructor
-    public OctopusDeployServer(String serverId, String url, String apiKey) {
-        this(serverId, url, Secret.fromString(apiKey), false);
+    public OctopusDeployServer(String serverId, String url, String apiKey, boolean ignoreSslErrors) {
+        this(serverId, url, Secret.fromString(apiKey), false, ignoreSslErrors);
     }
 }

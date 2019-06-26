@@ -11,9 +11,12 @@
             <f:entry title="URL" field="url">
                 <f:textbox value="${server.url}" checkMethod="post"/>
             </f:entry>
+            <f:entry title="Ignore SSL Errors" field="ignoreSslErrors">
+                <f:checkbox checked="${server.ignoreSslErrors}" />
+            </f:entry>
             <f:entry title="API Key" field="apiKey">
                 <f:password value="${server.apiKey}" />
-                  </f:entry>
+            </f:entry>
                   <f:entry title="">
                       <div align="right">
                           <f:repeatableDeleteButton/>
