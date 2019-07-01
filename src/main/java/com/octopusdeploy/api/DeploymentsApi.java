@@ -65,7 +65,7 @@ public class DeploymentsApi {
         String json = jsonBuilder.toString();
 
         byte[] data = json.getBytes(Charset.forName(UTF8));
-        AuthenticatedWebClient.WebResponse response = webClient.post("api/deployments", data);
+        AuthenticatedWebClient.WebResponse response = webClient.post("deployments", data);
         if (response.isErrorCode()) {
             String errorMsg = ErrorParser.getErrorsFromResponse(response.getContent());
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), errorMsg));
@@ -82,7 +82,7 @@ public class DeploymentsApi {
      */
     public DeploymentProcess getDeploymentProcessForProject(String projectId) throws IllegalArgumentException, IOException {
         // TODO: refactor/method extract/clean up
-        AuthenticatedWebClient.WebResponse response = webClient.get("api/deploymentprocesses/deploymentprocess-" + projectId);
+        AuthenticatedWebClient.WebResponse response = webClient.get("deploymentprocesses/deploymentprocess-" + projectId);
         if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
         }
@@ -124,7 +124,7 @@ public class DeploymentsApi {
      * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public DeploymentProcessTemplate getDeploymentProcessTemplateForProject(String projectId) throws IllegalArgumentException, IOException {
-        AuthenticatedWebClient.WebResponse response = webClient.get("api/deploymentprocesses/deploymentprocess-" + projectId + "/template");
+        AuthenticatedWebClient.WebResponse response = webClient.get("deploymentprocesses/deploymentprocess-" + projectId + "/template");
         if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
         }

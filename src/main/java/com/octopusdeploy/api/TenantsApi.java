@@ -27,7 +27,7 @@ public class TenantsApi {
      */
     public Set<Tenant> getAllTenants() throws IllegalArgumentException, IOException {
         HashSet<Tenant> tenants = new HashSet<Tenant>();
-        AuthenticatedWebClient.WebResponse response = webClient.get("api/tenants/all");
+        AuthenticatedWebClient.WebResponse response = webClient.get("tenants/all");
         if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
         }

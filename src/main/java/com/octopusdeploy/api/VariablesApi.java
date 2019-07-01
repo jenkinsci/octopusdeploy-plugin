@@ -28,7 +28,7 @@ public class VariablesApi {
     public Set<Variable> getVariablesByReleaseAndEnvironment(String releaseId, String environmentId, Properties entryProperties) throws IllegalArgumentException, IOException {
         Set<Variable> variables = new HashSet<Variable>();
 
-        AuthenticatedWebClient.WebResponse response = webClient.get("api/releases/" + releaseId + "/deployments/preview/" + environmentId);
+        AuthenticatedWebClient.WebResponse response = webClient.get("releases/" + releaseId + "/deployments/preview/" + environmentId);
         if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
         }

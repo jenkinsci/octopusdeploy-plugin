@@ -2,6 +2,10 @@ package com.octopusdeploy.api;
 
 public class OctopusApi {
     private final AuthenticatedWebClient webClient;
+    private String spaceId;
+
+    private final SpacesApi spacesApi;
+    public SpacesApi getSpacesApi() { return spacesApi; }
     
     private final ChannelsApi channelsApi;
     public ChannelsApi getChannelsApi() {
@@ -42,9 +46,20 @@ public class OctopusApi {
     public TasksApi getTasksApi() {
         return tasksApi;
     }
-    
+
+    public OctopusApi forSpace(String spaceId) {
+        this.webClient.spaceId = spaceId;
+        return this;
+    }
+
+    public OctopusApi forSystem() {
+        this.webClient.spaceId = null;
+        return this;
+    }
+
     public OctopusApi(String octopusHost, String apiKey) {
         webClient = new AuthenticatedWebClient(octopusHost, apiKey);
+        spacesApi = new SpacesApi(webClient);
         channelsApi = new ChannelsApi(webClient);
         tenantsApi = new TenantsApi(webClient);
         environmentsApi = new EnvironmentsApi(webClient);

@@ -24,7 +24,7 @@ public class ProjectsApi {
      */
     public Set<Project> getAllProjects() throws IllegalArgumentException, IOException {
         HashSet<Project> projects = new HashSet<Project>();
-        AuthenticatedWebClient.WebResponse response = webClient.get("api/projects/all");
+        AuthenticatedWebClient.WebResponse response = webClient.get("projects/all");
         if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
         }
