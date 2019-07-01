@@ -8,7 +8,7 @@ public class OctoConstants {
         public static final class Arguments {
             public static final String SERVER_URL_ARGUMENT = "--server";
             public static final String API_KEY_ARGUMENT = "--apiKey";
-
+            public static final String SPACE_ARGUMENT = "--space";
             public static final String PROJECT_NAME_ARGUMENT = "--project";
 
             public static final String[] MaskedArguments = {API_KEY_ARGUMENT};

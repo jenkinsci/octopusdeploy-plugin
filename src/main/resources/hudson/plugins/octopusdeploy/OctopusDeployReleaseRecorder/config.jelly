@@ -1,5 +1,11 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <j:if test="${instance.hasSpaces()}">
+    <f:entry title="Space" field="spaceId">
+      <f:select />
+    </f:entry>
+  </j:if>
+
   <f:entry title="Project Name" field="project">
     <f:combobox />
   </f:entry>

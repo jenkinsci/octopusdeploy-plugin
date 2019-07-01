@@ -1,6 +1,7 @@
 package hudson.plugins.octopusdeploy;
 
 import com.octopusdeploy.api.OctopusApi;
+import com.octopusdeploy.api.data.Space;
 import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.Proc;
@@ -14,6 +15,7 @@ import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
@@ -25,6 +27,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -59,6 +63,24 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
 
     protected String toolId;
     public String getToolId() {return toolId;}
+
+    /**
+     * The spaceId to use for this deployment
+     */
+    protected String spaceId;
+    public String getSpaceId() {
+        return spaceId;
+    }
+
+    public Boolean hasSpaces() {
+        try {
+            return getApi().getSpacesApi().getSupportsSpaces();
+        } catch (Exception ex) {
+            Logger.getLogger(AbstractOctopusDeployRecorder.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+    }
+
     /**
      * The project name as defined in Octopus.
      */
@@ -196,6 +218,8 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
         commands.add(serverUrl);
         commands.add(OctoConstants.Commands.Arguments.API_KEY_ARGUMENT);
         commands.add(apiKey);
+        commands.add(OctoConstants.Commands.Arguments.SPACE_ARGUMENT);
+        commands.add(spaceId);
         commands.add(OctoConstants.Commands.Arguments.PROJECT_NAME_ARGUMENT);
         commands.add(project);
 
@@ -331,6 +355,26 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
 
         public ComboBoxModel doFillToolIdItems() {
             return new ComboBoxModel(getOctopusToolIds());
+        }
+
+        public ListBoxModel doFillSpaceIdItems(@QueryParameter String serverId) {
+            ListBoxModel spaceItems = new ListBoxModel();
+            if(doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
+                return spaceItems;
+            }
+
+            OctopusApi api = getApiByServerId(serverId).forSystem();
+            try {
+                Set<Space> spaces = api.getSpacesApi().getAllSpaces();
+                spaceItems.add("", "");
+                for (Space space : spaces) {
+                    spaceItems.add(space.getName(), space.getId());
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(AbstractOctopusDeployRecorder.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+            return spaceItems;
         }
 
     }
