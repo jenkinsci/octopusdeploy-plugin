@@ -113,6 +113,16 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         return defaultPackageVersion;
     }
 
+    public OctopusDeployReleaseRecorder(
+            String serverId, String toolId, String project, String releaseVersion,
+            boolean releaseNotes, String releaseNotesSource, String releaseNotesFile,
+            boolean deployThisRelease, String environment, String tenant, String channel, boolean waitForDeployment,
+            List<PackageConfiguration> packageConfigs, boolean jenkinsUrlLinkback,
+            String defaultPackageVersion, boolean verboseLogging) {
+        this(serverId, toolId, "", project, releaseVersion, releaseNotes, releaseNotesSource,
+                releaseNotesFile, deployThisRelease, environment, tenant, channel, waitForDeployment,
+                packageConfigs, jenkinsUrlLinkback, defaultPackageVersion, verboseLogging);
+    }
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
     public OctopusDeployReleaseRecorder(
