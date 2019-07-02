@@ -40,10 +40,18 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         return variables;
     }
 
+    public OctopusDeployDeploymentRecorder(String serverId, String toolId, String project, String releaseVersion,
+                                           String environment, String tenant, String variables, boolean waitForDeployment,
+                                           boolean verboseLogging) {
+        this(serverId, toolId, "", project, releaseVersion, environment, tenant, variables, waitForDeployment,
+                verboseLogging);
+    }
+
     @DataBoundConstructor
-    public OctopusDeployDeploymentRecorder(String serverId, String toolId, String project, String releaseVersion, String environment, String tenant, String variables, boolean waitForDeployment, boolean verboseLogging) {
+    public OctopusDeployDeploymentRecorder(String serverId, String toolId, String spaceId, String project, String releaseVersion, String environment, String tenant, String variables, boolean waitForDeployment, boolean verboseLogging) {
         this.serverId = serverId.trim();
         this.toolId = toolId.trim();
+        this.spaceId = spaceId.trim();
         this.project = project.trim();
         this.releaseVersion = releaseVersion.trim();
         this.environment = environment.trim();
@@ -264,14 +272,14 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
          * @param serverId The id of OctopusDeployServer in the configuration.
          * @return Ok if not empty, error otherwise.
          */
-        public FormValidation doCheckProject(@QueryParameter String project, @QueryParameter String serverId) {
+        public FormValidation doCheckProject(@QueryParameter String project, @QueryParameter String serverId, @QueryParameter String spaceId) {
             project = project.trim();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return FormValidation.warning(SERVER_ID_VALIDATION_MESSAGE);
             }
 
-            OctopusApi api = getApiByServerId(serverId);
+            OctopusApi api = getApiByServerId(serverId).forSpace(spaceId);
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateProject(project);
         }
@@ -283,14 +291,14 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
          * @param serverId The id of OctopusDeployServer in the configuration.
          * @return Ok if not empty, error otherwise.
          */
-        public FormValidation doCheckReleaseVersion(@QueryParameter String releaseVersion, @QueryParameter String project, @QueryParameter String serverId) {
+        public FormValidation doCheckReleaseVersion(@QueryParameter String releaseVersion, @QueryParameter String project, @QueryParameter String serverId, @QueryParameter String spaceId) {
             releaseVersion = releaseVersion.trim();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return FormValidation.warning(SERVER_ID_VALIDATION_MESSAGE);
             }
 
-            OctopusApi api = getApiByServerId(serverId);
+            OctopusApi api = getApiByServerId(serverId).forSpace(spaceId);
             if (project == null || project.isEmpty()) {
                 return FormValidation.warning(PROJECT_RELEASE_VALIDATION_MESSAGE);
             }
@@ -315,14 +323,14 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
          * @param serverId The id of OctopusDeployServer in the configuration.
          * @return Ok if not empty, error otherwise.
          */
-        public FormValidation doCheckEnvironment(@QueryParameter String environment, @QueryParameter String serverId) {
+        public FormValidation doCheckEnvironment(@QueryParameter String environment, @QueryParameter String serverId, @QueryParameter String spaceId) {
             environment = environment.trim();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return FormValidation.warning(SERVER_ID_VALIDATION_MESSAGE);
             }
 
-            OctopusApi api = getApiByServerId(serverId);
+            OctopusApi api = getApiByServerId(serverId).forSpace(spaceId);
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateEnvironment(environment);
         }
@@ -332,14 +340,14 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
          * @param serverId The id of OctopusDeployServer in the configuration.
          * @return ComboBoxModel
          */
-        public ComboBoxModel doFillEnvironmentItems(@QueryParameter String serverId) {
+        public ComboBoxModel doFillEnvironmentItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
             ComboBoxModel names = new ComboBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return names;
             }
 
-            OctopusApi api = getApiByServerId(serverId);
+            OctopusApi api = getApiByServerId(serverId).forSpace(spaceId);
             try {
                 Set<com.octopusdeploy.api.data.Environment> environments = api.getEnvironmentsApi().getAllEnvironments();
                 for (com.octopusdeploy.api.data.Environment env : environments) {
@@ -356,14 +364,14 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
          * @param serverId The id of OctopusDeployServer in the configuration.
          * @return ComboBoxModel
          */
-        public ComboBoxModel doFillProjectItems(@QueryParameter String serverId) {
+        public ComboBoxModel doFillProjectItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
             ComboBoxModel names = new ComboBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return names;
             }
 
-            OctopusApi api = getApiByServerId(serverId);
+            OctopusApi api = getApiByServerId(serverId).forSpace(spaceId);
             try {
                 Set<com.octopusdeploy.api.data.Project> projects = api.getProjectsApi().getAllProjects();
                 for (com.octopusdeploy.api.data.Project proj : projects) {
@@ -380,14 +388,14 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
          * @param serverId The id of OctopusDeployServer in the configuration.
          * @return ComboBoxModel
          */
-        public ComboBoxModel doFillTenantItems(@QueryParameter String serverId) {
+        public ComboBoxModel doFillTenantItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
             ComboBoxModel names = new ComboBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return names;
             }
 
-            OctopusApi api = getApiByServerId(serverId);
+            OctopusApi api = getApiByServerId(serverId).forSpace(spaceId);
             try {
                 Set<com.octopusdeploy.api.data.Tenant> tenants = api.getTenantsApi().getAllTenants();
                 for (com.octopusdeploy.api.data.Tenant ten : tenants) {
