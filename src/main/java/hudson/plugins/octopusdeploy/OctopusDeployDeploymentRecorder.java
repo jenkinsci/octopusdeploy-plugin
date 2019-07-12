@@ -42,11 +42,14 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
                                            String environment, String tenant, String variables, boolean waitForDeployment,
                                            boolean verboseLogging) {
         this(serverId, toolId, "", project, releaseVersion, environment, tenant, variables, waitForDeployment,
-                verboseLogging, "");
+                "", false, verboseLogging, "");
     }
 
     @DataBoundConstructor
-    public OctopusDeployDeploymentRecorder(String serverId, String toolId, String spaceId, String project, String releaseVersion, String environment, String tenant, String variables, boolean waitForDeployment, boolean verboseLogging, String additionalArgs) {
+    public OctopusDeployDeploymentRecorder(String serverId, String toolId, String spaceId, String project,
+                                           String releaseVersion, String environment, String tenant, String variables,
+                                           boolean waitForDeployment, String deploymentTimeout, boolean cancelOnTimeout,
+                                           boolean verboseLogging, String additionalArgs) {
         this.serverId = serverId.trim();
         this.toolId = toolId.trim();
         this.spaceId = spaceId.trim();
@@ -56,6 +59,8 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         this.tenant = tenant == null ? null : tenant.trim(); // Otherwise this can throw on plugin version upgrade
         this.variables = variables.trim();
         this.waitForDeployment = waitForDeployment;
+        this.deploymentTimeout = deploymentTimeout.trim();
+        this.cancelOnTimeout = cancelOnTimeout;
         this.verboseLogging = verboseLogging;
         this.additionalArgs = additionalArgs.trim();
     }

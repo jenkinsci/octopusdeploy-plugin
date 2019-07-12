@@ -135,6 +135,23 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
     }
 
     /**
+     * Specifies maximum time (timespan format) that the console session will wait for
+     * the deployment to finish(default 00:10:00)
+     */
+    protected String deploymentTimeout;
+    public String getDeploymentTimeout() {
+        return deploymentTimeout;
+    }
+
+    /**
+     * Whether to cancel the deployment if the deployment timeout is reached
+     */
+    protected boolean cancelOnTimeout;
+    public boolean getCancelOnTimeout() {
+        return cancelOnTimeout;
+    }
+
+    /**
      * Get the default OctopusDeployServer from OctopusDeployPlugin configuration
      * @return the default server
      * */
@@ -234,6 +251,17 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
         }
         commands.add(OctoConstants.Commands.Arguments.PROJECT_NAME);
         commands.add(project);
+
+        if (waitForDeployment) {
+            if (StringUtils.isNotBlank(deploymentTimeout)) {
+                commands.add("--deploymentTimeout");
+                commands.add(deploymentTimeout);
+            }
+
+            if (cancelOnTimeout) {
+                commands.add("--cancelOnTimeout");
+            }
+        }
 
         if (ignoreSslErrors) {
             commands.add("--ignoreSslErrors");
