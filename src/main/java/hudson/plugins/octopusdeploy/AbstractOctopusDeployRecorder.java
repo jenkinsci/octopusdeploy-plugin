@@ -218,8 +218,10 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
         commands.add(serverUrl);
         commands.add(OctoConstants.Commands.Arguments.API_KEY);
         commands.add(apiKey);
-        commands.add(OctoConstants.Commands.Arguments.SPACE_NAME);
-        commands.add(spaceId);
+        if (StringUtils.isNotBlank(spaceId)) {
+            commands.add(OctoConstants.Commands.Arguments.SPACE_NAME);
+            commands.add(spaceId);
+        }
         commands.add(OctoConstants.Commands.Arguments.PROJECT_NAME);
         commands.add(project);
 
