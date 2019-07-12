@@ -247,7 +247,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
                 try {
                     releaseNotesContent += getReleaseNotesFromFile(build, releaseNotesFile);
                 } catch (Exception ex) {
-                    log.fatal(String.format("Unable to get file contents from release ntoes file! - %s", ex.getMessage()));
+                    log.fatal(String.format("Unable to get file contents from release notes file! - %s", ex.getMessage()));
                     success = false;
                 }
             } else if (isReleaseNotesSourceScm()) {
@@ -495,7 +495,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
 
         @Override
         public String getDisplayName() {
-            return "OctopusDeploy Release";
+            return "Octopus Deploy: Create Release configuration";
         }
 
         /**
