@@ -58,3 +58,39 @@ As of 1.6.0, this plugin can create releases on specific Channels as defined by 
 ## Multiple Octopus servers ##
 As of 1.7.0, this plugin now allows more than one Octopus server to be configured in the global Jenkins configuration. The selection of which Octopus server to use will be
 done by the plugin on a per-project basis (under Advanced Options). Note that unless otherwise specified, each project will use the first Octopus server listed.
+
+# Debugging
+
+To debug the plugin you need Java JDK 8 installed, you can download it from [here](https://jdk.java.net/java-se-ri/8)
+
+## IntelliJ configuration
+
+- Maven configuration
+  - Parameters tab
+    - Command line field: `hpi:run`
+  - If you want to run Jenkins on another port than the default **8080**
+    - Runner tab
+     - Add `-Djetty.port=<PortToUse>` to the VM options field
+- Open browser to http://localhost:8080/jenkins
+
+### If you want to connect to your Octopus instance using `https`
+
+- Update your Maven configuration in IntelliJ
+  - Runner tab
+    - Add the following options to the VM options field:
+      - `-Djavax.net.ssl.trustStore="%JAVA_HOME%/jre/lib/security/cacerts"` (You _might_ need to unfurl the `%JAVA_HOME%` environment variable to the absolute path of your JDK installation)
+      - `-Djavax.net.ssl.trustStorePassword=changeit`
+- Save the certificate for your Octopus Server as a `Base-64 encoded X.509` file
+  - Run `& '$env:JAVA_HOME/bin/keytool.exe' -import -alias <GiveItAnAlias> -keystore $env:JAVA_HOME/jre/lib/security/cacerts -file <PathToTheCertFile>`
+    - Enter the password for your keystore (by default it's `changeit`)
+    - Say `yes` to the question if you want to trust the certificate
+
+## Troubleshooting
+
+### Error - trustAnchors parameter must be non-empty
+
+You haven't configured SSL trust store correctly, see [If you want to connect to your Octopus instance using `https`](#if-you-want-to-connect-to-your-octopus-instance-using-https).
+
+### WARNING: Header is too large >8192
+
+If you restart the Jenkins service too often you may be greeted by a bunch of 413 HTTP error messages, to get rid of this error just clear all cookies for your Jenkins site (http://localhost:8080 by default). More information can be found [here](https://issues.jenkins-ci.org/browse/JENKINS-25046)
