@@ -2,19 +2,17 @@ package hudson.plugins.octopusdeploy;
 
 import com.google.common.base.Splitter;
 import com.octopusdeploy.api.data.Task;
-import com.octopusdeploy.api.data.Release;
 import com.octopusdeploy.api.*;
 import java.io.*;
 import java.util.*;
 import hudson.*;
 import hudson.model.*;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
-import hudson.tasks.*;
 import hudson.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.sf.json.*;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.*;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -263,7 +261,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
 
         @Override
         public String getDisplayName() {
-            return "OctopusDeploy Deployment";
+            return "Octopus Deploy: Deploy Release configuration";
         }
 
         /**
