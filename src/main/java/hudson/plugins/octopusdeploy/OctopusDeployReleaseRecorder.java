@@ -121,7 +121,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
             String defaultPackageVersion, boolean verboseLogging) {
         this(serverId, toolId, "", project, releaseVersion, releaseNotes, releaseNotesSource,
                 releaseNotesFile, deployThisRelease, environment, tenant, channel, waitForDeployment,
-                packageConfigs, jenkinsUrlLinkback, defaultPackageVersion, verboseLogging);
+                packageConfigs, jenkinsUrlLinkback, defaultPackageVersion, verboseLogging, "");
     }
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
@@ -130,7 +130,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
             boolean releaseNotes, String releaseNotesSource, String releaseNotesFile,
             boolean deployThisRelease, String environment, String tenant, String channel, boolean waitForDeployment,
             List<PackageConfiguration> packageConfigs, boolean jenkinsUrlLinkback,
-            String defaultPackageVersion, boolean verboseLogging) {
+            String defaultPackageVersion, boolean verboseLogging, String additionalArgs) {
 
         this.serverId = serverId.trim();
         this.toolId = toolId.trim();
@@ -149,6 +149,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
         this.defaultPackageVersion = defaultPackageVersion;
         this.verboseLogging = verboseLogging;
+        this.additionalArgs = additionalArgs.trim();
     }
 
     @Override
@@ -189,7 +190,8 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
 
         checkState(StringUtils.isNotBlank(project), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Project name"));
 
-        final List<String> commands = buildCommonCommandArguments(OctoConstants.Commands.CREATE_RELEASE);
+        final List<String> commands = new ArrayList<>();
+        commands.add(OctoConstants.Commands.CREATE_RELEASE);
 
         if (StringUtils.isNotBlank(releaseVersion)) {
             commands.add("--version");
@@ -282,6 +284,8 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
                 }
             }
         }
+
+        commands.addAll(getCommonCommandArguments());
 
         try {
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
@@ -537,7 +541,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateChannel(channel, project);
         }
-        
+
         /**
          * Check that the releaseVersion field is not empty.
          * @param releaseVersion release version.
