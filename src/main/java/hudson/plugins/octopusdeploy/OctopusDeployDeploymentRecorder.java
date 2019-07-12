@@ -42,11 +42,11 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
                                            String environment, String tenant, String variables, boolean waitForDeployment,
                                            boolean verboseLogging) {
         this(serverId, toolId, "", project, releaseVersion, environment, tenant, variables, waitForDeployment,
-                verboseLogging);
+                verboseLogging, "");
     }
 
     @DataBoundConstructor
-    public OctopusDeployDeploymentRecorder(String serverId, String toolId, String spaceId, String project, String releaseVersion, String environment, String tenant, String variables, boolean waitForDeployment, boolean verboseLogging) {
+    public OctopusDeployDeploymentRecorder(String serverId, String toolId, String spaceId, String project, String releaseVersion, String environment, String tenant, String variables, boolean waitForDeployment, boolean verboseLogging, String additionalArgs) {
         this.serverId = serverId.trim();
         this.toolId = toolId.trim();
         this.spaceId = spaceId.trim();
@@ -57,6 +57,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         this.variables = variables.trim();
         this.waitForDeployment = waitForDeployment;
         this.verboseLogging = verboseLogging;
+        this.additionalArgs = additionalArgs.trim();
     }
 
     @Override
@@ -99,7 +100,8 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             return false;
         }
 
-        final List<String> commands = buildCommonCommandArguments(OctoConstants.Commands.DEPLOY_RELEASE);
+        final List<String> commands = new ArrayList<>();
+        commands.add(OctoConstants.Commands.DEPLOY_RELEASE);
 
         final Iterable<String> environmentNameSplit = Splitter.on(',')
                 .trimResults()
@@ -133,6 +135,8 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             commands.add("--variable");
             commands.add(String.format("%s:%s", variableName, variableValue));
         }
+
+        commands.addAll(getCommonCommandArguments());
 
         if(success) {
             try {

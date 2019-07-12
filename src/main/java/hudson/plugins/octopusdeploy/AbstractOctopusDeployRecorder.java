@@ -20,6 +20,7 @@ import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.tools.ant.types.Commandline;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -106,6 +107,14 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
     protected String tenant;
     public String getTenant() {
         return tenant;
+    }
+
+    /**
+     * The additional arguments to pass to octo.exe
+     */
+    protected String additionalArgs;
+    public String getAdditionalArgs() {
+        return additionalArgs;
     }
 
     /**
@@ -204,7 +213,7 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
         return getOctopusDeployServer().getApi();
     }
 
-    List<String> buildCommonCommandArguments(final String command) {
+    List<String> getCommonCommandArguments() {
         List<String> commands = new ArrayList<>();
 
         OctopusDeployServer server = getOctopusDeployServer(this.serverId);
@@ -214,8 +223,6 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
 
         checkState(StringUtils.isNotBlank(serverUrl), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus URL"));
         checkState(StringUtils.isNotBlank(apiKey), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "API Key"));
-
-        commands.add(command);
 
         commands.add(OctoConstants.Commands.Arguments.SERVER_URL);
         commands.add(serverUrl);
@@ -236,6 +243,10 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
             commands.add("--debug");
         }
 
+        if(StringUtils.isNotBlank(additionalArgs)) {
+            final String[] myArgs = Commandline.translateCommandline(additionalArgs);
+            commands.addAll(Arrays.asList(myArgs));
+        }
 
         return commands;
     }
