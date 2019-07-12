@@ -2,8 +2,10 @@ package com.octopusdeploy.api;
 
 import com.octopusdeploy.api.data.Environment;
 import java.io.IOException;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.Set;
+import java.util.TreeSet;
+
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
@@ -23,7 +25,7 @@ public class EnvironmentsApi {
      * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public Set<Environment> getAllEnvironments() throws IllegalArgumentException, IOException {
-        HashSet<Environment> environments = new HashSet<Environment>();
+        TreeSet<Environment> environments = new TreeSet<>(Comparator.comparing(Environment::getName).thenComparing(Environment::getId));
         AuthenticatedWebClient.WebResponse response =webClient.get("environments/all");
         if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));

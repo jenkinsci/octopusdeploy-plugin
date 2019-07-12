@@ -6,8 +6,9 @@ import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 
 import java.io.IOException;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class SpacesApi {
     private final AuthenticatedWebClient webClient;
@@ -27,7 +28,7 @@ public class SpacesApi {
     }
 
     public Set<Space> getAllSpaces() throws IllegalArgumentException, IOException {
-        HashSet<Space> spaces = new HashSet<>();
+        TreeSet<Space> spaces = new TreeSet<>(Comparator.comparing(Space::getName).thenComparing(Space::getId));
         AuthenticatedWebClient.WebResponse response = webClient.get("spaces/all");
         if(response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %s%n", response.getCode(), response.getContent()));

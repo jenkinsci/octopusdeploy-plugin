@@ -2,8 +2,10 @@ package com.octopusdeploy.api;
 
 import com.octopusdeploy.api.data.Tenant;
 import java.io.IOException;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.Set;
+import java.util.TreeSet;
+
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
@@ -26,7 +28,7 @@ public class TenantsApi {
      * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public Set<Tenant> getAllTenants() throws IllegalArgumentException, IOException {
-        HashSet<Tenant> tenants = new HashSet<Tenant>();
+        TreeSet<Tenant> tenants = new TreeSet<>(Comparator.comparing(Tenant::getName).thenComparing(Tenant::getId));
         AuthenticatedWebClient.WebResponse response = webClient.get("tenants/all");
         if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
