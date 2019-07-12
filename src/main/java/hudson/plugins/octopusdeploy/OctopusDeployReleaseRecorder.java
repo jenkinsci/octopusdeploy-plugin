@@ -121,7 +121,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
             String defaultPackageVersion, boolean verboseLogging) {
         this(serverId, toolId, "", project, releaseVersion, releaseNotes, releaseNotesSource,
                 releaseNotesFile, deployThisRelease, environment, tenant, channel, waitForDeployment,
-                packageConfigs, jenkinsUrlLinkback, defaultPackageVersion, verboseLogging, "");
+                "", false, packageConfigs, jenkinsUrlLinkback, defaultPackageVersion, verboseLogging, "");
     }
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
@@ -129,6 +129,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
             String serverId, String toolId, String spaceId, String project, String releaseVersion,
             boolean releaseNotes, String releaseNotesSource, String releaseNotesFile,
             boolean deployThisRelease, String environment, String tenant, String channel, boolean waitForDeployment,
+            String deploymentTimeout, boolean cancelOnTimeout,
             List<PackageConfiguration> packageConfigs, boolean jenkinsUrlLinkback,
             String defaultPackageVersion, boolean verboseLogging, String additionalArgs) {
 
@@ -146,6 +147,8 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         this.tenant = tenant == null ? null : tenant.trim();
         this.channel = channel == null ? null : channel.trim();
         this.waitForDeployment = waitForDeployment;
+        this.deploymentTimeout = deploymentTimeout.trim();
+        this.cancelOnTimeout = cancelOnTimeout;
         this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
         this.defaultPackageVersion = defaultPackageVersion;
         this.verboseLogging = verboseLogging;
