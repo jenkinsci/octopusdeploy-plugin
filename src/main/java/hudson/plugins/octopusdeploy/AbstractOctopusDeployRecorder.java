@@ -61,6 +61,9 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
         return serverId;
     }
 
+    /**
+     * The toolId to use for this deployment
+     */
     protected String toolId;
     public String getToolId() {return toolId;}
 
@@ -295,8 +298,7 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
             if(exitCode == 0)
                 return Result.SUCCESS;
 
-            String message = "Unable to create or deploy release. Please check the build log for details on the error.";
-            log.error(message);
+            log.error("Unable to create or deploy release. Please check the build log for details on the error.");
             return Result.FAILURE;
         }
 
