@@ -101,7 +101,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             return false;
         }
 
-        final List<String> commands = buildCommonCommandArguments(OctoConstants.Commands.DEPLOY_RELEASE_COMMAND);
+        final List<String> commands = buildCommonCommandArguments(OctoConstants.Commands.DEPLOY_RELEASE);
 
         final Iterable<String> environmentNameSplit = Splitter.on(',')
                 .trimResults()

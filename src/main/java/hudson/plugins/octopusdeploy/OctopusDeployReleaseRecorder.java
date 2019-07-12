@@ -189,7 +189,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
 
         checkState(StringUtils.isNotBlank(project), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Project name"));
 
-        final List<String> commands = buildCommonCommandArguments(OctoConstants.Commands.CREATE_RELEASE_COMMAND);
+        final List<String> commands = buildCommonCommandArguments(OctoConstants.Commands.CREATE_RELEASE);
 
         if (StringUtils.isNotBlank(releaseVersion)) {
             commands.add("--version");

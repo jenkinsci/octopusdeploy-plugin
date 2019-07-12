@@ -214,13 +214,13 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
 
         commands.add(command);
 
-        commands.add(OctoConstants.Commands.Arguments.SERVER_URL_ARGUMENT);
+        commands.add(OctoConstants.Commands.Arguments.SERVER_URL);
         commands.add(serverUrl);
-        commands.add(OctoConstants.Commands.Arguments.API_KEY_ARGUMENT);
+        commands.add(OctoConstants.Commands.Arguments.API_KEY);
         commands.add(apiKey);
-        commands.add(OctoConstants.Commands.Arguments.SPACE_ARGUMENT);
+        commands.add(OctoConstants.Commands.Arguments.SPACE_NAME);
         commands.add(spaceId);
-        commands.add(OctoConstants.Commands.Arguments.PROJECT_NAME_ARGUMENT);
+        commands.add(OctoConstants.Commands.Arguments.PROJECT_NAME);
         commands.add(project);
 
         if (ignoreSslErrors) {
