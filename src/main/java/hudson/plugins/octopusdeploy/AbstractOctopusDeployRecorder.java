@@ -109,6 +109,11 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
         return tenant;
     }
 
+    protected String tenantTag;
+    public String getTenantTag() {
+        return tenantTag;
+    }
+
     /**
      * The additional arguments to pass to octo.exe
      */

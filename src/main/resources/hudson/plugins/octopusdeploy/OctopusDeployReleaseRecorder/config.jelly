@@ -81,6 +81,9 @@
         <f:entry title="Tenant" field="tenant">
           <f:combobox />
         </f:entry>
+        <f:entry title="Tenant Tag" field="tenantTag">
+          <f:combobox />
+        </f:entry>
         <f:optionalBlock name="waitForDeployment" inline="true" title="Show deployment progress" checked="${instance.getWaitForDeployment()}">
           <f:entry title="Time to wait for deployment" field="deploymentTimeout">
             <f:textbox />
