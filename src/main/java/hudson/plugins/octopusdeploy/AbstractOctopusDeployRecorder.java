@@ -9,6 +9,7 @@ import hudson.model.BuildListener;
 import hudson.model.Descriptor;
 import hudson.model.Result;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
+import hudson.plugins.octopusdeploy.utils.Lazy;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
@@ -44,14 +45,11 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
      * Cache for OctopusDeployServer instance used in deployment
      * transient keyword prevents leaking API key to Job configuration
      */
-    protected transient OctopusDeployServer octopusDeployServer;
+    protected transient Lazy<OctopusDeployServer> lazyOctopusDeployServer;
 
     public OctopusDeployServer getOctopusDeployServer() {
-        ///TODO use better approach to achieve Laziness
-        if (octopusDeployServer == null) {
-            octopusDeployServer = getOctopusDeployServer(getServerId());
-        }
-        return octopusDeployServer;
+        return lazyOctopusDeployServer
+                .getOrCompute(()->getOctopusDeployServer(getServerId()));
     }
 
     /**
