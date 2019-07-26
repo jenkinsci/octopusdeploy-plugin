@@ -249,10 +249,13 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
         OctopusDeployServer server = getOctopusDeployServer(this.serverId);
         String serverUrl = server.getUrl();
         String apiKey = server.getApiKey().getPlainText();
-        boolean ignoreSslErrors = server.isIgnoreSslErrors();
+        boolean ignoreSslErrors = server.getIgnoreSslErrors();
 
         checkState(StringUtils.isNotBlank(serverUrl), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus URL"));
         checkState(StringUtils.isNotBlank(apiKey), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "API Key"));
+
+        commands.add(OctoConstants.Commands.Arguments.PROJECT_NAME);
+        commands.add(project);
 
         commands.add(OctoConstants.Commands.Arguments.SERVER_URL);
         commands.add(serverUrl);
@@ -262,8 +265,6 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
             commands.add(OctoConstants.Commands.Arguments.SPACE_NAME);
             commands.add(spaceId);
         }
-        commands.add(OctoConstants.Commands.Arguments.PROJECT_NAME);
-        commands.add(project);
 
         if (waitForDeployment) {
             if (StringUtils.isNotBlank(deploymentTimeout)) {
