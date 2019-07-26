@@ -140,12 +140,12 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         this.tenantTag = tenantTag == null ? null : tenantTag.trim();
         this.channel = channel == null ? null : channel.trim();
         this.waitForDeployment = waitForDeployment;
-        this.deploymentTimeout = deploymentTimeout.trim();
+        this.deploymentTimeout = deploymentTimeout == null ? null : deploymentTimeout.trim();
         this.cancelOnTimeout = cancelOnTimeout;
         this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
         this.defaultPackageVersion = defaultPackageVersion;
         this.verboseLogging = verboseLogging;
-        this.additionalArgs = additionalArgs.trim();
+        this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
     }
 
     @Override

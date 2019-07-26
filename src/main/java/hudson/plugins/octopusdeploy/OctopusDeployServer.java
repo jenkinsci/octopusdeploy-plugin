@@ -34,7 +34,7 @@ public class OctopusDeployServer implements Serializable {
     }
 
     private boolean ignoreSslErrors;
-    public boolean isIgnoreSslErrors() {
+    public boolean getIgnoreSslErrors() {
         return ignoreSslErrors;
     }
 

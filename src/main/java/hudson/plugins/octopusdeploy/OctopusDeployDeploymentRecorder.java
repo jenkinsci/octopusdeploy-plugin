@@ -32,13 +32,6 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         return releaseVersion;
     }
 
-    public OctopusDeployDeploymentRecorder(String serverId, String toolId, String project, String releaseVersion,
-                                           String environment, String tenant, String variables, boolean waitForDeployment,
-                                           boolean verboseLogging) {
-        this(serverId, toolId, "", project, releaseVersion, environment, tenant, variables, waitForDeployment,
-                "", false, verboseLogging, "");
-    }
-
     @DataBoundConstructor
     public OctopusDeployDeploymentRecorder(String serverId, String toolId, String spaceId, String project,
                                            String releaseVersion, String environment, String tenant, String tenantTag, String variables,
@@ -54,10 +47,10 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         this.tenantTag = tenantTag == null ? null : tenantTag.trim();
         this.variables = variables.trim();
         this.waitForDeployment = waitForDeployment;
-        this.deploymentTimeout = deploymentTimeout.trim();
+        this.deploymentTimeout = deploymentTimeout == null ? null : deploymentTimeout.trim();
         this.cancelOnTimeout = cancelOnTimeout;
         this.verboseLogging = verboseLogging;
-        this.additionalArgs = additionalArgs.trim();
+        this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
     }
 
     @Override

@@ -22,9 +22,7 @@
       </f:entry>
     </j:if>
     <j:if test="${!supportsSpaces}">
-      <f:invisibleEntry>
-        <f:readOnlyTextbox field="spaceId" />
-      </f:invisibleEntry>
+      <input type="hidden" name="spaceId" value="" />
     </j:if>
   </f:section>
 

@@ -18,14 +18,12 @@
     <j:invokeStatic var="supportsSpaces" method="hasSpaces" className="hudson.plugins.octopusdeploy.AbstractOctopusDeployRecorder">
     </j:invokeStatic>
     <j:if test="${supportsSpaces}">
-    <f:entry title="Space" field="spaceId">
-      <f:select />
-    </f:entry>
+      <f:entry title="Space" field="spaceId">
+        <f:select />
+      </f:entry>
     </j:if>
     <j:if test="${!supportsSpaces}">
-    <f:invisibleEntry>
-      <f:readOnlyTextbox field="spaceId" />
-    </f:invisibleEntry>
+        <input type="hidden" name="spaceId" value="" />
     </j:if>
   </f:section>
 
