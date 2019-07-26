@@ -243,11 +243,17 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         // Do this regardless if Release Notes are specified
         if (releaseNotesJenkinsLinkback) {
             final String buildUrlVar = "${BUILD_URL}";
+            final String jobNameVar = "${JOB_NAME}";
+            final String buildNumberVar = "${BUILD_NUMBER}";
 
             // Use env vars
             String resolvedBuildUrlVar = envInjector.injectEnvironmentVariableValues(buildUrlVar);
-            releaseNotesContent = String.format("Created by: <a href=\"%s\">%s</a>%n",
-                resolvedBuildUrlVar,
+            String resolvedJobNameVar = envInjector.injectEnvironmentVariableValues(jobNameVar);
+            String resolvedBuildNumberVar = envInjector.injectEnvironmentVariableValues(buildNumberVar);
+
+            releaseNotesContent = String.format("Release created by Build [%s #%s](%s)",
+                resolvedJobNameVar,
+                resolvedBuildNumberVar,
                 resolvedBuildUrlVar);
         }
 
