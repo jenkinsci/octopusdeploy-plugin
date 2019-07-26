@@ -32,14 +32,6 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         return releaseVersion;
     }
 
-    /**
-     * The variables to use for a deploy to in Octopus.
-     */
-    private final String variables;
-    public String getVariables() {
-        return variables;
-    }
-
     public OctopusDeployDeploymentRecorder(String serverId, String toolId, String project, String releaseVersion,
                                            String environment, String tenant, String variables, boolean waitForDeployment,
                                            boolean verboseLogging) {

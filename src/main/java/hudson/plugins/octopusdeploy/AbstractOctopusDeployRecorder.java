@@ -102,6 +102,14 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
     }
 
     /**
+     * The variables to use for a deploy to in Octopus.
+     */
+    protected String variables;
+    public String getVariables() {
+        return variables;
+    }
+
+    /**
      * The Tenant to use for a deploy to in Octopus.
      */
     protected String tenant;
