@@ -1,6 +1,8 @@
 package hudson.plugins.octopusdeploy;
 
 import com.google.common.base.Splitter;
+import com.octopusdeploy.api.data.Tag;
+import com.octopusdeploy.api.data.TagSet;
 import com.octopusdeploy.api.data.Task;
 import com.octopusdeploy.api.*;
 import java.io.*;
@@ -47,7 +49,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
 
     @DataBoundConstructor
     public OctopusDeployDeploymentRecorder(String serverId, String toolId, String spaceId, String project,
-                                           String releaseVersion, String environment, String tenant, String variables,
+                                           String releaseVersion, String environment, String tenant, String tenantTag, String variables,
                                            boolean waitForDeployment, String deploymentTimeout, boolean cancelOnTimeout,
                                            boolean verboseLogging, String additionalArgs) {
         this.serverId = serverId.trim();
@@ -57,6 +59,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         this.releaseVersion = releaseVersion.trim();
         this.environment = environment.trim();
         this.tenant = tenant == null ? null : tenant.trim(); // Otherwise this can throw on plugin version upgrade
+        this.tenantTag = tenantTag == null ? null : tenantTag.trim();
         this.variables = variables.trim();
         this.waitForDeployment = waitForDeployment;
         this.deploymentTimeout = deploymentTimeout.trim();
@@ -128,6 +131,17 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             for(String t : tenantsSplit) {
                 commands.add("--tenant");
                 commands.add(t);
+            }
+        }
+
+        if(StringUtils.isNotBlank(tenantTag)) {
+            Iterable<String> tenantTagsSplit = Splitter.on(',')
+                    .trimResults()
+                    .omitEmptyStrings()
+                    .split(tenantTag);
+            for (String tag : tenantTagsSplit) {
+                commands.add("--tenanttag");
+                commands.add(tag);
             }
         }
 
@@ -413,5 +427,28 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             }
             return names;
         }
+
+        public ComboBoxModel doFillTenantTagItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
+            ComboBoxModel names = new ComboBoxModel();
+
+            if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
+                return names;
+            }
+
+            OctopusApi api = getApiByServerId(serverId).forSpace(spaceId);
+            try {
+                Set<TagSet> tagSets = api.getTagSetsApi().getAll();
+                for (TagSet tagSet : tagSets) {
+                    for (Tag tag : tagSet.getTags()) {
+                        names.add(tag.getCanonicalName());
+                    }
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(OctopusDeployReleaseRecorder.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+            return names;
+        }
+
     }
 }

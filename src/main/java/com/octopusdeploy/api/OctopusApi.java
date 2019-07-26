@@ -16,6 +16,9 @@ public class OctopusApi {
     public TenantsApi getTenantsApi() {
         return tenantsApi;
     }
+
+    private final TagSetsApi tagSetsApi;
+    public TagSetsApi getTagSetsApi() { return tagSetsApi; }
     
     private final EnvironmentsApi environmentsApi;
     public EnvironmentsApi getEnvironmentsApi() {
@@ -62,6 +65,7 @@ public class OctopusApi {
         spacesApi = new SpacesApi(webClient);
         channelsApi = new ChannelsApi(webClient);
         tenantsApi = new TenantsApi(webClient);
+        tagSetsApi = new TagSetsApi(webClient);
         environmentsApi = new EnvironmentsApi(webClient);
         projectsApi = new ProjectsApi(webClient);
         deploymentsApi = new DeploymentsApi(webClient);
