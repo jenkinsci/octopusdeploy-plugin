@@ -330,6 +330,7 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
                         .masks(ArrayUtils.toPrimitive(cmdMasks.toArray((Boolean[])Array.newInstance(Boolean.class, 0))))
                         .stdout(listener)
                         .envs(environment)
+                        .pwd(environment.get("WORKSPACE", ""))
                         .start();
 
                 exitCode = process.join();
