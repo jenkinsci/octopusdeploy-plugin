@@ -1,0 +1,52 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <f:section title="Octopus CLI">
+    <f:entry title="Octopus CLI" field="toolId">
+      <j:set var="default" value="${descriptor.getDefaultOctopusToolId()}"/>
+      <j:set var="value" value="${attrs.value ?: instance.toolId ?: default}"/>
+      <f:combobox value="${value}"/>
+    </f:entry>
+  </f:section>
+
+  <f:section title="Octopus Connection">
+    <f:entry title="Octopus Server" field="serverId">
+      <j:set var="default" value="${descriptor.getDefaultOctopusDeployServerId()}"/>
+      <j:set var="value" value="${attrs.value ?: instance.serverId ?: default}"/>
+      <f:combobox value="${value}"/>
+    </f:entry>
+
+    <j:invokeStatic var="supportsSpaces" method="hasSpaces" className="hudson.plugins.octopusdeploy.AbstractOctopusDeployRecorder">
+    </j:invokeStatic>
+    <j:if test="${supportsSpaces}">
+      <f:entry title="Space" field="spaceId">
+        <f:select />
+      </f:entry>
+    </j:if>
+    <j:if test="${!supportsSpaces}">
+        <input type="hidden" name="spaceId" value="" />
+    </j:if>
+  </f:section>
+
+  <f:section title="Package">
+    <f:entry title="Package paths" field="packagePaths">
+      <f:textarea />
+    </f:entry>
+    <f:entry title="Overwrite mode" field="overwriteMode">
+      <j:invokeStatic var="overwriteModes" method="getOverwriteModes" className="hudson.plugins.octopusdeploy.OverwriteModes">
+      </j:invokeStatic>
+      <f:enum>
+        ${overwriteModes[it.name()]}
+      </f:enum>
+    </f:entry>
+  </f:section>
+  <f:section title="Advanced Options">
+    <f:advanced>
+      <f:entry title="Verbose logging" field="verboseLogging">
+        <f:checkbox value="false" />
+      </f:entry>
+      <f:entry title="Additional command line arguments" field="additionalArgs">
+        <f:textbox />
+      </f:entry>
+    </f:advanced>
+  </f:section>
+</j:jelly>
