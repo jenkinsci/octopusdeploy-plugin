@@ -24,7 +24,7 @@ public class EnvironmentsApi {
      */
     public Set<Environment> getAllEnvironments() throws IllegalArgumentException, IOException {
         HashSet<Environment> environments = new HashSet<Environment>();
-        AuthenticatedWebClient.WebResponse response =webClient.get("api/environments/all");
+        AuthenticatedWebClient.WebResponse response = webClient.get("environments/all");
         if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
         }

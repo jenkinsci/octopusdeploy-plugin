@@ -1,5 +1,6 @@
 package hudson.plugins.octopusdeploy;
 
+import com.octopusdeploy.api.data.Project;
 import com.octopusdeploy.api.data.Release;
 import com.octopusdeploy.api.*;
 import hudson.util.FormValidation;
@@ -104,7 +105,7 @@ public class OctopusValidator {
             com.octopusdeploy.api.data.Environment env = api.getEnvironmentsApi().getEnvironmentByName(environmentName, true);
             if (env == null)
             {
-                return FormValidation.error("Environment not found.");
+                return FormValidation.error("The '%s' environment was not found.", environmentName);
             }
             if (!environmentName.equals(env.getName()))
             {
@@ -129,12 +130,13 @@ public class OctopusValidator {
      * @param existanceCheckReq the requirement for the existence of the release.
      * @return FormValidation response
      */
-    public FormValidation validateRelease(String releaseVersion, String projectId, ReleaseExistenceRequirement existanceCheckReq) {
+    public FormValidation validateRelease(String releaseVersion, Project project, ReleaseExistenceRequirement existanceCheckReq) {
         if (releaseVersion.isEmpty()) {
             return FormValidation.error("Please provide a release version.");
         }
         try {
-            Set<Release> releases = api.getReleasesApi().getReleasesForProject(projectId);
+            Set<Release> releases = api.getReleasesApi().getReleasesForProject(project.getId());
+
             boolean found = false;
             for (Release release : releases) {
                 if (releaseVersion.equals(release.getVersion()) ) {
@@ -143,10 +145,10 @@ public class OctopusValidator {
                 }
             }
             if (found && existanceCheckReq == ReleaseExistenceRequirement.MustNotExist) {
-                return FormValidation.error("Release %s already exists for project %s!", releaseVersion, projectId);
+                return FormValidation.error("Release %s already exists for project '%s'!", releaseVersion, project.getName());
             }
             if (!found && existanceCheckReq == ReleaseExistenceRequirement.MustExist) {
-                return FormValidation.error("Release %s doesn't exist for project %s!", releaseVersion, projectId);
+                return FormValidation.error("Release %s doesn't exist for project '%s'!", releaseVersion, project.getName());
             }
         } catch (IllegalArgumentException ex) {
             return FormValidation.error(ex.getMessage());

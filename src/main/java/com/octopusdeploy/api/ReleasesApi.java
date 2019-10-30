@@ -75,7 +75,7 @@ public class ReleasesApi {
         jsonBuilder.append("}");
         String json = jsonBuilder.toString();
         byte[] data = json.getBytes(Charset.forName(UTF8));
-        AuthenticatedWebClient.WebResponse response = webClient.post("api/releases", data);
+        AuthenticatedWebClient.WebResponse response = webClient.post("releases", data);
         if (response.isErrorCode()) {
             String errorMsg = ErrorParser.getErrorsFromResponse(response.getContent());
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), errorMsg));
@@ -92,7 +92,7 @@ public class ReleasesApi {
      */
     public Set<Release> getReleasesForProject(String projectId) throws IllegalArgumentException, IOException {
         HashSet<Release> releases = new HashSet<Release>();
-        AuthenticatedWebClient.WebResponse response = webClient.get("api/projects/" + projectId + "/releases");
+        AuthenticatedWebClient.WebResponse response = webClient.get("projects/" + projectId + "/releases");
         if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
         }

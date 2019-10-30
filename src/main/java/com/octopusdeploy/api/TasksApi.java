@@ -20,7 +20,7 @@ public class TasksApi {
      * @throws IOException  When the AuthenticatedWebClient receives and error response code
      */
     public Task getTask(String taskId) throws IllegalArgumentException, IOException {
-        AuthenticatedWebClient.WebResponse response = webClient.get("api/tasks/" + taskId);
+        AuthenticatedWebClient.WebResponse response = webClient.get("tasks/" + taskId);
         if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
         }

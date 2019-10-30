@@ -165,11 +165,12 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
          * @return Form validation to present on the Jenkins UI
          */
         public FormValidation doCheckApiKey(@QueryParameter String apiKey) {
+            final String apiKeyRegex = "API\\-\\w{25,27}";
             apiKey = apiKey.trim();
             if (apiKey.isEmpty()) {
                 return FormValidation.warning("Please set a API Key generated from OctopusDeploy Server.");
             }
-            if (!Secret.decrypt(apiKey).getPlainText().matches("API\\-\\w{25,27}")) {
+            if (!apiKey.matches(apiKeyRegex) && !Secret.decrypt(apiKey).getPlainText().matches(apiKeyRegex)) {
                 return FormValidation.error("Supplied Octopus API Key format is invalid. It should look like API-XXXXXXXXXXXXXXXXXXXXXXXXXXX");
             }
             return FormValidation.ok();

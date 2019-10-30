@@ -18,7 +18,8 @@ public class AuthenticatedWebClient {
     
     private final String hostUrl;
     private final String apiKey;
-    
+    public String spaceId;
+
     /**
      * Create a new instance.
      * @param hostUrl URL to the Octopus Deploy host. example: https://octopus.company.com/
@@ -28,7 +29,7 @@ public class AuthenticatedWebClient {
         this.hostUrl = hostUrl;
         this.apiKey = apiKey;
     }
-    
+
     /**
      * Executes a post against the resource provided.
      * Uses content type application/x-www-form-urlencoded
@@ -56,7 +57,11 @@ public class AuthenticatedWebClient {
         dataOutputStream.close();
         return getResponse(connection);
     }
-    
+
+    public WebResponse getRoot() throws IOException {
+        return get("", null);
+    }
+
     /**
      * Executes a get request against the resource provided.
      * @param resource the URL to the resource (omitting the host portion)
@@ -116,7 +121,10 @@ public class AuthenticatedWebClient {
             throw new IllegalArgumentException(String.format("Unsupported method '%s'.", method));
         }
 
-        String joinedUrl = StringUtils.join(new String[] {hostUrl, endpoint}, "/");
+        String[] urlParts = StringUtils.isNotBlank(spaceId)
+            ? new String[] {hostUrl, "api", spaceId, endpoint}
+            : new String[] {hostUrl, "api", endpoint};
+        String joinedUrl = StringUtils.join(urlParts, "/");
         if (GET.equals(method) && queryParameters != null && !queryParameters.isEmpty())
         {
             joinedUrl = StringUtils.join(new String[]{joinedUrl, queryParameters}, "?");
