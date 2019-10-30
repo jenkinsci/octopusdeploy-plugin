@@ -313,7 +313,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             }
 
             OctopusValidator validator = new OctopusValidator(api);
-            return validator.validateRelease(releaseVersion, p.getId(), OctopusValidator.ReleaseExistenceRequirement.MustExist);
+            return validator.validateRelease(releaseVersion, p, OctopusValidator.ReleaseExistenceRequirement.MustExist);
         }
 
 
