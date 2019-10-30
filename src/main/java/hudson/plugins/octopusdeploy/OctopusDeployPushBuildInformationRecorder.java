@@ -8,8 +8,8 @@ import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Result;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
-import hudson.plugins.octopusdeploy.services.OctopusMetadataBuilder;
-import hudson.plugins.octopusdeploy.services.OctopusMetadataWriter;
+import hudson.plugins.octopusdeploy.services.OctopusBuildInformationBuilder;
+import hudson.plugins.octopusdeploy.services.OctopusBuildInformationWriter;
 import hudson.scm.ChangeLogSet;
 import hudson.util.ListBoxModel;
 import hudson.util.VariableResolver;
@@ -26,7 +26,7 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public class OctopusDeployPushMetadataRecorder extends AbstractOctopusDeployRecorder implements Serializable {
+public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDeployRecorder implements Serializable {
 
     private transient Log log;
 
@@ -43,9 +43,9 @@ public class OctopusDeployPushMetadataRecorder extends AbstractOctopusDeployReco
     public OverwriteMode getOverwriteMode() { return overwriteMode; }
 
     @DataBoundConstructor
-    public OctopusDeployPushMetadataRecorder(String serverId, String spaceId, String toolId, String packageId,
-                                             String packageVersion, String commentParser, OverwriteMode overwriteMode,
-                                             Boolean verboseLogging, String additionalArgs) {
+    public OctopusDeployPushBuildInformationRecorder(String serverId, String spaceId, String toolId, String packageId,
+                                                     String packageVersion, String commentParser, OverwriteMode overwriteMode,
+                                                     Boolean verboseLogging, String additionalArgs) {
         this.serverId = serverId.trim();
         this.spaceId = spaceId.trim();
         this.toolId = toolId.trim();
@@ -62,7 +62,7 @@ public class OctopusDeployPushMetadataRecorder extends AbstractOctopusDeployReco
         boolean success = true;
         log = new Log(listener);
         if (Result.FAILURE.equals(build.getResult())) {
-            log.info("Not pushing package metadata due to job being in FAILED state.");
+            log.info("Not pushing build information due to job being in FAILED state.");
             return success;
         }
 
@@ -86,7 +86,7 @@ public class OctopusDeployPushMetadataRecorder extends AbstractOctopusDeployReco
             Result result = launchOcto(launcher, commands, masks, envVars, listener);
             success = result.equals(Result.SUCCESS);
         } catch (Exception ex) {
-            log.fatal("Failed to push the package metadata: " + ex.getMessage());
+            log.fatal("Failed to push the build information: " + ex.getMessage());
             success = false;
         }
 
@@ -107,7 +107,7 @@ public class OctopusDeployPushMetadataRecorder extends AbstractOctopusDeployReco
         checkState(StringUtils.isNotBlank(serverUrl), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus URL"));
         checkState(StringUtils.isNotBlank(apiKey), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "API Key"));
 
-        commands.add("push-metadata");
+        commands.add("build-information");
 
         commands.add("--server");
         commands.add(serverUrl);
@@ -126,9 +126,9 @@ public class OctopusDeployPushMetadataRecorder extends AbstractOctopusDeployReco
         commands.add("--version");
         commands.add(packageVersion);
 
-        final String metadataFile = getPackageMetadataFromScm(build, envInjector);
-        commands.add("--metadata-file");
-        commands.add(metadataFile);
+        final String buildInformationFile = getBuildInformationFromScm(build, envInjector);
+        commands.add("--file");
+        commands.add(buildInformationFile);
 
         if (overwriteMode != OverwriteMode.FailIfExists) {
             commands.add("--overwrite-mode");
@@ -154,15 +154,15 @@ public class OctopusDeployPushMetadataRecorder extends AbstractOctopusDeployReco
      * Attempt to load release notes info from SCM.
      * @param build the jenkins build
      * @param envInjector the environment variable injector
-     * @return path to package metadata file
+     * @return path to build information file
      */
-    private String getPackageMetadataFromScm(AbstractBuild build, EnvironmentVariableValueInjector envInjector) throws IOException, InterruptedException {
+    private String getBuildInformationFromScm(AbstractBuild build, EnvironmentVariableValueInjector envInjector) throws IOException, InterruptedException {
         String checkoutDir = build.getWorkspace().getRemote();
-        final String metaFile = Paths.get(checkoutDir, "octopus.metadata").toAbsolutePath().toString();
+        final String buildInformationFile = Paths.get(checkoutDir, "octopus.buildinfo").toAbsolutePath().toString();
         AbstractProject project = build.getProject();
 
-        final OctopusMetadataBuilder builder = new OctopusMetadataBuilder();
-        final OctopusPackageMetadata metadata = builder.build(
+        final OctopusBuildInformationBuilder builder = new OctopusBuildInformationBuilder();
+        final OctopusBuildInformation buildInformation = builder.build(
                 getVcsType(project),
                 envInjector.injectEnvironmentVariableValues("${GIT_URL}"),
                 envInjector.injectEnvironmentVariableValues("${GIT_COMMIT}"),
@@ -173,12 +173,12 @@ public class OctopusDeployPushMetadataRecorder extends AbstractOctopusDeployReco
         );
 
         if (verboseLogging) {
-            log.info("Creating " + metaFile);
+            log.info("Creating " + buildInformationFile);
         }
-        final OctopusMetadataWriter writer = new OctopusMetadataWriter(log, verboseLogging);
-        writer.writeToFile(metadata, metaFile);
+        final OctopusBuildInformationWriter writer = new OctopusBuildInformationWriter(log, verboseLogging);
+        writer.writeToFile(buildInformation, buildInformationFile);
 
-        return metaFile;
+        return buildInformationFile;
     }
 
     private String getVcsType(AbstractProject project) {
@@ -246,7 +246,7 @@ public class OctopusDeployPushMetadataRecorder extends AbstractOctopusDeployReco
 
         @Override
         public String getDisplayName() {
-            return "Octopus Deploy: Push package metadata configuration";
+            return "Octopus Deploy: Push build information configuration";
         }
 
         public ListBoxModel doFillCommentParserItems() {
