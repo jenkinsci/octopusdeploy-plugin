@@ -170,7 +170,12 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
             if (apiKey.isEmpty()) {
                 return FormValidation.warning("Please set a API Key generated from OctopusDeploy Server.");
             }
-            if (!apiKey.matches(apiKeyRegex) && !Secret.decrypt(apiKey).getPlainText().matches(apiKeyRegex)) {
+
+            try {
+                if (!apiKey.matches(apiKeyRegex) && !Secret.decrypt(apiKey).getPlainText().matches(apiKeyRegex)) {
+                    return FormValidation.error("Supplied Octopus API Key format is invalid. It should look like API-XXXXXXXXXXXXXXXXXXXXXXXXXXX");
+                }
+            } catch (NullPointerException ex) {
                 return FormValidation.error("Supplied Octopus API Key format is invalid. It should look like API-XXXXXXXXXXXXXXXXXXXXXXXXXXX");
             }
             return FormValidation.ok();
