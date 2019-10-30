@@ -2,8 +2,10 @@ package com.octopusdeploy.api;
 
 import com.octopusdeploy.api.data.Project;
 import java.io.IOException;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.Set;
+import java.util.TreeSet;
+
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
@@ -23,7 +25,7 @@ public class ProjectsApi {
      * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public Set<Project> getAllProjects() throws IllegalArgumentException, IOException {
-        HashSet<Project> projects = new HashSet<Project>();
+        TreeSet<Project> projects = new TreeSet<>(Comparator.comparing(Project::getName).thenComparing(Project::getId));
         AuthenticatedWebClient.WebResponse response = webClient.get("projects/all");
         if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));

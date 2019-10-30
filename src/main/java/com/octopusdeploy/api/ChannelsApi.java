@@ -2,8 +2,10 @@ package com.octopusdeploy.api;
 
 import com.octopusdeploy.api.data.Channel;
 import java.io.IOException;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.Set;
+import java.util.TreeSet;
+
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 
@@ -27,7 +29,7 @@ public class ChannelsApi {
      * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public Set<Channel> getChannelsByProjectId(String projectId) throws IllegalArgumentException, IOException {
-        HashSet<Channel> channels = new HashSet<Channel>();
+        TreeSet<Channel> channels = new TreeSet<Channel>(Comparator.comparing(Channel::getName).thenComparing(Channel::getId));
         AuthenticatedWebClient.WebResponse response = webClient.get("projects/" + projectId + "/channels");
         if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
