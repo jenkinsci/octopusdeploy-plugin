@@ -495,7 +495,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
 
         @Override
         public String getDisplayName() {
-            return "Octopus Deploy: Create Release configuration";
+            return "Octopus Deploy: Create Release";
         }
 
         /**
