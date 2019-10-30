@@ -160,7 +160,7 @@ public class OctopusValidator {
 
     public static FormValidation validateServerId(String serverId) {
         if (serverId==null || serverId.isEmpty()) {
-            return FormValidation.error("Please set a Server Id");
+            return FormValidation.error("Please select an instance of Octopus Deploy.");
         }
         if(serverId.equals("default")) {
             return FormValidation.ok();
@@ -170,7 +170,7 @@ public class OctopusValidator {
             return FormValidation.error("There are no OctopusDeploy servers configured.");
         }
         if (!ids.contains(serverId)) {
-            return FormValidation.error("There are no OctopusDeploy servers configured with this Server ID.");
+            return FormValidation.error("There are no OctopusDeploy servers configured with this Server Id.");
         }
         return FormValidation.ok();
     }
