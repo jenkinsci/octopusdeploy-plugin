@@ -1,5 +1,6 @@
 package hudson.plugins.octopusdeploy;
 
+import com.google.common.base.Splitter;
 import com.octopusdeploy.api.data.SelectedPackage;
 import com.octopusdeploy.api.data.DeploymentProcessTemplate;
 import com.octopusdeploy.api.*;
@@ -11,6 +12,7 @@ import java.util.*;
 import hudson.*;
 import hudson.FilePath.FileCallable;
 import hudson.model.*;
+import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.remoting.VirtualChannel;
 import hudson.scm.*;
 import hudson.tasks.*;
@@ -22,6 +24,8 @@ import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.*;
 import org.kohsuke.stapler.export.*;
+
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Creates a release and optionally deploys it.
@@ -112,13 +116,14 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
     public OctopusDeployReleaseRecorder(
-            String serverId, String project, String releaseVersion,
+            String serverId, String toolId, String project, String releaseVersion,
             boolean releaseNotes, String releaseNotesSource, String releaseNotesFile,
             boolean deployThisRelease, String environment, String tenant, String channel, boolean waitForDeployment,
             List<PackageConfiguration> packageConfigs, boolean jenkinsUrlLinkback,
-            String defaultPackageVersion) {
+            String defaultPackageVersion, boolean verboseLogging) {
 
         this.serverId = serverId.trim();
+        this.toolId = toolId.trim();
         this.project = project.trim();
         this.releaseVersion = releaseVersion.trim();
         this.releaseNotes = releaseNotes;
@@ -132,6 +137,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         this.waitForDeployment = waitForDeployment;
         this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
         this.defaultPackageVersion = defaultPackageVersion;
+        this.verboseLogging = verboseLogging;
     }
 
     @Override
@@ -147,7 +153,6 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
             log.info("Not creating a release due to job being in FAILED state.");
             return success;
         }
-        logStartHeader(log);
 
         VariableResolver resolver = build.getBuildVariableResolver();
         EnvVars envVars;
@@ -169,33 +174,48 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         String channel = envInjector.injectEnvironmentVariableValues(this.channel);
         String defaultPackageVersion = envInjector.injectEnvironmentVariableValues(this.defaultPackageVersion);
 
-        com.octopusdeploy.api.data.Project p = null;
-        try {
-            p = getApi().getProjectsApi().getProjectByName(project);
-        } catch (Exception ex) {
-            log.fatal(String.format("Retrieving project name '%s' failed with message '%s'",
-                project, ex.getMessage()));
-            success = false;
+        logStartHeader(log);
+
+        checkState(StringUtils.isNotBlank(project), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Project name"));
+
+        final List<String> commands = buildCommonCommandArguments(OctoConstants.Commands.CREATE_RELEASE_COMMAND);
+
+        if (StringUtils.isNotBlank(releaseVersion)) {
+            commands.add("--version");
+            commands.add(releaseVersion);
         }
-        if (p == null) {
-            log.fatal("Project was not found.");
-            success = false;
+
+        if (StringUtils.isNotBlank(channel)) {
+            commands.add("--channel");
+            commands.add(channel);
         }
-        
-        com.octopusdeploy.api.data.Channel c = null;
-        if (channel != null && !channel.isEmpty()) {
-            try {
-                c = getApi().getChannelsApi().getChannelByName(p.getId(), channel);
-            } catch (Exception ex) {
-                log.fatal(String.format("Retrieving channel name '%s' from project '%s' failed with message '%s'",
-                    channel, project, ex.getMessage()));
-                success = false;
+
+        if (deployThisRelease && StringUtils.isNotBlank(environment)) {
+            final Iterable<String> environmentNameSplit = Splitter.on(',')
+                    .trimResults()
+                    .omitEmptyStrings()
+                    .split(environment);
+            for(final String env : environmentNameSplit) {
+                commands.add("--deployTo");
+                commands.add(env);
             }
-            if (c == null) {
-                log.fatal("Channel was not found.");
-                success = false;
+        }
+
+        if (waitForDeployment) {
+            commands.add("--progress");
+        }
+
+        if (StringUtils.isNotBlank(tenant)) {
+            final Iterable<String> tenantSplit = Splitter.on(',')
+                    .trimResults()
+                    .omitEmptyStrings()
+                    .split(tenant);
+            for(final String t : tenantSplit) {
+                commands.add("--tenant");
+                commands.add(t);
             }
         }
+
         // Check packageVersion
         String releaseNotesContent = "";
 
@@ -231,32 +251,37 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
             return success;
         }
 
-        Set<SelectedPackage> selectedPackages = getCombinedPackageList(p.getId(), packageConfigs, envInjector.injectEnvironmentVariableValues(defaultPackageVersion), log, envInjector);
+        if (StringUtils.isNotBlank(releaseNotesContent)) {
+            commands.add("--releaseNotes");
+            commands.add(JSONSanitizer.getInstance().sanitize(releaseNotesContent));
+        }
+
+        if (StringUtils.isNotBlank(defaultPackageVersion)) {
+            commands.add("--defaultPackageVersion");
+            commands.add(defaultPackageVersion);
+        }
+
+        if (packageConfigs != null && !packageConfigs.isEmpty()) {
+            for (final PackageConfiguration pkg : packageConfigs) {
+                commands.add("--package");
+                if (StringUtils.isNotBlank(pkg.getPackageReferenceName())) {
+                    commands.add(String.format("%s:%s:%s", pkg.getPackageName(), pkg.getPackageReferenceName(), pkg.getPackageVersion()));
+                } else {
+                    commands.add(String.format("%s:%s", pkg.getPackageName(), pkg.getPackageVersion()));
+                }
+            }
+        }
 
         try {
-            // Sanitize the release notes in preparation for JSON
-            releaseNotesContent = JSONSanitizer.getInstance().sanitize(releaseNotesContent);
-            String channelId = null;
-            if (c != null) {
-                channelId = c.getId();
+            final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
+            Result result = launchOcto(launcher, commands, masks, envVars, listener);
+            success = result.equals(Result.SUCCESS);
+            if (success) {
+                //build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Release, serverUrl + urlSuffix));
             }
-            String results = getApi().getReleasesApi().createRelease(p.getId(), releaseVersion, channelId, releaseNotesContent, selectedPackages);
-            JSONObject json = (JSONObject)JSONSerializer.toJSON(results);
-            String urlSuffix = json.getJSONObject("Links").getString("Web");
-            String url = getOctopusDeployServer().getUrl();
-            if (url.endsWith("/")) {
-                url = url.substring(0, url.length() - 1);
-            }
-            log.info("Release created: \n\t" + url + urlSuffix);
-            build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Release, url + urlSuffix));
         } catch (Exception ex) {
             log.fatal("Failed to create release: " + ex.getMessage());
             success = false;
-        }
-
-        if (success && deployThisRelease) {
-          OctopusDeployDeploymentRecorder deployment = new OctopusDeployDeploymentRecorder(getServerId(), project, releaseVersion, environment, tenant, "", waitForDeployment);
-          success = deployment.perform(build, launcher, listener);
         }
 
         return success;
@@ -449,7 +474,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
      * The class is marked as public so that it can be accessed from views.
      */
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
-    public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+    public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImpl {
         private static final String PROJECT_RELEASE_VALIDATION_MESSAGE = "Project must be set to validate release.";
         private static final String SERVER_ID_VALIDATION_MESSAGE = "Could not validate without a valid Server ID.";
 
@@ -460,34 +485,6 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         @Override
         public String getDisplayName() {
             return "OctopusDeploy Release";
-        }
-
-        @Override
-        public boolean configure(StaplerRequest req, JSONObject formData) throws Descriptor.FormException {
-            save();
-            return true;
-        }
-
-        private OctopusApi getApiByServerId(String serverId){
-            return AbstractOctopusDeployRecorder.getOctopusDeployServer(serverId).getApi();
-        }
-
-        public String getDefaultOctopusDeployServerId() {
-            OctopusDeployServer server = AbstractOctopusDeployRecorder.getDefaultOctopusDeployServer();
-            if(server != null){
-                return server.getId();
-            }
-            return null;
-        }
-
-        /**
-         * Check that the serverId field is not empty and does exist.
-         * @param serverId The id of OctopusDeployServer in the configuration.
-         * @return Ok if not empty, error otherwise.
-         */
-        public FormValidation doCheckServerId(@QueryParameter String serverId) {
-            serverId = serverId.trim();
-            return OctopusValidator.validateServerId(serverId);
         }
 
         /**
@@ -591,14 +588,6 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
             OctopusApi api = getApiByServerId(serverId);
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateEnvironment(environment);
-        }
-
-        /**
-         * Data binding that returns all configured Octopus server ids to be used in the serverId drop-down list.
-         * @return ComboBoxModel
-         */
-        public ComboBoxModel doFillServerIdItems() {
-            return new ComboBoxModel(getOctopusDeployServersIds());
         }
 
         /**

@@ -4,6 +4,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
+import hudson.util.Secret;
 import jenkins.model.Jenkins;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.GlobalPluginConfiguration;
@@ -77,7 +78,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
 		@SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "This is for backwards compatiblity on Jenkins plugin upgrade" )
         private void loadLegacyOctopusDeployServerConfig() {
             if (doesLegacyOctopusDeployServerExist()){
-                OctopusDeployServer server = new OctopusDeployServer("default", octopusHost, apiKey, true);
+                OctopusDeployServer server = new OctopusDeployServer("default", octopusHost, Secret.fromString(apiKey), true, false);
                 if(octopusDeployServers == null)
                 {
                     octopusDeployServers = new ArrayList<>();
@@ -108,7 +109,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
                 return FormValidation.warning("Please set a ServerID");
             }
             for (OctopusDeployServer s:getOctopusDeployServers()){
-                if (serverId.equals(s.getId()) && !url.equals(s.getUrl()) && !apiKey.equals(s.getApiKey())){
+                if (serverId.equals(s.getId()) && !url.equals(s.getUrl()) && !apiKey.equals(s.getApiKey().getEncryptedValue())){
                     return FormValidation.error("The Server ID you entered already exists.");
                 }
             }
@@ -168,7 +169,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
             if (apiKey.isEmpty()) {
                 return FormValidation.warning("Please set a API Key generated from OctopusDeploy Server.");
             }
-            if (!apiKey.matches("API\\-\\w{25,27}")) {
+            if (!Secret.decrypt(apiKey).getPlainText().matches("API\\-\\w{25,27}")) {
                 return FormValidation.error("Supplied Octopus API Key format is invalid. It should look like API-XXXXXXXXXXXXXXXXXXXXXXXXXXX");
             }
             return FormValidation.ok();

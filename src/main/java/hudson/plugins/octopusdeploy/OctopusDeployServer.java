@@ -1,6 +1,7 @@
 package hudson.plugins.octopusdeploy;
 
 import com.octopusdeploy.api.OctopusApi;
+import hudson.util.Secret;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.Serializable;
@@ -27,29 +28,35 @@ public class OctopusDeployServer implements Serializable {
         return url;
     }
 
-    private String apiKey;
-    public String getApiKey() {
+    private Secret apiKey;
+    public Secret getApiKey() {
         return apiKey;
+    }
+
+    private boolean ignoreSslErrors;
+    public boolean isIgnoreSslErrors() {
+        return ignoreSslErrors;
     }
 
     private transient OctopusApi api;
     public OctopusApi getApi() {
         ///TODO use better approach to achieve Laziness
         if (api == null) {
-            api = new OctopusApi(url, apiKey);
+            api = new OctopusApi(url, apiKey.getPlainText());
         }
         return api;
     }
 
-    public OctopusDeployServer(String serverId, String url, String apiKey, boolean isDefault) {
+    public OctopusDeployServer(String serverId, String url, Secret apiKey, boolean isDefault, boolean ignoreSslErrors) {
         this.id = serverId.trim();
         this.url = url.trim();
-        this.apiKey = apiKey.trim();
+        this.apiKey = apiKey;
         this.isDefault = isDefault;
+        this.ignoreSslErrors = ignoreSslErrors;
     }
 
     @DataBoundConstructor
-    public OctopusDeployServer(String serverId, String url, String apiKey) {
-        this(serverId, url, apiKey, false);
+    public OctopusDeployServer(String serverId, String url, String apiKey, boolean ignoreSslErrors) {
+        this(serverId, url, Secret.fromString(apiKey), false, ignoreSslErrors);
     }
 }

@@ -1,5 +1,6 @@
 package hudson.plugins.octopusdeploy;
 
+import com.google.common.base.Splitter;
 import com.octopusdeploy.api.data.Task;
 import com.octopusdeploy.api.data.Release;
 import com.octopusdeploy.api.*;
@@ -7,12 +8,16 @@ import java.io.*;
 import java.util.*;
 import hudson.*;
 import hudson.model.*;
+import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.tasks.*;
 import hudson.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.sf.json.*;
+import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.*;
+
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Executes deployments of releases.
@@ -36,14 +41,16 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
     }
 
     @DataBoundConstructor
-    public OctopusDeployDeploymentRecorder(String serverId, String project, String releaseVersion, String environment, String tenant, String variables, boolean waitForDeployment) {
+    public OctopusDeployDeploymentRecorder(String serverId, String toolId, String project, String releaseVersion, String environment, String tenant, String variables, boolean waitForDeployment, boolean verboseLogging) {
         this.serverId = serverId.trim();
+        this.toolId = toolId.trim();
         this.project = project.trim();
         this.releaseVersion = releaseVersion.trim();
         this.environment = environment.trim();
         this.tenant = tenant == null ? null : tenant.trim(); // Otherwise this can throw on plugin version upgrade
         this.variables = variables.trim();
         this.waitForDeployment = waitForDeployment;
+        this.verboseLogging = verboseLogging;
     }
 
     @Override
@@ -55,8 +62,6 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             log.info("Not deploying due to job being in FAILED state.");
             return success;
         }
-
-        logStartHeader(log);
 
         VariableResolver resolver = build.getBuildVariableResolver();
         EnvVars envVars;
@@ -74,128 +79,67 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         String tenant = envInjector.injectEnvironmentVariableValues(this.tenant);
         String variables = envInjector.injectEnvironmentVariableValues(this.variables);
 
-        com.octopusdeploy.api.data.Project p = null;
-        try {
-            p = getApi().getProjectsApi().getProjectByName(project);
-        } catch (Exception ex) {
-            log.fatal(String.format("Retrieving project name '%s' failed with message '%s'",
-                    project, ex.getMessage()));
-            success = false;
-        }
-        com.octopusdeploy.api.data.Environment env = null;
-        try {
-            env = getApi().getEnvironmentsApi().getEnvironmentByName(environment);
-        } catch (Exception ex) {
-            log.fatal(String.format("Retrieving environment name '%s' failed with message '%s'",
-                    environment, ex.getMessage()));
-            success = false;
-        }
+        logStartHeader(log);
 
-        if (p == null) {
-            log.fatal("Project was not found.");
-            success = false;
-        }
-        if (env == null) {
-            log.fatal("Environment was not found.");
-            success = false;
-        }
-        if (!success) // Early exit
-        {
-            return success;
-        }
+        checkState(StringUtils.isNotBlank(project), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Project name"));
+        checkState(StringUtils.isNotBlank(environment), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Environment name"));
+        checkState(StringUtils.isNotBlank(releaseVersion), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Version"));
 
-        String tenantId = null;
-        if (tenant != null && !tenant.isEmpty()) {
-            com.octopusdeploy.api.data.Tenant ten = null;
-            try {
-                ten = getApi().getTenantsApi().getTenantByName(tenant);
-                if (ten != null) {
-                    tenantId = ten.getId();
-                } else {
-                    log.fatal(String.format("Retrieving tenant name '%s' failed with message 'not found'", tenant));
-                    return false;
-                }
-            } catch (Exception ex) {
-                log.fatal(String.format("Retrieving tenant name '%s' failed with message '%s'",
-                        tenant, ex.getMessage()));
-                return false;
-            }
-        }
-
-        Set<com.octopusdeploy.api.data.Release> releases = null;
-        try {
-            releases = getApi().getReleasesApi().getReleasesForProject(p.getId());
-        } catch (Exception ex) {
-            log.fatal(String.format("Retrieving releases for project '%s' failed with message '%s'",
-                    project, ex.getMessage()));
-            success = false;
-        }
-        if (releases == null) {
-            log.fatal("Releases was not found.");
-            return false;
-        }
-        Release releaseToDeploy = null;
-        for(Release r : releases) {
-            if (releaseVersion.equals(r.getVersion()))
-            {
-                releaseToDeploy = r;
-                break;
-            }
-        }
-        if (releaseToDeploy == null) // early exit
-        {
-            log.fatal(String.format("Unable to find release version %s for project %s", releaseVersion, project));
-            return false;
-        }
         Properties properties = new Properties();
         try {
             properties.load(new StringReader(variables));
         } catch (Exception ex) {
-            log.fatal(String.format("Unable to load entry variables failed with message '%s'",
-                    ex.getMessage()));
-            success = false;
+            log.fatal(String.format("Unable to load entry variables: '%s'", ex.getMessage()));
+            return false;
         }
 
-        // TODO: Can we tell if we need to call? For now I will always try and get variable and use if I find them
-        Set<com.octopusdeploy.api.data.Variable> variablesForDeploy = null;
+        final List<String> commands = buildCommonCommandArguments(OctoConstants.Commands.DEPLOY_RELEASE_COMMAND);
 
-        try {
-            String releaseId = releaseToDeploy.getId();
-            String environmentId = env.getId();
-            variablesForDeploy = getApi().getVariablesApi().getVariablesByReleaseAndEnvironment(releaseId, environmentId, properties);
-        } catch (Exception ex) {
-            log.fatal(String.format("Retrieving variables for release '%s' to environment '%s' failed with message '%s'",
-                    releaseToDeploy.getId(), env.getName(), ex.getMessage()));
-            success = false;
+        final Iterable<String> environmentNameSplit = Splitter.on(',')
+                .trimResults()
+                .omitEmptyStrings()
+                .split(environment);
+        for(String env : environmentNameSplit) {
+            commands.add("--deployTo");
+            commands.add(env);
         }
-        try {
-            String results = getApi().getDeploymentsApi().executeDeployment(releaseToDeploy.getId(), env.getId(), tenantId, variablesForDeploy);
-            if (isTaskJson(results)) {
-                JSON resultJson = JSONSerializer.toJSON(results);
-                String urlSuffix = ((JSONObject)resultJson).getJSONObject("Links").getString("Web");
-                String url = getOctopusDeployServer().getUrl();
-                if (url.endsWith("/")) {
-                    url = url.substring(0, url.length() - 1);
-                }
-                log.info("Deployment executed: \n\t" + url + urlSuffix);
-                build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Deployment, url + urlSuffix));
-                if (waitForDeployment) {
-                    log.info("Waiting for deployment to complete.");
-                    String resultState = waitForDeploymentCompletion(resultJson, getApi(), log);
-                    if (resultState == null) {
-                        log.info("Marking build failed due to failure in waiting for deployment to complete.");
-                        success = false;
-                    }
 
-                    if ("Failed".equals(resultState)) {
-                        log.info("Marking build failed due to deployment task status.");
-                        success = false;
-                    }
-                }
+        commands.add("--version");
+        commands.add(releaseVersion);
+
+        if(StringUtils.isNotBlank(tenant)) {
+            Iterable<String> tenantsSplit = Splitter.on(',')
+                    .trimResults()
+                    .omitEmptyStrings()
+                    .split(tenant);
+            for(String t : tenantsSplit) {
+                commands.add("--tenant");
+                commands.add(t);
             }
-        } catch (IOException ex) {
-            log.fatal("Failed to deploy: " + ex.getMessage());
-            success = false;
+        }
+
+        if(waitForDeployment) {
+            commands.add("--progress");
+        }
+
+        for(String variableName : properties.stringPropertyNames()) {
+            String variableValue = properties.getProperty(variableName);
+            commands.add("--variable");
+            commands.add(String.format("%s:%s", variableName, variableValue));
+        }
+
+        if(success) {
+            try {
+                final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
+                Result result = launchOcto(launcher, commands, masks, envVars, listener);
+                success = result.equals(Result.SUCCESS);
+                if(success) {
+                    //build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Deployment, url + urlSuffix));
+                }
+            } catch (Exception ex) {
+                log.fatal("Failed to deploy: " + ex.getMessage());
+                success = false;
+            }
         }
 
         return success;
@@ -296,7 +240,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
      * The class is marked as public so that it can be accessed from views.
      */
     @Extension
-    public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+    public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImpl {
         private static final String PROJECT_RELEASE_VALIDATION_MESSAGE = "Project must be set to validate release.";
         private static final String SERVER_ID_VALIDATION_MESSAGE = "Could not validate without a valid Server ID.";
 
@@ -312,36 +256,6 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         @Override
         public String getDisplayName() {
             return "OctopusDeploy Deployment";
-        }
-
-        @Override
-        public boolean configure(StaplerRequest req, JSONObject formData) throws Descriptor.FormException {
-            save();
-            return true;
-        }
-
-        private OctopusApi getApiByServerId(String serverId){
-            return AbstractOctopusDeployRecorder.getOctopusDeployServer(serverId).getApi();
-        }
-
-        public String getDefaultOctopusDeployServerId() {
-
-            OctopusDeployServer server = AbstractOctopusDeployRecorder.getDefaultOctopusDeployServer();
-            if(server != null){
-                return server.getId();
-            }
-            return null;
-        }
-
-        /**
-         * Check that the serverId field is not empty.
-         * @param serverId The id of OctopusDeployServer in the configuration.
-         * @return Ok if not empty, error otherwise.
-         */
-        public FormValidation doCheckServerId(@QueryParameter String serverId) {
-
-            serverId = serverId.trim();
-            return OctopusValidator.validateServerId(serverId);
         }
 
         /**
@@ -411,15 +325,6 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             OctopusApi api = getApiByServerId(serverId);
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateEnvironment(environment);
-        }
-
-        /**
-         * Data binding that returns all configured Octopus server ids to be used in the serverId drop-down list.
-         * @return ComboBoxModel
-         */
-        public ComboBoxModel doFillServerIdItems() {
-
-            return new ComboBoxModel(getOctopusDeployServersIds());
         }
 
         /**

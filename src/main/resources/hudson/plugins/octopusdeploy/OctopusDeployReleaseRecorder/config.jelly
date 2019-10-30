@@ -55,11 +55,22 @@
     </f:entry>
   </f:block>
 
+  <f:block>
+    <f:entry title="Verbose logging" field="verboseLogging">
+        <f:checkbox value="false" />
+    </f:entry>
+  </f:block>
+
   <f:section title="Advanced Options">
     <f:advanced>
        <f:entry title="Octopus Server" field="serverId">
         <j:set var="default" value="${descriptor.getDefaultOctopusDeployServerId()}"/>
         <j:set var="value" value="${attrs.value ?: instance.serverId ?: default}"/>
+        <f:combobox value="${value}"/>
+      </f:entry>
+       <f:entry title="Octopus Tool" field="toolId">
+        <j:set var="default" value="${descriptor.getDefaultOctopusToolId()}"/>
+        <j:set var="value" value="${attrs.value ?: instance.toolId ?: default}"/>
         <f:combobox value="${value}"/>
       </f:entry>
     </f:advanced>
