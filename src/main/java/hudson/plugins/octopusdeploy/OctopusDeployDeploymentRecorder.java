@@ -6,6 +6,12 @@ import com.octopusdeploy.api.data.TagSet;
 import com.octopusdeploy.api.data.Task;
 import com.octopusdeploy.api.*;
 import java.io.*;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import hudson.*;
 import hudson.model.*;
@@ -257,6 +263,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
     public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImpl {
         private static final String PROJECT_RELEASE_VALIDATION_MESSAGE = "Project must be set to validate release.";
         private static final String SERVER_ID_VALIDATION_MESSAGE = "Could not validate without a valid Server ID.";
+        private static final String DEPLOYMENT_TIMEOUT_VALIDATION_MESSAGE = "This is not a valid deployment timeout it should be in the format HH:mm:ss";
 
         public DescriptorImpl() {
             load();
@@ -290,6 +297,22 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             return validator.validateProject(project);
         }
 
+        public FormValidation doCheckDeploymentTimeout(@QueryParameter String deploymentTimeout)
+        {
+            if(deploymentTimeout != null) {
+                deploymentTimeout = deploymentTimeout.trim();
+                if (!deploymentTimeout.isEmpty()) {
+                    try {
+                        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
+                        dtf.parse(deploymentTimeout);
+                    } catch (DateTimeParseException ex) {
+                        return FormValidation.warning(DEPLOYMENT_TIMEOUT_VALIDATION_MESSAGE);
+                    }
+                }
+            }
+
+            return FormValidation.ok();
+        }
         /**
          * Check that the releaseVersion field is not empty.
          * @param releaseVersion The release version of the package.
