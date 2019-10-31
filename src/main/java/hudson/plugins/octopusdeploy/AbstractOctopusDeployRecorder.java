@@ -266,6 +266,7 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
 
         if (waitForDeployment) {
             if (StringUtils.isNotBlank(deploymentTimeout)) {
+                checkState(OctopusValidator.isValidTimeSpan(deploymentTimeout), String.format(OctoConstants.Errors.INPUT_IS_INVALID_MESSAGE_FORMAT, "Deployment Timeout (expects format:\"HH:mm:ss\")"));
                 commands.add("--deploymentTimeout");
                 commands.add(deploymentTimeout);
             }

@@ -175,7 +175,7 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorder imp
 
         @Override
         public String getDisplayName() {
-            return "Octopus Deploy: Package application configuration";
+            return "Octopus Deploy: Package application";
         }
     }
 }

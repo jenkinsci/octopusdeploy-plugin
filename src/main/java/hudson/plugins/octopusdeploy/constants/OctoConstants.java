@@ -18,5 +18,6 @@ public class OctoConstants {
     public class Errors {
 
         public static final String INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT = "OCTOPUS-JENKINS-INPUT-ERROR-0002: %s can not be blank";
+        public static final String INPUT_IS_INVALID_MESSAGE_FORMAT = "OCTOPUS-JENKINS-INPUT-ERROR-0003: %s is invalid";
     }
 }
