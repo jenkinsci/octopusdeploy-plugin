@@ -9,6 +9,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 
+import com.octopusdeploy.api.data.Tag;
+import com.octopusdeploy.api.data.TagSet;
 import hudson.*;
 import hudson.FilePath.FileCallable;
 import hudson.model.*;
@@ -19,7 +21,7 @@ import hudson.tasks.*;
 import hudson.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.sf.json.*;
+
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.*;
@@ -113,24 +115,15 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         return defaultPackageVersion;
     }
 
-    public OctopusDeployReleaseRecorder(
-            String serverId, String toolId, String project, String releaseVersion,
-            boolean releaseNotes, String releaseNotesSource, String releaseNotesFile,
-            boolean deployThisRelease, String environment, String tenant, String channel, boolean waitForDeployment,
-            List<PackageConfiguration> packageConfigs, boolean jenkinsUrlLinkback,
-            String defaultPackageVersion, boolean verboseLogging) {
-        this(serverId, toolId, "", project, releaseVersion, releaseNotes, releaseNotesSource,
-                releaseNotesFile, deployThisRelease, environment, tenant, channel, waitForDeployment,
-                packageConfigs, jenkinsUrlLinkback, defaultPackageVersion, verboseLogging);
-    }
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
     public OctopusDeployReleaseRecorder(
             String serverId, String toolId, String spaceId, String project, String releaseVersion,
             boolean releaseNotes, String releaseNotesSource, String releaseNotesFile,
-            boolean deployThisRelease, String environment, String tenant, String channel, boolean waitForDeployment,
+            boolean deployThisRelease, String environment, String tenant, String tenantTag, String channel, boolean waitForDeployment,
+            String deploymentTimeout, boolean cancelOnTimeout,
             List<PackageConfiguration> packageConfigs, boolean jenkinsUrlLinkback,
-            String defaultPackageVersion, boolean verboseLogging) {
+            String defaultPackageVersion, boolean verboseLogging, String additionalArgs) {
 
         this.serverId = serverId.trim();
         this.toolId = toolId.trim();
@@ -144,11 +137,15 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         this.packageConfigs = packageConfigs;
         this.environment = environment.trim();
         this.tenant = tenant == null ? null : tenant.trim();
+        this.tenantTag = tenantTag == null ? null : tenantTag.trim();
         this.channel = channel == null ? null : channel.trim();
         this.waitForDeployment = waitForDeployment;
+        this.deploymentTimeout = deploymentTimeout == null ? null : deploymentTimeout.trim();
+        this.cancelOnTimeout = cancelOnTimeout;
         this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
         this.defaultPackageVersion = defaultPackageVersion;
         this.verboseLogging = verboseLogging;
+        this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
     }
 
     @Override
@@ -189,7 +186,8 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
 
         checkState(StringUtils.isNotBlank(project), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Project name"));
 
-        final List<String> commands = buildCommonCommandArguments(OctoConstants.Commands.CREATE_RELEASE);
+        final List<String> commands = new ArrayList<>();
+        commands.add(OctoConstants.Commands.CREATE_RELEASE);
 
         if (StringUtils.isNotBlank(releaseVersion)) {
             commands.add("--version");
@@ -210,20 +208,31 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
                 commands.add("--deployTo");
                 commands.add(env);
             }
-        }
 
-        if (waitForDeployment) {
-            commands.add("--progress");
-        }
+            if (waitForDeployment) {
+                commands.add("--progress");
+            }
 
-        if (StringUtils.isNotBlank(tenant)) {
-            final Iterable<String> tenantSplit = Splitter.on(',')
-                    .trimResults()
-                    .omitEmptyStrings()
-                    .split(tenant);
-            for(final String t : tenantSplit) {
-                commands.add("--tenant");
-                commands.add(t);
+            if (StringUtils.isNotBlank(tenant)) {
+                final Iterable<String> tenantSplit = Splitter.on(',')
+                        .trimResults()
+                        .omitEmptyStrings()
+                        .split(tenant);
+                for(final String t : tenantSplit) {
+                    commands.add("--tenant");
+                    commands.add(t);
+                }
+            }
+
+            if (StringUtils.isNotBlank(tenantTag)) {
+                final Iterable<String> tenantTagsSplit = Splitter.on(',')
+                        .trimResults()
+                        .omitEmptyStrings()
+                        .split(tenantTag);
+                for(final String tag : tenantTagsSplit) {
+                    commands.add("--tenanttag");
+                    commands.add(tag);
+                }
             }
         }
 
@@ -234,11 +243,17 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         // Do this regardless if Release Notes are specified
         if (releaseNotesJenkinsLinkback) {
             final String buildUrlVar = "${BUILD_URL}";
+            final String jobNameVar = "${JOB_NAME}";
+            final String buildNumberVar = "${BUILD_NUMBER}";
 
             // Use env vars
             String resolvedBuildUrlVar = envInjector.injectEnvironmentVariableValues(buildUrlVar);
-            releaseNotesContent = String.format("Created by: <a href=\"%s\">%s</a>%n",
-                resolvedBuildUrlVar,
+            String resolvedJobNameVar = envInjector.injectEnvironmentVariableValues(jobNameVar);
+            String resolvedBuildNumberVar = envInjector.injectEnvironmentVariableValues(buildNumberVar);
+
+            releaseNotesContent = String.format("Release created by Build [%s #%s](%s)",
+                resolvedJobNameVar,
+                resolvedBuildNumberVar,
                 resolvedBuildUrlVar);
         }
 
@@ -282,6 +297,8 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
                 }
             }
         }
+
+        commands.addAll(getCommonCommandArguments());
 
         try {
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
@@ -537,7 +554,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateChannel(channel, project);
         }
-        
+
         /**
          * Check that the releaseVersion field is not empty.
          * @param releaseVersion release version.
@@ -646,6 +663,28 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
             } catch (Exception ex) {
                 Logger.getLogger(OctopusDeployDeploymentRecorder.class.getName()).log(Level.SEVERE, null, ex);
             }
+            return names;
+        }
+
+        public ComboBoxModel doFillTenantTagItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
+            ComboBoxModel names = new ComboBoxModel();
+
+            if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
+                return names;
+            }
+
+            OctopusApi api = getApiByServerId(serverId).forSpace(spaceId);
+            try {
+                Set<TagSet> tagSets = api.getTagSetsApi().getAll();
+                for (TagSet tagSet : tagSets) {
+                    for (Tag tag : tagSet.getTags()) {
+                        names.add(tag.getCanonicalName());
+                    }
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(OctopusDeployReleaseRecorder.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
             return names;
         }
         

@@ -1,9 +1,17 @@
 package hudson.plugins.octopusdeploy;
 
 import com.google.common.base.Splitter;
+import com.octopusdeploy.api.data.Tag;
+import com.octopusdeploy.api.data.TagSet;
 import com.octopusdeploy.api.data.Task;
 import com.octopusdeploy.api.*;
 import java.io.*;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import hudson.*;
 import hudson.model.*;
@@ -30,23 +38,11 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         return releaseVersion;
     }
 
-    /**
-     * The variables to use for a deploy to in Octopus.
-     */
-    private final String variables;
-    public String getVariables() {
-        return variables;
-    }
-
-    public OctopusDeployDeploymentRecorder(String serverId, String toolId, String project, String releaseVersion,
-                                           String environment, String tenant, String variables, boolean waitForDeployment,
-                                           boolean verboseLogging) {
-        this(serverId, toolId, "", project, releaseVersion, environment, tenant, variables, waitForDeployment,
-                verboseLogging);
-    }
-
     @DataBoundConstructor
-    public OctopusDeployDeploymentRecorder(String serverId, String toolId, String spaceId, String project, String releaseVersion, String environment, String tenant, String variables, boolean waitForDeployment, boolean verboseLogging) {
+    public OctopusDeployDeploymentRecorder(String serverId, String toolId, String spaceId, String project,
+                                           String releaseVersion, String environment, String tenant, String tenantTag, String variables,
+                                           boolean waitForDeployment, String deploymentTimeout, boolean cancelOnTimeout,
+                                           boolean verboseLogging, String additionalArgs) {
         this.serverId = serverId.trim();
         this.toolId = toolId.trim();
         this.spaceId = spaceId.trim();
@@ -54,9 +50,13 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         this.releaseVersion = releaseVersion.trim();
         this.environment = environment.trim();
         this.tenant = tenant == null ? null : tenant.trim(); // Otherwise this can throw on plugin version upgrade
+        this.tenantTag = tenantTag == null ? null : tenantTag.trim();
         this.variables = variables.trim();
         this.waitForDeployment = waitForDeployment;
+        this.deploymentTimeout = deploymentTimeout == null ? null : deploymentTimeout.trim();
+        this.cancelOnTimeout = cancelOnTimeout;
         this.verboseLogging = verboseLogging;
+        this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
     }
 
     @Override
@@ -99,7 +99,8 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             return false;
         }
 
-        final List<String> commands = buildCommonCommandArguments(OctoConstants.Commands.DEPLOY_RELEASE);
+        final List<String> commands = new ArrayList<>();
+        commands.add(OctoConstants.Commands.DEPLOY_RELEASE);
 
         final Iterable<String> environmentNameSplit = Splitter.on(',')
                 .trimResults()
@@ -124,6 +125,17 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             }
         }
 
+        if(StringUtils.isNotBlank(tenantTag)) {
+            Iterable<String> tenantTagsSplit = Splitter.on(',')
+                    .trimResults()
+                    .omitEmptyStrings()
+                    .split(tenantTag);
+            for (String tag : tenantTagsSplit) {
+                commands.add("--tenanttag");
+                commands.add(tag);
+            }
+        }
+
         if(waitForDeployment) {
             commands.add("--progress");
         }
@@ -133,6 +145,8 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             commands.add("--variable");
             commands.add(String.format("%s:%s", variableName, variableValue));
         }
+
+        commands.addAll(getCommonCommandArguments());
 
         if(success) {
             try {
@@ -249,6 +263,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
     public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImpl {
         private static final String PROJECT_RELEASE_VALIDATION_MESSAGE = "Project must be set to validate release.";
         private static final String SERVER_ID_VALIDATION_MESSAGE = "Could not validate without a valid Server ID.";
+        private static final String DEPLOYMENT_TIMEOUT_VALIDATION_MESSAGE = "This is not a valid deployment timeout it should be in the format HH:mm:ss";
 
         public DescriptorImpl() {
             load();
@@ -282,6 +297,22 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             return validator.validateProject(project);
         }
 
+        public FormValidation doCheckDeploymentTimeout(@QueryParameter String deploymentTimeout)
+        {
+            if(deploymentTimeout != null) {
+                deploymentTimeout = deploymentTimeout.trim();
+                if (!deploymentTimeout.isEmpty()) {
+                    try {
+                        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
+                        dtf.parse(deploymentTimeout);
+                    } catch (DateTimeParseException ex) {
+                        return FormValidation.warning(DEPLOYMENT_TIMEOUT_VALIDATION_MESSAGE);
+                    }
+                }
+            }
+
+            return FormValidation.ok();
+        }
         /**
          * Check that the releaseVersion field is not empty.
          * @param releaseVersion The release version of the package.
@@ -404,5 +435,28 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             }
             return names;
         }
+
+        public ComboBoxModel doFillTenantTagItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
+            ComboBoxModel names = new ComboBoxModel();
+
+            if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
+                return names;
+            }
+
+            OctopusApi api = getApiByServerId(serverId).forSpace(spaceId);
+            try {
+                Set<TagSet> tagSets = api.getTagSetsApi().getAll();
+                for (TagSet tagSet : tagSets) {
+                    for (Tag tag : tagSet.getTags()) {
+                        names.add(tag.getCanonicalName());
+                    }
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(OctopusDeployReleaseRecorder.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+            return names;
+        }
+
     }
 }

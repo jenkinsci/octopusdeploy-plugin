@@ -9,6 +9,7 @@ import hudson.model.BuildListener;
 import hudson.model.Descriptor;
 import hudson.model.Result;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
+import hudson.plugins.octopusdeploy.utils.Lazy;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
@@ -20,6 +21,7 @@ import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.tools.ant.types.Commandline;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -43,14 +45,11 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
      * Cache for OctopusDeployServer instance used in deployment
      * transient keyword prevents leaking API key to Job configuration
      */
-    protected transient OctopusDeployServer octopusDeployServer;
+    protected transient Lazy<OctopusDeployServer> lazyOctopusDeployServer;
 
     public OctopusDeployServer getOctopusDeployServer() {
-        ///TODO use better approach to achieve Laziness
-        if (octopusDeployServer == null) {
-            octopusDeployServer = getOctopusDeployServer(getServerId());
-        }
-        return octopusDeployServer;
+        return lazyOctopusDeployServer
+                .getOrCompute(()->getOctopusDeployServer(getServerId()));
     }
 
     /**
@@ -101,11 +100,32 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
     }
 
     /**
+     * The variables to use for a deploy to in Octopus.
+     */
+    protected String variables;
+    public String getVariables() {
+        return variables;
+    }
+
+    /**
      * The Tenant to use for a deploy to in Octopus.
      */
     protected String tenant;
     public String getTenant() {
         return tenant;
+    }
+
+    protected String tenantTag;
+    public String getTenantTag() {
+        return tenantTag;
+    }
+
+    /**
+     * The additional arguments to pass to octo.exe
+     */
+    protected String additionalArgs;
+    public String getAdditionalArgs() {
+        return additionalArgs;
     }
 
     /**
@@ -123,6 +143,23 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
     protected boolean verboseLogging;
     public boolean getVerboseLogging() {
         return verboseLogging;
+    }
+
+    /**
+     * Specifies maximum time (timespan format) that the console session will wait for
+     * the deployment to finish(default 00:10:00)
+     */
+    protected String deploymentTimeout;
+    public String getDeploymentTimeout() {
+        return deploymentTimeout;
+    }
+
+    /**
+     * Whether to cancel the deployment if the deployment timeout is reached
+     */
+    protected boolean cancelOnTimeout;
+    public boolean getCancelOnTimeout() {
+        return cancelOnTimeout;
     }
 
     /**
@@ -204,18 +241,19 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
         return getOctopusDeployServer().getApi();
     }
 
-    List<String> buildCommonCommandArguments(final String command) {
+    List<String> getCommonCommandArguments() {
         List<String> commands = new ArrayList<>();
 
         OctopusDeployServer server = getOctopusDeployServer(this.serverId);
         String serverUrl = server.getUrl();
         String apiKey = server.getApiKey().getPlainText();
-        boolean ignoreSslErrors = server.isIgnoreSslErrors();
+        boolean ignoreSslErrors = server.getIgnoreSslErrors();
 
         checkState(StringUtils.isNotBlank(serverUrl), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus URL"));
         checkState(StringUtils.isNotBlank(apiKey), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "API Key"));
 
-        commands.add(command);
+        commands.add(OctoConstants.Commands.Arguments.PROJECT_NAME);
+        commands.add(project);
 
         commands.add(OctoConstants.Commands.Arguments.SERVER_URL);
         commands.add(serverUrl);
@@ -225,8 +263,17 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
             commands.add(OctoConstants.Commands.Arguments.SPACE_NAME);
             commands.add(spaceId);
         }
-        commands.add(OctoConstants.Commands.Arguments.PROJECT_NAME);
-        commands.add(project);
+
+        if (waitForDeployment) {
+            if (StringUtils.isNotBlank(deploymentTimeout)) {
+                commands.add("--deploymentTimeout");
+                commands.add(deploymentTimeout);
+            }
+
+            if (cancelOnTimeout) {
+                commands.add("--cancelOnTimeout");
+            }
+        }
 
         if (ignoreSslErrors) {
             commands.add("--ignoreSslErrors");
@@ -236,6 +283,10 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
             commands.add("--debug");
         }
 
+        if(StringUtils.isNotBlank(additionalArgs)) {
+            final String[] myArgs = Commandline.translateCommandline(additionalArgs);
+            commands.addAll(Arrays.asList(myArgs));
+        }
 
         return commands;
     }

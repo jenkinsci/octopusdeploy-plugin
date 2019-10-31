@@ -18,14 +18,12 @@
     <j:invokeStatic var="supportsSpaces" method="hasSpaces" className="hudson.plugins.octopusdeploy.AbstractOctopusDeployRecorder">
     </j:invokeStatic>
     <j:if test="${supportsSpaces}">
-    <f:entry title="Space" field="spaceId">
-      <f:select />
-    </f:entry>
+      <f:entry title="Space" field="spaceId">
+        <f:select />
+      </f:entry>
     </j:if>
     <j:if test="${!supportsSpaces}">
-    <f:invisibleEntry>
-      <f:readOnlyTextbox field="spaceId" />
-    </f:invisibleEntry>
+        <input type="hidden" name="spaceId" value="" />
     </j:if>
   </f:section>
 
@@ -78,12 +76,23 @@
         <f:entry title="Environment" field="environment">
           <f:combobox />
         </f:entry>
+        <f:entry title="Variables" field="variables">
+          <f:textarea />
+        </f:entry>
         <f:entry title="Tenant" field="tenant">
           <f:combobox />
         </f:entry>
-        <f:entry title="Show deployment progress" field="waitForDeployment">
-          <f:checkbox value="false" />
+        <f:entry title="Tenant Tag" field="tenantTag">
+          <f:combobox />
         </f:entry>
+        <f:optionalBlock name="waitForDeployment" inline="true" title="Show deployment progress" checked="${instance.getWaitForDeployment()}">
+          <f:entry title="Time to wait for deployment" field="deploymentTimeout">
+            <f:textbox />
+          </f:entry>
+          <f:entry title="Cancel deployment on timeout" field="cancelOnTimeout">
+            <f:checkbox value="false" />
+          </f:entry>
+        </f:optionalBlock>
       </f:optionalBlock>
     </f:block>
   </f:section>
@@ -92,6 +101,9 @@
     <f:advanced>
       <f:entry title="Verbose logging" field="verboseLogging">
         <f:checkbox value="false" />
+      </f:entry>
+      <f:entry title="Additional command line arguments" field="additionalArgs">
+        <f:textbox />
       </f:entry>
     </f:advanced>
   </f:section>
