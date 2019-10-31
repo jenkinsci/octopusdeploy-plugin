@@ -11,16 +11,19 @@ import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.slaves.NodeSpecific;
 import hudson.tools.*;
+import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
 
@@ -121,6 +124,27 @@ public class OctoInstallation extends ToolInstallation implements NodeSpecific<O
                 }
             }
             return null;
+        }
+
+        /**
+         * Validate that the home is:
+         *  - Not empty
+         *  - A file path
+         * @param home the path of the file
+         * @return Form validation to present on the Jenkins UI
+         */
+        public FormValidation doCheckHome(@QueryParameter String home){
+            if(home != null && !home.isEmpty())
+            {
+                File file = new File(home);
+                if (!file.exists()){
+                    return FormValidation.warning("No file was found at this path");
+                } else if(!file.canExecute()){
+                    return FormValidation.warning("The file at this path is not executable");
+                }
+            }
+
+            return FormValidation.ok();
         }
 
         @Override
