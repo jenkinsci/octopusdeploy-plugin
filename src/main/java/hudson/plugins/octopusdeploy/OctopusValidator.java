@@ -4,7 +4,11 @@ import com.octopusdeploy.api.data.Project;
 import com.octopusdeploy.api.data.Release;
 import com.octopusdeploy.api.*;
 import hudson.util.FormValidation;
+
+import java.io.File;
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Set;
 
@@ -180,5 +184,43 @@ public class OctopusValidator {
      */
     public enum ReleaseExistenceRequirement {
         MustExist, MustNotExist
+    }
+
+    public static FormValidation validateDirectory(String directoryPath) {
+        if (directoryPath != null) {
+            directoryPath = directoryPath.trim();
+            if (!directoryPath.isEmpty() && !isValidDirectory(directoryPath)) {
+                return FormValidation.error("This is not a path to a directory");
+            }
+        }
+
+        return FormValidation.ok();
+    }
+
+    public static FormValidation validateDeploymentTimeout(String deploymentTimeout) {
+        if (deploymentTimeout != null) {
+            deploymentTimeout = deploymentTimeout.trim();
+            if (!deploymentTimeout.isEmpty() && !isValidTimeSpan(deploymentTimeout)) {
+                return FormValidation.error("This is not a valid deployment timeout it should be in the format HH:mm:ss");
+            }
+        }
+
+        return FormValidation.ok();
+    }
+
+    public static Boolean isValidTimeSpan(String deploymentTimeout)
+    {
+        try {
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
+            dtf.parse(deploymentTimeout);
+        } catch (DateTimeParseException ex) {
+            return false;
+        }
+        return true;
+    }
+
+    public static Boolean isValidDirectory(String path) {
+        File f = new File(path);
+        return f.exists() && f.isDirectory();
     }
 }

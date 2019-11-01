@@ -1,0 +1,46 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <f:section title="Octopus CLI">
+    <f:entry title="Octopus CLI" field="toolId">
+      <j:set var="default" value="${descriptor.getDefaultOctopusToolId()}"/>
+      <j:set var="value" value="${attrs.value ?: instance.toolId ?: default}"/>
+      <f:combobox value="${value}"/>
+    </f:entry>
+  </f:section>
+  <f:section title="Package">
+    <f:entry title="Package ID" field="packageId">
+      <f:textbox />
+    </f:entry>
+    <f:entry title="Version number" field="packageVersion">
+      <f:textbox />
+    </f:entry>
+    <f:entry title="Package format" field="packageFormat">
+        <f:radio title="zip" name="packageFormat" inline="true" value="zip" checked="${instance.isZipPackageFormat() || !instance.isNuGetPackageFormat()}">
+        </f:radio><br />
+        <f:radio title="nuget" name="packageFormat" inline="true" value="nuget" checked="${instance.isNuGetPackageFormat()}">
+        </f:radio>
+    </f:entry>
+    <f:entry title="Package base folder" field="sourcePath">
+      <f:textbox />
+    </f:entry>
+    <f:entry title="Package include paths" field="includePaths">
+      <f:textarea />
+    </f:entry>
+    <f:entry title="Package output folder" field="outputPath">
+      <f:textbox />
+    </f:entry>
+    <f:entry title="Overwrite existing package" field="overwriteExisting">
+      <f:checkbox />
+    </f:entry>
+  </f:section>
+  <f:section title="Advanced Options">
+    <f:advanced>
+      <f:entry title="Verbose logging" field="verboseLogging">
+        <f:checkbox value="false" />
+      </f:entry>
+      <f:entry title="Additional command line arguments" field="additionalArgs">
+        <f:textbox />
+      </f:entry>
+    </f:advanced>
+  </f:section>
+</j:jelly>

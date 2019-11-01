@@ -266,6 +266,7 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
 
         if (waitForDeployment) {
             if (StringUtils.isNotBlank(deploymentTimeout)) {
+                checkState(OctopusValidator.isValidTimeSpan(deploymentTimeout), String.format(OctoConstants.Errors.INPUT_IS_INVALID_MESSAGE_FORMAT, "Deployment Timeout (expects format:\"HH:mm:ss\")"));
                 commands.add("--deploymentTimeout");
                 commands.add(deploymentTimeout);
             }
@@ -330,6 +331,7 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
                         .masks(ArrayUtils.toPrimitive(cmdMasks.toArray((Boolean[])Array.newInstance(Boolean.class, 0))))
                         .stdout(listener)
                         .envs(environment)
+                        .pwd(environment.get("WORKSPACE", ""))
                         .start();
 
                 exitCode = process.join();

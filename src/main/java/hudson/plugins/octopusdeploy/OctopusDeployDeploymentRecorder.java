@@ -254,7 +254,6 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         logger.info("Wait complete!");
         return lastState;
     }
-
     /**
      * Descriptor for {@link OctopusDeployDeploymentRecorder}. Used as a singleton.
      * The class is marked as public so that it can be accessed from views.
@@ -263,7 +262,6 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
     public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImpl {
         private static final String PROJECT_RELEASE_VALIDATION_MESSAGE = "Project must be set to validate release.";
         private static final String SERVER_ID_VALIDATION_MESSAGE = "Could not validate without a valid Server ID.";
-        private static final String DEPLOYMENT_TIMEOUT_VALIDATION_MESSAGE = "This is not a valid deployment timeout it should be in the format HH:mm:ss";
 
         public DescriptorImpl() {
             load();
@@ -297,22 +295,15 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             return validator.validateProject(project);
         }
 
-        public FormValidation doCheckDeploymentTimeout(@QueryParameter String deploymentTimeout)
-        {
-            if(deploymentTimeout != null) {
-                deploymentTimeout = deploymentTimeout.trim();
-                if (!deploymentTimeout.isEmpty()) {
-                    try {
-                        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
-                        dtf.parse(deploymentTimeout);
-                    } catch (DateTimeParseException ex) {
-                        return FormValidation.warning(DEPLOYMENT_TIMEOUT_VALIDATION_MESSAGE);
-                    }
-                }
-            }
-
-            return FormValidation.ok();
+        /**
+         * Check that the deployment timeout is valid.
+         * @param deploymentTimeout The deployment timeout (TimeSpan).
+         * @return Ok if not empty, error otherwise.
+         */
+        public FormValidation doCheckDeploymentTimeout(@QueryParameter String deploymentTimeout) {
+            return OctopusValidator.validateDeploymentTimeout(deploymentTimeout);
         }
+
         /**
          * Check that the releaseVersion field is not empty.
          * @param releaseVersion The release version of the package.
