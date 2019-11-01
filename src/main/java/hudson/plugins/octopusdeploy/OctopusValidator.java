@@ -4,6 +4,8 @@ import com.octopusdeploy.api.data.Project;
 import com.octopusdeploy.api.data.Release;
 import com.octopusdeploy.api.*;
 import hudson.util.FormValidation;
+
+import java.io.File;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -184,6 +186,17 @@ public class OctopusValidator {
         MustExist, MustNotExist
     }
 
+    public static FormValidation validateDirectory(String directoryPath) {
+        if (directoryPath != null) {
+            directoryPath = directoryPath.trim();
+            if (!directoryPath.isEmpty() && !isValidDirectory(directoryPath)) {
+                return FormValidation.error("This is not a path to a directory");
+            }
+        }
+
+        return FormValidation.ok();
+    }
+
     public static FormValidation validateDeploymentTimeout(String deploymentTimeout) {
         if (deploymentTimeout != null) {
             deploymentTimeout = deploymentTimeout.trim();
@@ -204,5 +217,10 @@ public class OctopusValidator {
             return false;
         }
         return true;
+    }
+
+    public static Boolean isValidDirectory(String path) {
+        File f = new File(path);
+        return f.exists() && f.isDirectory();
     }
 }

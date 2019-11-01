@@ -295,9 +295,15 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             return validator.validateProject(project);
         }
 
+        /**
+         * Check that the deployment timeout is valid.
+         * @param deploymentTimeout The deployment timeout (TimeSpan).
+         * @return Ok if not empty, error otherwise.
+         */
         public FormValidation doCheckDeploymentTimeout(@QueryParameter String deploymentTimeout) {
             return OctopusValidator.validateDeploymentTimeout(deploymentTimeout);
         }
+
         /**
          * Check that the releaseVersion field is not empty.
          * @param releaseVersion The release version of the package.
