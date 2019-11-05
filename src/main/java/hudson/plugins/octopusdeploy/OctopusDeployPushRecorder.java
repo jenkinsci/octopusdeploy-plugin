@@ -190,7 +190,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorder imp
 
         @Override
         public String getDisplayName() {
-            return "Octopus Deploy: Push packages configuration";
+            return "Octopus Deploy: Push packages";
         }
     }
 }
