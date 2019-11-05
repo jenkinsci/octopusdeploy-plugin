@@ -168,6 +168,10 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorder imp
             commands.add(overwriteMode.name());
         }
 
+        if (ignoreSslErrors) {
+            commands.add("--ignoreSslErrors");
+        }
+
         if (verboseLogging) {
             commands.add("--debug");
         }
