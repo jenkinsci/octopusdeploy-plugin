@@ -1,9 +1,14 @@
 package hudson.plugins.octopusdeploy;
 
+import com.octopusdeploy.api.data.Project;
 import com.octopusdeploy.api.data.Release;
 import com.octopusdeploy.api.*;
 import hudson.util.FormValidation;
+
+import java.io.File;
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Set;
 
@@ -104,7 +109,7 @@ public class OctopusValidator {
             com.octopusdeploy.api.data.Environment env = api.getEnvironmentsApi().getEnvironmentByName(environmentName, true);
             if (env == null)
             {
-                return FormValidation.error("Environment not found.");
+                return FormValidation.error("The '%s' environment was not found.", environmentName);
             }
             if (!environmentName.equals(env.getName()))
             {
@@ -129,12 +134,13 @@ public class OctopusValidator {
      * @param existanceCheckReq the requirement for the existence of the release.
      * @return FormValidation response
      */
-    public FormValidation validateRelease(String releaseVersion, String projectId, ReleaseExistenceRequirement existanceCheckReq) {
+    public FormValidation validateRelease(String releaseVersion, Project project, ReleaseExistenceRequirement existanceCheckReq) {
         if (releaseVersion.isEmpty()) {
             return FormValidation.error("Please provide a release version.");
         }
         try {
-            Set<Release> releases = api.getReleasesApi().getReleasesForProject(projectId);
+            Set<Release> releases = api.getReleasesApi().getReleasesForProject(project.getId());
+
             boolean found = false;
             for (Release release : releases) {
                 if (releaseVersion.equals(release.getVersion()) ) {
@@ -143,10 +149,10 @@ public class OctopusValidator {
                 }
             }
             if (found && existanceCheckReq == ReleaseExistenceRequirement.MustNotExist) {
-                return FormValidation.error("Release %s already exists for project %s!", releaseVersion, projectId);
+                return FormValidation.error("Release %s already exists for project '%s'!", releaseVersion, project.getName());
             }
             if (!found && existanceCheckReq == ReleaseExistenceRequirement.MustExist) {
-                return FormValidation.error("Release %s doesn't exist for project %s!", releaseVersion, projectId);
+                return FormValidation.error("Release %s doesn't exist for project '%s'!", releaseVersion, project.getName());
             }
         } catch (IllegalArgumentException ex) {
             return FormValidation.error(ex.getMessage());
@@ -158,7 +164,7 @@ public class OctopusValidator {
 
     public static FormValidation validateServerId(String serverId) {
         if (serverId==null || serverId.isEmpty()) {
-            return FormValidation.error("Please set a Server Id");
+            return FormValidation.error("Please select an instance of Octopus Deploy.");
         }
         if(serverId.equals("default")) {
             return FormValidation.ok();
@@ -168,7 +174,7 @@ public class OctopusValidator {
             return FormValidation.error("There are no OctopusDeploy servers configured.");
         }
         if (!ids.contains(serverId)) {
-            return FormValidation.error("There are no OctopusDeploy servers configured with this Server ID.");
+            return FormValidation.error("There are no OctopusDeploy servers configured with this Server Id.");
         }
         return FormValidation.ok();
     }
@@ -178,5 +184,43 @@ public class OctopusValidator {
      */
     public enum ReleaseExistenceRequirement {
         MustExist, MustNotExist
+    }
+
+    public static FormValidation validateDirectory(String directoryPath) {
+        if (directoryPath != null) {
+            directoryPath = directoryPath.trim();
+            if (!directoryPath.isEmpty() && !isValidDirectory(directoryPath)) {
+                return FormValidation.error("This is not a path to a directory");
+            }
+        }
+
+        return FormValidation.ok();
+    }
+
+    public static FormValidation validateDeploymentTimeout(String deploymentTimeout) {
+        if (deploymentTimeout != null) {
+            deploymentTimeout = deploymentTimeout.trim();
+            if (!deploymentTimeout.isEmpty() && !isValidTimeSpan(deploymentTimeout)) {
+                return FormValidation.error("This is not a valid deployment timeout it should be in the format HH:mm:ss");
+            }
+        }
+
+        return FormValidation.ok();
+    }
+
+    public static Boolean isValidTimeSpan(String deploymentTimeout)
+    {
+        try {
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
+            dtf.parse(deploymentTimeout);
+        } catch (DateTimeParseException ex) {
+            return false;
+        }
+        return true;
+    }
+
+    public static Boolean isValidDirectory(String path) {
+        File f = new File(path);
+        return f.exists() && f.isDirectory();
     }
 }

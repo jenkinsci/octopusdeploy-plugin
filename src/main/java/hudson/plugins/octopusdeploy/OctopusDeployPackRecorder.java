@@ -9,10 +9,12 @@ import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Result;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
+import hudson.util.FormValidation;
 import hudson.util.VariableResolver;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -175,7 +177,25 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorder imp
 
         @Override
         public String getDisplayName() {
-            return "Octopus Deploy: Package application configuration";
+            return "Octopus Deploy: Package application";
+        }
+
+        /**
+         * Check that the source path is valid and a directory.
+         * @param sourcePath The deployment timeout (TimeSpan).
+         * @return Ok if not empty, error otherwise.
+         */
+        public FormValidation doCheckSourcePath(@QueryParameter String sourcePath) {
+            return OctopusValidator.validateDirectory(sourcePath);
+        }
+
+        /**
+         * Check that the output path is valid and a directory.
+         * @param outputPath The deployment timeout (TimeSpan).
+         * @return Ok if not empty, error otherwise.
+         */
+        public FormValidation doCheckOutputPath(@QueryParameter String outputPath) {
+            return OctopusValidator.validateDirectory(outputPath);
         }
     }
 }

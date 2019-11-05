@@ -6,6 +6,12 @@ import com.octopusdeploy.api.data.TagSet;
 import com.octopusdeploy.api.data.Task;
 import com.octopusdeploy.api.*;
 import java.io.*;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import hudson.*;
 import hudson.model.*;
@@ -248,7 +254,6 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         logger.info("Wait complete!");
         return lastState;
     }
-
     /**
      * Descriptor for {@link OctopusDeployDeploymentRecorder}. Used as a singleton.
      * The class is marked as public so that it can be accessed from views.
@@ -269,7 +274,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
 
         @Override
         public String getDisplayName() {
-            return "Octopus Deploy: Deploy Release configuration";
+            return "Octopus Deploy: Deploy Release";
         }
 
         /**
@@ -288,6 +293,15 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             OctopusApi api = getApiByServerId(serverId).forSpace(spaceId);
             OctopusValidator validator = new OctopusValidator(api);
             return validator.validateProject(project);
+        }
+
+        /**
+         * Check that the deployment timeout is valid.
+         * @param deploymentTimeout The deployment timeout (TimeSpan).
+         * @return Ok if not empty, error otherwise.
+         */
+        public FormValidation doCheckDeploymentTimeout(@QueryParameter String deploymentTimeout) {
+            return OctopusValidator.validateDeploymentTimeout(deploymentTimeout);
         }
 
         /**
@@ -319,7 +333,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             }
 
             OctopusValidator validator = new OctopusValidator(api);
-            return validator.validateRelease(releaseVersion, p.getId(), OctopusValidator.ReleaseExistenceRequirement.MustExist);
+            return validator.validateRelease(releaseVersion, p, OctopusValidator.ReleaseExistenceRequirement.MustExist);
         }
 
 

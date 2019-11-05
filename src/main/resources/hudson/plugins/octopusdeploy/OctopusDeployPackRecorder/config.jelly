@@ -15,9 +15,9 @@
       <f:textbox />
     </f:entry>
     <f:entry title="Package format" field="packageFormat">
-        <f:radio title="zip" name="packageFormat" inline="true" value="zip" checked="${instance.isZipPackageFormat()}">
+        <f:radio title="zip" name="packageFormat" inline="true" value="zip" checked="${instance.isZipPackageFormat() || !instance.isNuGetPackageFormat()}">
         </f:radio><br />
-        <f:radio title="nuget" name="packageFormat" inline="true" value="nuget" checked="${instance.isNugetPackageFormat()}">
+        <f:radio title="nuget" name="packageFormat" inline="true" value="nuget" checked="${instance.isNuGetPackageFormat()}">
         </f:radio>
     </f:entry>
     <f:entry title="Package base folder" field="sourcePath">

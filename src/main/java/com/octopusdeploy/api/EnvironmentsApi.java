@@ -26,7 +26,7 @@ public class EnvironmentsApi {
      */
     public Set<Environment> getAllEnvironments() throws IllegalArgumentException, IOException {
         TreeSet<Environment> environments = new TreeSet<>(Comparator.comparing(Environment::getName).thenComparing(Environment::getId));
-        AuthenticatedWebClient.WebResponse response =webClient.get("environments/all");
+        AuthenticatedWebClient.WebResponse response = webClient.get("environments/all");
         if (response.isErrorCode()) {
             throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
         }
