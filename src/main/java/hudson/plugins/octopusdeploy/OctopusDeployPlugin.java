@@ -106,12 +106,19 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
         public FormValidation doCheckServerId(@QueryParameter String serverId,@QueryParameter String url,@QueryParameter String apiKey) {
             serverId = serverId.trim();
             if (serverId.isEmpty()) {
-                return FormValidation.warning("Please set a ServerID");
+                return FormValidation.warning("Please set a Server Id");
             }
             for (OctopusDeployServer s:getOctopusDeployServers()){
-                if (serverId.equals(s.getId()) && !url.equals(s.getUrl()) && !apiKey.equals(s.getApiKey().getEncryptedValue())){
-                    return FormValidation.error("The Server ID you entered already exists.");
+                boolean serverIdMatches = serverId.equals(s.getId());
+                boolean urlsDiffer = !url.equals(s.getUrl());
+                boolean apiKeysDiffer = !apiKey.equals(s.getApiKey().getEncryptedValue());
+                // this validation function fires when serverId OR url OR apiKey change, which is documented (poorly) - https://wiki.jenkins.io/display/JENKINS/Form+Validation
+                // if 1 field is only changing we can consider it an update
+                // but if the 2 fields have changed, we struggle to tell it apart from a complete change versus a new addition
+                if (serverIdMatches && urlsDiffer && apiKeysDiffer){
+                    return FormValidation.warning("The Server Id you entered may already exist. If you are updating both the API key and URL of an existing server entry you can disregard this warning.");
                 }
+                // to solve this better we would need an identifier that the user cannot edit to be linked to these fields
             }
             return FormValidation.ok();
         }
