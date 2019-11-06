@@ -219,6 +219,7 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
 
     /**
      * Get the instance of OctopusDeployServer by serverId
+     * @param serverId The id of OctopusDeployServer in the configuration.
      * @return the server by id
      * */
     public static OctopusDeployServer getOctopusDeployServer(String serverId) {

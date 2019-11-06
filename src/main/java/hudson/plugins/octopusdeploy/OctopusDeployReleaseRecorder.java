@@ -519,6 +519,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
          * Check that the project field is not empty and represents an actual project.
          * @param project The name of the project.
          * @param serverId The id of OctopusDeployServer in the configuration.
+         * @param spaceId The id of the space the project is in
          * @return FormValidation message if not ok.
          */
         public FormValidation doCheckProject(@QueryParameter String project, @QueryParameter String serverId, @QueryParameter String spaceId) {
@@ -539,6 +540,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
          * @param channel release channel.
          * @param project  The name of the project.
          * @param serverId The id of OctopusDeployServer in the configuration.
+         * @param spaceId The id of the space the project is in
          * @return Ok if not empty, error otherwise.
          */
         public FormValidation doCheckChannel(@QueryParameter String channel, @QueryParameter String project, @QueryParameter String serverId, @QueryParameter String spaceId) {
@@ -560,6 +562,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
          * @param releaseVersion release version.
          * @param project  The name of the project.
          * @param serverId The id of OctopusDeployServer in the configuration.
+         * @param spaceId The id of the space the project is in
          * @return Ok if not empty, error otherwise.
          */
         public FormValidation doCheckReleaseVersion(@QueryParameter String releaseVersion, @QueryParameter String project, @QueryParameter String serverId, @QueryParameter String spaceId) {
@@ -604,6 +607,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
          * Check that the environment field is not empty, and represents a real environment.
          * @param environment The name of the environment.
          * @param serverId The id of OctopusDeployServer in the configuration.
+         * @param spaceId The id of the space the project is in
          * @return FormValidation message if not ok.
          */
         public FormValidation doCheckEnvironment(@QueryParameter String environment, @QueryParameter String serverId, @QueryParameter String spaceId) {
@@ -621,6 +625,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         /**
          * Data binding that returns all possible environment names to be used in the environment autocomplete.
          * @param serverId The id of OctopusDeployServer in the configuration.
+         * @param spaceId The id of the space the project is in
          * @return ComboBoxModel
          */
         public ComboBoxModel doFillEnvironmentItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
@@ -645,6 +650,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         /**
          * Data binding that returns all possible tenant names to be used in the tenant autocomplete.
          * @param serverId The id of OctopusDeployServer in the configuration.
+         * @param spaceId The id of the space the project is in
          * @return ComboBoxModel
          */
         public ComboBoxModel doFillTenantItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
@@ -691,6 +697,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         /**
          * Data binding that returns all possible project names to be used in the project autocomplete.
          * @param serverId The id of OctopusDeployServer in the configuration.
+         * @param spaceId The id of the space the project is in
          * @return ComboBoxModel
          */
         public ComboBoxModel doFillProjectItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
@@ -716,6 +723,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
          * Data binding that returns all possible channels names to be used in the channel autocomplete.
          * @param project the project name
          * @param serverId The id of OctopusDeployServer in the configuration.
+         * @param spaceId The id of the space the project is in
          * @return ComboBoxModel
          */
         public ComboBoxModel doFillChannelItems(@QueryParameter String project, @QueryParameter String serverId, @QueryParameter String spaceId) {

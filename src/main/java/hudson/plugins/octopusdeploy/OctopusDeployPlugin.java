@@ -100,7 +100,9 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
          * Validate that serverId is:
          *  - Not empty
          *  - Unique
-         * @param serverId the uniqueId for an octopus deploy instance
+         * @param serverId the uniqueId for an Octopus Deploy instance
+         * @param url the url of the Octopus Deploy server
+         * @param apiKey the api key of the Octopus Deploy server
          * @return Form validation to present on the Jenkins UI
          */
         public FormValidation doCheckServerId(@QueryParameter String serverId,@QueryParameter String url,@QueryParameter String apiKey) {

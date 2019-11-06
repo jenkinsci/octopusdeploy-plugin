@@ -281,6 +281,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
          * Check that the project field is not empty and is a valid project.
          * @param project The name of the project.
          * @param serverId The id of OctopusDeployServer in the configuration.
+         * @param spaceId The id of the space the project is in
          * @return Ok if not empty, error otherwise.
          */
         public FormValidation doCheckProject(@QueryParameter String project, @QueryParameter String serverId, @QueryParameter String spaceId) {
@@ -309,6 +310,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
          * @param releaseVersion The release version of the package.
          * @param project The project name
          * @param serverId The id of OctopusDeployServer in the configuration.
+         * @param spaceId The id of the space the project is in
          * @return Ok if not empty, error otherwise.
          */
         public FormValidation doCheckReleaseVersion(@QueryParameter String releaseVersion, @QueryParameter String project, @QueryParameter String serverId, @QueryParameter String spaceId) {
@@ -341,6 +343,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
          * Check that the environment field is not empty.
          * @param environment The name of the project.
          * @param serverId The id of OctopusDeployServer in the configuration.
+         * @param spaceId The id of the space the project is in
          * @return Ok if not empty, error otherwise.
          */
         public FormValidation doCheckEnvironment(@QueryParameter String environment, @QueryParameter String serverId, @QueryParameter String spaceId) {
@@ -358,6 +361,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         /**
          * Data binding that returns all possible environment names to be used in the environment autocomplete.
          * @param serverId The id of OctopusDeployServer in the configuration.
+         * @param spaceId The id of the space the project is in
          * @return ComboBoxModel
          */
         public ComboBoxModel doFillEnvironmentItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
@@ -382,6 +386,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         /**
          * Data binding that returns all possible project names to be used in the project autocomplete.
          * @param serverId The id of OctopusDeployServer in the configuration.
+         * @param spaceId The id of the space the project is in
          * @return ComboBoxModel
          */
         public ComboBoxModel doFillProjectItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
@@ -406,6 +411,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         /**
          * Data binding that returns all possible tenant names to be used in the tenant autocomplete.
          * @param serverId The id of OctopusDeployServer in the configuration.
+         * @param spaceId The id of the space the project is in
          * @return ComboBoxModel
          */
         public ComboBoxModel doFillTenantItems(@QueryParameter String serverId, @QueryParameter String spaceId) {

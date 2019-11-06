@@ -130,11 +130,11 @@ public class OctopusValidator {
      *  The release is not empty.
      *  The release conforms to the existence check requirement.
      * @param releaseVersion the release version.
-     * @param projectId the project's Id that this release is for.
-     * @param existanceCheckReq the requirement for the existence of the release.
+     * @param project the project that this release is for.
+     * @param existenceCheckReq the requirement for the existence of the release.
      * @return FormValidation response
      */
-    public FormValidation validateRelease(String releaseVersion, Project project, ReleaseExistenceRequirement existanceCheckReq) {
+    public FormValidation validateRelease(String releaseVersion, Project project, ReleaseExistenceRequirement existenceCheckReq) {
         if (releaseVersion.isEmpty()) {
             return FormValidation.error("Please provide a release version.");
         }
@@ -148,10 +148,10 @@ public class OctopusValidator {
                     break;
                 }
             }
-            if (found && existanceCheckReq == ReleaseExistenceRequirement.MustNotExist) {
+            if (found && existenceCheckReq == ReleaseExistenceRequirement.MustNotExist) {
                 return FormValidation.error("Release %s already exists for project '%s'!", releaseVersion, project.getName());
             }
-            if (!found && existanceCheckReq == ReleaseExistenceRequirement.MustExist) {
+            if (!found && existenceCheckReq == ReleaseExistenceRequirement.MustExist) {
                 return FormValidation.error("Release %s doesn't exist for project '%s'!", releaseVersion, project.getName());
             }
         } catch (IllegalArgumentException ex) {
