@@ -76,7 +76,7 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
 
     public static Boolean hasSpaces() {
         try {
-            return getDefaultOctopusDeployServer().getApi().getSpacesApi().getSupportsSpaces();
+            return getDefaultOctopusDeployServer().getApi().forSystem().getSupportsSpaces();
         } catch (Exception ex) {
             Logger.getLogger(AbstractOctopusDeployRecorder.class.getName()).log(Level.SEVERE, null, ex);
             return false;
