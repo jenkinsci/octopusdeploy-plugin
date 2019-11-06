@@ -22,6 +22,7 @@ import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.types.Commandline;
+import org.apache.xpath.operations.Bool;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -232,6 +233,9 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
         return null;
     }
 
+    public Boolean hasAdvancedOptions() {
+        return getVerboseLogging() || (getAdditionalArgs() != null && !getAdditionalArgs().isEmpty());
+    }
 
     /**
      * Get OctopusApi instance for this deployment
