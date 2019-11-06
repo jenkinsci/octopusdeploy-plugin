@@ -372,7 +372,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
         }
 
         DeploymentProcessTemplate defaultPackages = null;
-        //If not default version specified, ignore all default packages
+        //If not default version specified, ignore` all default packages
         try {
             defaultPackages = getApi().getDeploymentsApi().getDeploymentProcessTemplateForProject(projectId);
         } catch (Exception ex) {
