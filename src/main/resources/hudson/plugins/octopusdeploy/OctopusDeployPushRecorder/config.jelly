@@ -40,13 +40,27 @@
     </f:entry>
   </f:section>
   <f:section title="Advanced Options">
-    <f:advanced>
-      <f:entry title="Verbose logging" field="verboseLogging">
-        <f:checkbox value="false" />
-      </f:entry>
-      <f:entry title="Additional command line arguments" field="additionalArgs">
-        <f:textbox />
-      </f:entry>
-    </f:advanced>
+    <j:choose>
+      <j:when test="${instance.hasAdvancedOptions()}">
+        <f:entry title="Verbose logging" field="verboseLogging">
+          <f:checkbox value="false" />
+        </f:entry>
+        <f:entry title="Additional command line arguments" field="additionalArgs">
+          <f:textbox />
+        </f:entry>
+      </j:when>
+      <!--NOTE: the double up of the controls in the advanced section, one for when they have a value,
+        to show expanded, the other case when no value set yet -->
+      <j:otherwise>
+        <f:advanced>
+          <f:entry title="Verbose logging" field="verboseLogging">
+            <f:checkbox value="false" />
+          </f:entry>
+          <f:entry title="Additional command line arguments" field="additionalArgs">
+            <f:textbox />
+          </f:entry>
+        </f:advanced>
+      </j:otherwise>
+    </j:choose>
   </f:section>
 </j:jelly>
