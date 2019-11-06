@@ -246,7 +246,7 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
 
         @Override
         public String getDisplayName() {
-            return "Octopus Deploy: Push build information configuration";
+            return "Octopus Deploy: Push build information";
         }
 
         public ListBoxModel doFillCommentParserItems() {
