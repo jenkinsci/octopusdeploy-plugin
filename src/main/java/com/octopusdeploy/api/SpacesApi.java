@@ -17,16 +17,6 @@ public class SpacesApi {
         this.webClient = webClient;
     }
 
-    public boolean getSupportsSpaces() throws IllegalArgumentException, IOException {
-        AuthenticatedWebClient.WebResponse response = webClient.getRoot();
-        if(response.isErrorCode()) {
-            throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
-        }
-
-        JSONObject json = (JSONObject) JSONSerializer.toJSON(response.getContent());
-        return ((JSONObject)json.get("Links")).has("Spaces");
-    }
-
     public Set<Space> getAllSpaces() throws IllegalArgumentException, IOException {
         TreeSet<Space> spaces = new TreeSet<>(Comparator.comparing(Space::getName).thenComparing(Space::getId));
         AuthenticatedWebClient.WebResponse response = webClient.get("spaces/all");

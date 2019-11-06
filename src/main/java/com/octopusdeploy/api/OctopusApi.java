@@ -1,5 +1,10 @@
 package com.octopusdeploy.api;
 
+import net.sf.json.JSONObject;
+import net.sf.json.JSONSerializer;
+
+import java.io.IOException;
+
 public class OctopusApi {
     private final AuthenticatedWebClient webClient;
     private String spaceId;
@@ -72,5 +77,15 @@ public class OctopusApi {
         releasesApi = new ReleasesApi(webClient);
         variablesApi = new VariablesApi(webClient);
         tasksApi = new TasksApi(webClient);
+    }
+
+    public boolean getSupportsSpaces() throws IllegalArgumentException, IOException {
+        AuthenticatedWebClient.WebResponse response = webClient.getRoot();
+        if(response.isErrorCode()) {
+            throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
+        }
+
+        JSONObject json = (JSONObject) JSONSerializer.toJSON(response.getContent());
+        return ((JSONObject)json.get("Links")).has("Spaces");
     }
 }
