@@ -364,8 +364,8 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
          * @param spaceId The id of the space where to load this resource from
          * @return ComboBoxModel
          */
-        public ComboBoxModel doFillEnvironmentItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
-            ComboBoxModel names = new ComboBoxModel();
+        public ListBoxModel doFillEnvironmentItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
+            ListBoxModel names = new ListBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return names;
@@ -387,10 +387,10 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
          * Data binding that returns all possible project names to be used in the project autocomplete.
          * @param serverId The id of OctopusDeployServer in the configuration.
          * @param spaceId The id of the space where to load this resource from
-         * @return ComboBoxModel
+         * @return ListBoxModel
          */
-        public ComboBoxModel doFillProjectItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
-            ComboBoxModel names = new ComboBoxModel();
+        public ListBoxModel doFillProjectItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
+            ListBoxModel names = new ListBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return names;
@@ -433,6 +433,12 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             return names;
         }
 
+        /**
+         * Data binding that returns all possible tenant tags to be used in the tenant tag autocomplete.
+         * @param serverId The id of OctopusDeployServer in the configuration.
+         * @param spaceId The id of the space where to load this resource from
+         * @return ComboBoxModel
+         */
         public ComboBoxModel doFillTenantTagItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
             ComboBoxModel names = new ComboBoxModel();
 

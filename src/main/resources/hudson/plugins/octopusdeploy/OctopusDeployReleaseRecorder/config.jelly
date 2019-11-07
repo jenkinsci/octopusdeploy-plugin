@@ -29,7 +29,7 @@
 
   <f:section title="Release">
     <f:entry title="Project Name" field="project">
-      <f:combobox />
+      <f:select />
     </f:entry>
 
     <f:entry title="Release Version" field="releaseVersion">
@@ -37,7 +37,7 @@
     </f:entry>
 
     <f:entry title="Channel" field="channel">
-      <f:combobox />
+      <f:select />
     </f:entry>
 
     <f:section title="Packages">
@@ -74,7 +74,7 @@
     <f:block>
       <f:optionalBlock name="deployThisRelease" inline="true" title="Deploy this release after it is created?" checked="${instance.getDeployThisRelease()}">
         <f:entry title="Environment" field="environment">
-          <f:combobox />
+          <f:select />
         </f:entry>
         <f:entry title="Variables" field="variables">
           <f:textarea />

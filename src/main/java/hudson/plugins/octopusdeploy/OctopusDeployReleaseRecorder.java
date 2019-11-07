@@ -626,10 +626,10 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
          * Data binding that returns all possible environment names to be used in the environment autocomplete.
          * @param serverId The id of OctopusDeployServer in the configuration.
          * @param spaceId The id of the space where to load this resource from
-         * @return ComboBoxModel
+         * @return ListBoxModel
          */
-        public ComboBoxModel doFillEnvironmentItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
-            ComboBoxModel names = new ComboBoxModel();
+        public ListBoxModel doFillEnvironmentItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
+            ListBoxModel names = new ListBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return names;
@@ -647,14 +647,15 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
             return names;
         }
 
+
         /**
          * Data binding that returns all possible tenant names to be used in the tenant autocomplete.
          * @param serverId The id of OctopusDeployServer in the configuration.
          * @param spaceId The id of the space where to load this resource from
-         * @return ComboBoxModel
+         * @return ListBoxModel
          */
-        public ComboBoxModel doFillTenantItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
-            ComboBoxModel names = new ComboBoxModel();
+        public ListBoxModel doFillTenantItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
+            ListBoxModel names = new ListBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return names;
@@ -672,6 +673,12 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
             return names;
         }
 
+        /**
+         * Data binding that returns all possible tenant names to be used in the tenant autocomplete.
+         * @param serverId The id of OctopusDeployServer in the configuration.
+         * @param spaceId The id of the space where to load this resource from
+         * @return ComboBoxModel
+         */
         public ComboBoxModel doFillTenantTagItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
             ComboBoxModel names = new ComboBoxModel();
 
@@ -698,10 +705,10 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
          * Data binding that returns all possible project names to be used in the project autocomplete.
          * @param serverId The id of OctopusDeployServer in the configuration.
          * @param spaceId The id of the space where to load this resource from
-         * @return ComboBoxModel
+         * @return ListBoxModel
          */
-        public ComboBoxModel doFillProjectItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
-            ComboBoxModel names = new ComboBoxModel();
+        public ListBoxModel doFillProjectItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
+            ListBoxModel names = new ListBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return names;
@@ -726,8 +733,8 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
          * @param spaceId The id of the space where to load this resource from
          * @return ComboBoxModel
          */
-        public ComboBoxModel doFillChannelItems(@QueryParameter String project, @QueryParameter String serverId, @QueryParameter String spaceId) {
-            ComboBoxModel names = new ComboBoxModel();
+        public ListBoxModel doFillChannelItems(@QueryParameter String project, @QueryParameter String serverId, @QueryParameter String spaceId) {
+            ListBoxModel names = new ListBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return names;

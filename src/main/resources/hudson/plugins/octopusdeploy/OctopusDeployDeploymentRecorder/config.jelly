@@ -28,13 +28,13 @@
 
   <f:section title="Deployment">
     <f:entry title="Project Name" field="project">
-      <f:combobox />
+      <f:select />
     </f:entry>
     <f:entry title="Release Version" field="releaseVersion">
       <f:textbox />
     </f:entry>
     <f:entry title="Environment" field="environment">
-      <f:combobox />
+      <f:select />
     </f:entry>
     <f:entry title="Variables" field="variables">
       <f:textarea />
