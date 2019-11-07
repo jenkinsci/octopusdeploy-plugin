@@ -29,7 +29,7 @@ THE SOFTWARE.
     <version>2.7</version>
   </parent>
 
-  <name>OctopusDeploy Plugin</name>
+  <name>Octopus Deploy</name>
   <groupId>hudson.plugins.octopusdeploy</groupId>
   <artifactId>octopusdeploy</artifactId>
   <version>1.10.0-SNAPSHOT</version>
