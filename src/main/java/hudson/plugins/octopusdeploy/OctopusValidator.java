@@ -152,7 +152,7 @@ public class OctopusValidator {
                 return FormValidation.error("Release %s already exists for project '%s'!", releaseVersion, project.getName());
             }
             if (!found && existenceCheckReq == ReleaseExistenceRequirement.MustExist) {
-                return FormValidation.error("Release %s doesn't exist for project '%s'!", releaseVersion, project.getName());
+                return FormValidation.warning("Release %s doesn't exist for project '%s'. If this field is computed you can disregard this warning.", releaseVersion, project.getName());
             }
         } catch (IllegalArgumentException ex) {
             return FormValidation.error(ex.getMessage());
