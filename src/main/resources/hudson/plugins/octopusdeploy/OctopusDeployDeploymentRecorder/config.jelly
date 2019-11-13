@@ -1,5 +1,8 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <style type="text/css">
+    .repeated-chunk .section-header { font-size: 1em !important; }
+  </style>
   <f:section title="Octopus Deploy CLI">
     <f:entry title="Octopus Deploy CLI" field="toolId">
       <j:set var="default" value="${descriptor.getDefaultOctopusToolId()}"/>
