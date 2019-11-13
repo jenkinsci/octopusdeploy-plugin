@@ -3,5 +3,5 @@
   This view is used to render the installed plugins page.
 -->
 <div>
-  This plugin allows integration with one or more OctopusDeploy instances.
+  This plugin allows integration with one or more Octopus Deploy instances.
 </div>

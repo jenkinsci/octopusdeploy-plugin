@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Validations on input for OctopusDeploy.
+ * Validations on input for Octopus Deploy.
  */
 public class OctopusValidator {
     private final OctopusApi api;
@@ -171,10 +171,10 @@ public class OctopusValidator {
         }
         List<String> ids = AbstractOctopusDeployRecorder.getOctopusDeployServersIds();
         if (ids.isEmpty()){
-            return FormValidation.error("There are no OctopusDeploy servers configured.");
+            return FormValidation.error("There are no Octopus Deploy servers configured.");
         }
         if (!ids.contains(serverId)) {
-            return FormValidation.error("There are no OctopusDeploy servers configured with this Server Id.");
+            return FormValidation.error("There are no Octopus Deploy servers configured with this Server Id.");
         }
         return FormValidation.ok();
     }
