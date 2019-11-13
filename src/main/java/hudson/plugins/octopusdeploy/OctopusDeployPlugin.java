@@ -177,7 +177,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
             final String apiKeyRegex = "API\\-\\w{25,27}";
             apiKey = apiKey.trim();
             if (apiKey.isEmpty()) {
-                return FormValidation.warning("Please set a API Key generated from OctopusDeploy Server.");
+                return FormValidation.warning("Please set a API Key generated from Octopus Deploy Server.");
             }
 
             try {

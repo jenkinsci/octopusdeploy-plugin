@@ -1,4 +1,4 @@
 <?jelly escape-by-default='true'?>
 <a href="${it.urlName}" target="_blank">
-    <img width="16" height="16" title="${it.displayName}" alt="OctopusDeploy" src="${rootURL}${it.labelledIconFileName}"/>
+    <img width="16" height="16" title="${it.displayName}" alt="Octopus Deploy" src="${rootURL}${it.labelledIconFileName}"/>
 </a>

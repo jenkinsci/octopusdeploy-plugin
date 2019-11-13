@@ -1,7 +1,7 @@
 package com.octopusdeploy.api.data;
 
 /**
- * Represents a project from the OctopusDeploy API.
+ * Represents a project from the Octopus Deploy API.
  */
 public class Project {
     private final String name;

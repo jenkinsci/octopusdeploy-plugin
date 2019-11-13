@@ -1,9 +1,9 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-  <f:section title="OctopusDeploy Plugin" name="octopusConfig">
-      <f:entry title="OctopusDeploy Servers" description="List of OctopusDeploy servers that projects can use for deployment.">
+  <f:section title="Octopus Deploy Plugin" name="octopusConfig">
+      <f:entry title="Octopus Deploy Servers" description="List of Octopus Deploy servers that projects can use for deployment.">
               <f:repeatable name="servers" var="server" items="${descriptor.octopusDeployServers}" minimum="1"
-                                     header="OctopusDeploy" add="${%Add OctopusDeploy Server}">
+                                     header="Octopus Deploy" add="${%Add OctopusDeploy Server}">
               <table width="100%">
             <f:entry title="Server Id" field="serverId">
                 <f:textbox value="${server.id}"/>
