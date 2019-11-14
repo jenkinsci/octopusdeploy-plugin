@@ -107,4 +107,22 @@ public class ReleasesApi {
         }
         return releases;
     }
+
+    /**
+     * Get the partial Octopus portal URL for a given release version of a project;
+     * @param projectId the id of the project to get the releases for
+     * @param releaseVersion the version of the release to get
+     * @return A version of releases for a given project
+     * @throws IllegalArgumentException when the web client receives a bad parameter
+     * @throws IOException When the AuthenticatedWebClient receives and error response code
+     */
+    public String getPortalUrlForRelease(String projectId, String releaseVersion) throws IllegalArgumentException, IOException {
+        AuthenticatedWebClient.WebResponse response = webClient.get("projects/" + projectId + "/releases/" + releaseVersion);
+        if (response.isErrorCode()) {
+            throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
+        }
+        JSONObject json = (JSONObject)JSONSerializer.toJSON(response.getContent());
+        JSONObject links = json.getJSONObject("Links");
+        return links.getString("Web");
+    }
 }

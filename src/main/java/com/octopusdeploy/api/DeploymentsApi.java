@@ -72,6 +72,45 @@ public class DeploymentsApi {
         }
         return response.getContent();
     }
+
+    /**
+     * Get the url for a deployment given the following params;
+     * @param projectId the id of the project to get the releases for
+     * @param releaseVersion the version of the release to get
+     * @param environmentId the id of the environment
+     * @param tenantId the id of the tenant
+     * @return A partial url to the Octopus portal to view the deployment
+     * @throws IllegalArgumentException when the web client receives a bad parameter
+     * @throws IOException When the AuthenticatedWebClient receives and error response code
+     */
+    public String getPortalUrlForDeployment(String projectId, String releaseVersion, String environmentId, String tenantId) throws IllegalArgumentException, IOException {
+        //lets only take the first 10, we know it will be a fairly recent deployment
+        String urlFilter = "?take=10" + "&projects=" + projectId + "&environments=" + environmentId;
+
+        if (tenantId != null && !tenantId.isEmpty()) {
+            urlFilter += "&tenants=" + tenantId;
+        }
+
+        AuthenticatedWebClient.WebResponse response = webClient.get("deployments" + urlFilter);
+        if (response.isErrorCode()) {
+            throw new IOException(String.format("Code %s - %n%s", response.getCode(), response.getContent()));
+        }
+
+        JSONObject json = (JSONObject)JSONSerializer.toJSON(response.getContent());
+        for (Object obj : json.getJSONArray("Items")) {
+
+            JSONObject jsonObj = (JSONObject)obj;
+            for (Object change : jsonObj.getJSONArray("Changes")) {
+                String version = ((JSONObject)change).getString("Version");
+                if(version.equals(releaseVersion))
+                {
+                    JSONObject links = jsonObj.getJSONObject("Links");
+                    return links.getString("Web");
+                }
+            }
+        }
+        return null;
+    }
     
     /**
      * Return a representation of a deployment process for a given project.

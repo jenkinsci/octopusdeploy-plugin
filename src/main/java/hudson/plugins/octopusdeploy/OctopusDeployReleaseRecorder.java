@@ -1,6 +1,7 @@
 package hudson.plugins.octopusdeploy;
 
 import com.google.common.base.Splitter;
+import com.octopusdeploy.api.data.Project;
 import com.octopusdeploy.api.data.SelectedPackage;
 import com.octopusdeploy.api.data.DeploymentProcessTemplate;
 import com.octopusdeploy.api.*;
@@ -305,7 +306,16 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
             Result result = launchOcto(launcher, commands, masks, envVars, listener);
             success = result.equals(Result.SUCCESS);
             if (success) {
-                //build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Release, serverUrl + urlSuffix));
+                String serverUrl = getOctopusDeployServer(serverId).getUrl();
+                if (serverUrl.endsWith("/")) {
+                    serverUrl = serverUrl.substring(0, serverUrl.length() - 1);
+                }
+                OctopusApi api = getOctopusDeployServer(serverId).getApi().forSpace(spaceId);
+                Project fullProject = api.getProjectsApi().getProjectByName(project, true);
+                String urlSuffix = api.getReleasesApi().getPortalUrlForRelease(fullProject.getId(), releaseVersion);
+                String portalUrl = serverUrl + urlSuffix;
+                log.info("Release created: \n\t" + portalUrl);
+                build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Release, portalUrl));
             }
         } catch (Exception ex) {
             log.fatal("Failed to create release: " + ex.getMessage());
