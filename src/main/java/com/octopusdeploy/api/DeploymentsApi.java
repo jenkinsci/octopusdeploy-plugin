@@ -84,8 +84,8 @@ public class DeploymentsApi {
      * @throws IOException When the AuthenticatedWebClient receives and error response code
      */
     public String getPortalUrlForDeployment(String projectId, String releaseVersion, String environmentId, String tenantId) throws IllegalArgumentException, IOException {
-        //lets only take the first 10, we know it will be a fairly recent deployment
-        String urlFilter = "?take=10" + "&projects=" + projectId + "&environments=" + environmentId;
+        //lets only take the first 25, we know it will be a fairly recent deployment
+        String urlFilter = "?take=25" + "&projects=" + projectId + "&environments=" + environmentId;
 
         if (tenantId != null && !tenantId.isEmpty()) {
             urlFilter += "&tenants=" + tenantId;
