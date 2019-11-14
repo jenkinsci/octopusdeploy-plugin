@@ -1,17 +1,15 @@
 package hudson.plugins.octopusdeploy;
 
 import com.google.common.base.Splitter;
-import com.octopusdeploy.api.data.Project;
-import com.octopusdeploy.api.data.SelectedPackage;
-import com.octopusdeploy.api.data.DeploymentProcessTemplate;
+import com.octopusdeploy.api.data.*;
 import com.octopusdeploy.api.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 
-import com.octopusdeploy.api.data.Tag;
-import com.octopusdeploy.api.data.TagSet;
+import com.octopusdeploy.api.data.Environment;
+import com.octopusdeploy.api.data.Project;
 import hudson.*;
 import hudson.FilePath.FileCallable;
 import hudson.model.*;
@@ -316,6 +314,25 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
                 String portalUrl = serverUrl + urlSuffix;
                 log.info("Release created: \n\t" + portalUrl);
                 build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Release, portalUrl));
+
+                if(deployThisRelease)
+                {
+                    Environment fullEnvironment = api.getEnvironmentsApi().getEnvironmentByName(environment, true);
+
+                    String tenantId = null;
+                    if (tenant != null && !tenant.isEmpty()) {
+                        Tenant fullTenant = api.getTenantsApi().getTenantByName(tenant, true);
+                        tenantId = fullTenant.getId();
+                    }
+
+                    String deploymenturlSuffix = api.getDeploymentsApi().getPortalUrlForDeployment(fullProject.getId(), releaseVersion, fullEnvironment.getId(), tenantId);
+
+                    if (urlSuffix != null && !urlSuffix.isEmpty()) {
+                        String portalDeploymentUrl = serverUrl + deploymenturlSuffix;
+                        log.info("Deployment executed: \n\t" + portalDeploymentUrl);
+                        build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Deployment, portalDeploymentUrl));
+                    }
+                }
             }
         } catch (Exception ex) {
             log.fatal("Failed to create release: " + ex.getMessage());
