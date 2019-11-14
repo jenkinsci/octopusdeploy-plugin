@@ -1,9 +1,7 @@
 package hudson.plugins.octopusdeploy;
 
 import com.google.common.base.Splitter;
-import com.octopusdeploy.api.data.Tag;
-import com.octopusdeploy.api.data.TagSet;
-import com.octopusdeploy.api.data.Task;
+import com.octopusdeploy.api.data.*;
 import com.octopusdeploy.api.*;
 import java.io.*;
 import java.text.DateFormat;
@@ -13,6 +11,9 @@ import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+
+import com.octopusdeploy.api.data.Environment;
+import com.octopusdeploy.api.data.Project;
 import hudson.*;
 import hudson.model.*;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
@@ -154,7 +155,28 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
                 Result result = launchOcto(launcher, commands, masks, envVars, listener);
                 success = result.equals(Result.SUCCESS);
                 if(success) {
-                    //build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Deployment, url + urlSuffix));
+                    String serverUrl = getOctopusDeployServer(serverId).getUrl();
+                    if (serverUrl.endsWith("/")) {
+                        serverUrl = serverUrl.substring(0, serverUrl.length() - 1);
+                    }
+
+                    OctopusApi api = getOctopusDeployServer(serverId).getApi().forSpace(spaceId);
+                    Project fullProject = api.getProjectsApi().getProjectByName(project, true);
+                    Environment fullEnvironment = api.getEnvironmentsApi().getEnvironmentByName(environment, true);
+
+                    String tenantId = null;
+                    if (tenant != null && !tenant.isEmpty()) {
+                        Tenant fullTenant = api.getTenantsApi().getTenantByName(tenant, true);
+                        tenantId = fullTenant.getId();
+                    }
+
+                    String urlSuffix = api.getDeploymentsApi().getPortalUrlForDeployment(fullProject.getId(), releaseVersion, fullEnvironment.getId(), tenantId);
+
+                    if (urlSuffix != null && !urlSuffix.isEmpty()) {
+                        String portalUrl = serverUrl + urlSuffix;
+                        log.info("Deployment executed: \n\t" + portalUrl);
+                        build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Deployment, portalUrl));
+                    }
                 }
             } catch (Exception ex) {
                 log.fatal("Failed to deploy: " + ex.getMessage());
