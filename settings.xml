@@ -1,0 +1,9 @@
+<settings>
+    <servers>
+        <server>
+            <id>repo.jenkins-ci.org</id>
+            <username>${artifactory.username}</username>
+            <password>${artifactory.password}</password>
+        </server>
+    </servers>
+</settings>
