@@ -31,7 +31,7 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorder implements Serializable {
+public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuildStep implements Serializable {
 
     private transient FileService fileService;
 
@@ -185,7 +185,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorder imp
     }
 
     @Extension
-    public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImpl {
+    public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImplStep {
 
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {

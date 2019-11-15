@@ -26,7 +26,7 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDeployRecorder implements Serializable {
+public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDeployRecorderBuildStep implements Serializable {
 
     private transient Log log;
 
@@ -237,7 +237,7 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
     }
 
     @Extension
-    public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImpl {
+    public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImplStep {
 
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {

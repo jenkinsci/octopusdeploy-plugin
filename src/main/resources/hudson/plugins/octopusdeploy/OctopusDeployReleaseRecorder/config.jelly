@@ -18,7 +18,7 @@
       <f:combobox value="${value}"/>
     </f:entry>
 
-    <j:invokeStatic var="supportsSpaces" method="hasSpaces" className="hudson.plugins.octopusdeploy.AbstractOctopusDeployRecorder">
+    <j:invokeStatic var="supportsSpaces" method="hasSpaces" className="hudson.plugins.octopusdeploy.AbstractOctopusDeployRecorderPostBuild">
     </j:invokeStatic>
     <j:if test="${supportsSpaces}">
       <f:entry title="Space" field="spaceId">
