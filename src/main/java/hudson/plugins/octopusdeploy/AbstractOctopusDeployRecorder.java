@@ -13,7 +13,7 @@ import hudson.plugins.octopusdeploy.utils.Lazy;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
-import hudson.tasks.Builder;
+import hudson.tasks.Recorder;
 import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -39,7 +39,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Deploy server access.
  * @author wbenayed
  */
-public abstract class AbstractOctopusDeployRecorder extends Builder {
+public abstract class AbstractOctopusDeployRecorder extends Recorder {
 
     /**
      * Cache for OctopusDeployServer instance used in deployment
@@ -368,7 +368,7 @@ public abstract class AbstractOctopusDeployRecorder extends Builder {
         return BuildStepMonitor.NONE;
     }
 
-    public static abstract class AbstractOctopusDeployDescriptorImpl extends BuildStepDescriptor<Builder> {
+    public static abstract class AbstractOctopusDeployDescriptorImpl extends BuildStepDescriptor<Publisher> {
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws Descriptor.FormException {
