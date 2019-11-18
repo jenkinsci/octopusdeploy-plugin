@@ -31,7 +31,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Creates a release and optionally deploys it.
  */
-public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderPostBuild implements Serializable {
+public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderPostBuildStep implements Serializable {
     /**
      * The release version as defined in Octopus.
      */

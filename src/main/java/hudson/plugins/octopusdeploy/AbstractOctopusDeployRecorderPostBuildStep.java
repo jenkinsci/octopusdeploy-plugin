@@ -39,7 +39,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Deploy server access.
  * @author wbenayed
  */
-public abstract class AbstractOctopusDeployRecorderPostBuild extends Recorder {
+public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorder {
 
     /**
      * Cache for OctopusDeployServer instance used in deployment
@@ -78,7 +78,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuild extends Recorder {
         try {
             return getDefaultOctopusDeployServer().getApi().forSystem().getSupportsSpaces();
         } catch (Exception ex) {
-            Logger.getLogger(AbstractOctopusDeployRecorderPostBuild.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(AbstractOctopusDeployRecorderPostBuildStep.class.getName()).log(Level.SEVERE, null, ex);
             return false;
         }
     }
@@ -378,11 +378,11 @@ public abstract class AbstractOctopusDeployRecorderPostBuild extends Recorder {
         }
 
         protected OctopusApi getApiByServerId(String serverId){
-            return AbstractOctopusDeployRecorderPostBuild.getOctopusDeployServer(serverId).getApi();
+            return AbstractOctopusDeployRecorderPostBuildStep.getOctopusDeployServer(serverId).getApi();
         }
 
         public String getDefaultOctopusDeployServerId() {
-            OctopusDeployServer server = AbstractOctopusDeployRecorderPostBuild.getDefaultOctopusDeployServer();
+            OctopusDeployServer server = AbstractOctopusDeployRecorderPostBuildStep.getDefaultOctopusDeployServer();
             if(server != null){
                 return server.getId();
             }
@@ -433,7 +433,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuild extends Recorder {
                     spaceItems.add(space.getName(), space.getId());
                 }
             } catch (Exception ex) {
-                Logger.getLogger(AbstractOctopusDeployRecorderPostBuild.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(AbstractOctopusDeployRecorderPostBuildStep.class.getName()).log(Level.SEVERE, null, ex);
             }
 
             return spaceItems;

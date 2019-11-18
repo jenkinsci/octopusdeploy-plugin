@@ -29,7 +29,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Executes deployments of releases.
  */
-public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecorderPostBuild implements Serializable {
+public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecorderPostBuildStep implements Serializable {
 
     /**
      * The release version number in Octopus.

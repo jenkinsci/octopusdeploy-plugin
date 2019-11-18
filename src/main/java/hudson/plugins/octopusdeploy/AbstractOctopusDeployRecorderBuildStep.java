@@ -377,11 +377,11 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder {
         }
 
         protected OctopusApi getApiByServerId(String serverId){
-            return AbstractOctopusDeployRecorderPostBuild.getOctopusDeployServer(serverId).getApi();
+            return AbstractOctopusDeployRecorderPostBuildStep.getOctopusDeployServer(serverId).getApi();
         }
 
         public String getDefaultOctopusDeployServerId() {
-            OctopusDeployServer server = AbstractOctopusDeployRecorderPostBuild.getDefaultOctopusDeployServer();
+            OctopusDeployServer server = AbstractOctopusDeployRecorderPostBuildStep.getDefaultOctopusDeployServer();
             if(server != null){
                 return server.getId();
             }
@@ -432,7 +432,7 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder {
                     spaceItems.add(space.getName(), space.getId());
                 }
             } catch (Exception ex) {
-                Logger.getLogger(AbstractOctopusDeployRecorderPostBuild.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(AbstractOctopusDeployRecorderPostBuildStep.class.getName()).log(Level.SEVERE, null, ex);
             }
 
             return spaceItems;
