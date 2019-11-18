@@ -23,7 +23,7 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorder implements Serializable {
+public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuildStep implements Serializable {
 
     private final String packageId;
     public String getPackageId() { return packageId; }
@@ -168,7 +168,7 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorder imp
     }
 
     @Extension
-    public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImpl {
+    public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImplStep {
 
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {

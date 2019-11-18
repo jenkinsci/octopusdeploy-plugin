@@ -29,7 +29,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Executes deployments of releases.
  */
-public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecorder implements Serializable {
+public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecorderPostBuildStep implements Serializable {
 
     /**
      * The release version number in Octopus.
@@ -281,7 +281,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
      * The class is marked as public so that it can be accessed from views.
      */
     @Extension
-    public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImpl {
+    public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImplPost {
         private static final String PROJECT_RELEASE_VALIDATION_MESSAGE = "Project must be set to validate release.";
         private static final String SERVER_ID_VALIDATION_MESSAGE = "Could not validate without a valid Server ID.";
 

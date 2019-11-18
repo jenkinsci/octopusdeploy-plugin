@@ -12,8 +12,7 @@ import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.plugins.octopusdeploy.utils.Lazy;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
-import hudson.tasks.Publisher;
-import hudson.tasks.Recorder;
+import hudson.tasks.Builder;
 import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -39,7 +38,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Deploy server access.
  * @author wbenayed
  */
-public abstract class AbstractOctopusDeployRecorder extends Recorder {
+public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder {
 
     /**
      * Cache for OctopusDeployServer instance used in deployment
@@ -78,7 +77,7 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
         try {
             return getDefaultOctopusDeployServer().getApi().forSystem().getSupportsSpaces();
         } catch (Exception ex) {
-            Logger.getLogger(AbstractOctopusDeployRecorder.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(AbstractOctopusDeployRecorderBuildStep.class.getName()).log(Level.SEVERE, null, ex);
             return false;
         }
     }
@@ -368,7 +367,8 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
         return BuildStepMonitor.NONE;
     }
 
-    public static abstract class AbstractOctopusDeployDescriptorImpl extends BuildStepDescriptor<Publisher> {
+    public static abstract class AbstractOctopusDeployDescriptorImplStep extends BuildStepDescriptor<Builder>
+    {
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws Descriptor.FormException {
@@ -377,11 +377,11 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
         }
 
         protected OctopusApi getApiByServerId(String serverId){
-            return AbstractOctopusDeployRecorder.getOctopusDeployServer(serverId).getApi();
+            return AbstractOctopusDeployRecorderPostBuildStep.getOctopusDeployServer(serverId).getApi();
         }
 
         public String getDefaultOctopusDeployServerId() {
-            OctopusDeployServer server = AbstractOctopusDeployRecorder.getDefaultOctopusDeployServer();
+            OctopusDeployServer server = AbstractOctopusDeployRecorderPostBuildStep.getDefaultOctopusDeployServer();
             if(server != null){
                 return server.getId();
             }
@@ -432,11 +432,10 @@ public abstract class AbstractOctopusDeployRecorder extends Recorder {
                     spaceItems.add(space.getName(), space.getId());
                 }
             } catch (Exception ex) {
-                Logger.getLogger(AbstractOctopusDeployRecorder.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(AbstractOctopusDeployRecorderPostBuildStep.class.getName()).log(Level.SEVERE, null, ex);
             }
 
             return spaceItems;
         }
-
     }
 }

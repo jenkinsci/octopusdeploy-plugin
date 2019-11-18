@@ -31,7 +31,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Creates a release and optionally deploys it.
  */
-public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder implements Serializable {
+public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderPostBuildStep implements Serializable {
     /**
      * The release version as defined in Octopus.
      */
@@ -529,7 +529,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorder 
      * The class is marked as public so that it can be accessed from views.
      */
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
-    public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImpl {
+    public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImplPost {
         private static final String PROJECT_RELEASE_VALIDATION_MESSAGE = "Project must be set to validate release.";
         private static final String SERVER_ID_VALIDATION_MESSAGE = "Could not validate without a valid Server ID.";
 
