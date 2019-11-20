@@ -30,7 +30,7 @@ THE SOFTWARE.
   </parent>
 
   <name>Octopus Deploy</name>
-  <groupId>hudson.plugins.octopusdeploy</groupId>
+  <groupId>io.jenkins.plugins</groupId>
   <artifactId>octopusdeploy</artifactId>
   <version>2.0.2-SNAPSHOT</version>
   <packaging>hpi</packaging>
@@ -43,21 +43,15 @@ THE SOFTWARE.
     <tag>1.9.0</tag>
   </scm>
 
+  <organization>
+    <name>Octopus Deploy</name>
+    <url>https://octopus.com</url>
+  </organization>
   <developers>
     <developer>
-      <id>badriance</id>
-      <name>Brian Adriance</name>
-      <email>badriance@vistaprint.com</email>
-    </developer>
-	<developer>
-      <id>jonlabroad</id>
-      <name>Jon LaBroad</name>
-      <email>jlabroad@vistaprint.com</email>
-    </developer>
-	<developer>
-      <id>lteixeira</id>
-      <name>Luis Teixeira</name>
-      <email>lteixeira@vistaprint.com</email>
+      <id>octopusdeploy</id>
+      <name>Octopus Deploy</name>
+      <email>support@octopus.com</email>
     </developer>
   </developers>
 
