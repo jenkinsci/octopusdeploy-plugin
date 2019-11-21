@@ -7,6 +7,12 @@ Tested and compatible with OctopusDeploy: 2.6 and 3.0 - 3.7.
 
 Tested and compatible with Octopus 2018.9 as of 1.9.0 of this plugin.
 
+## Contributing to the plugin ##
+
+We welcome contributions; issues, bug fixes, enhancements. If you are starting to work on something more detailed please reach out to support@octopus.com to ensure it aligns with what we have going on, and that we are not doubling up efforts.
+
+We have the following [developer focussed guidelines](./developer-guide.md) to get started working on the plugin.
+
 # Main Components #
 ## Post-build step - Create Release ##
 Creates a new release entry for a given project.
@@ -21,7 +27,7 @@ This component will only run if the build has been successful up until the point
 
 # Features #
 ## REST API Integration ##
-This plugin implements part of the REST API for OctopusDeploy in order to retrieve data and execute commands on the server. 
+This plugin implements part of the REST API for OctopusDeploy in order to retrieve data and execute commands on the server.
 It makes use of an API Key which is configured in the Global Settings Jenkins configuration page. This API Key is used for all interactions with OctopusDeploy.
 
 ## Environment Variable Support ##
@@ -112,7 +118,7 @@ If you restart the Jenkins service too often you may be greeted by a bunch of 41
 
 ### 1.6.0 ###
 * Implemented support for Channels
-* Refactored API 
+* Refactored API
 
 ### 1.5.0 ###
 * Implemented support for multi-Tenant Deployment
