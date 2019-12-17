@@ -31,8 +31,8 @@
   </f:section>
 
   <f:section title="Package">
-    <f:entry title="Package ID" field="packageId">
-      <f:textbox />
+    <f:entry title="Package IDs" field="packageId">
+      <f:textarea />
     </f:entry>
     <f:entry title="Version number" field="packageVersion">
       <f:textbox />

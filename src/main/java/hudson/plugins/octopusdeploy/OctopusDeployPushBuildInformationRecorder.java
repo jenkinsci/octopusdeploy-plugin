@@ -1,5 +1,6 @@
 package hudson.plugins.octopusdeploy;
 
+import com.google.common.base.Splitter;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
@@ -101,7 +102,7 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
         String apiKey = server.getApiKey().getPlainText();
         boolean ignoreSslErrors = server.getIgnoreSslErrors();
         OverwriteMode overwriteMode = this.overwriteMode;
-        String packageId = envInjector.injectEnvironmentVariableValues(this.packageId);
+        String packageIds = envInjector.injectEnvironmentVariableValues(this.packageId);
         String additionalArgs = envInjector.injectEnvironmentVariableValues(this.additionalArgs);
 
         checkState(StringUtils.isNotBlank(serverUrl), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus URL"));
@@ -120,8 +121,16 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
             commands.add(spaceId);
         }
 
-        commands.add("--package-id");
-        commands.add(packageId);
+        if (StringUtils.isNotBlank(packageIds)) {
+            final Iterable<String> packageIdsSplit = Splitter.on("\n")
+                    .trimResults()
+                    .omitEmptyStrings()
+                    .split(packageIds);
+            for(final String packageId : packageIdsSplit) {
+                commands.add("--package-id");
+                commands.add(packageId);
+            }
+        }
 
         commands.add("--version");
         commands.add(packageVersion);
