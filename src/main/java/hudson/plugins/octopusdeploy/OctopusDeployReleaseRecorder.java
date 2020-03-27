@@ -459,6 +459,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             try {
                 return StringUtils.join(Files.readAllLines(f.toPath(), StandardCharsets.UTF_8), "\n");
             } catch (IOException ex) {
+                log.error("Failed to read file: " + ex.getMessage());
                 return ERROR_READING;
             }
         }
