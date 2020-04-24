@@ -152,7 +152,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         if(success) {
             try {
                 final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-                Result result = launchOcto(launcher, commands, masks, envVars, listener);
+                Result result = launchOcto(build.getBuiltOn(), launcher, commands, masks, envVars, listener);
                 success = result.equals(Result.SUCCESS);
                 if(success) {
                     String serverUrl = getOctopusDeployServer(serverId).getUrl();

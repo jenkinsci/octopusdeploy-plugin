@@ -60,8 +60,20 @@ public class OctoInstallation extends ToolInstallation implements NodeSpecific<O
         return this;
     }
 
-    public String getPathToOctoExe() {
-        return getHome();
+    public String getPathToOctoExe(Node builtOn, EnvVars env, TaskListener taskListener) {
+        OctoInstallation octo = this;
+        if (builtOn != null) {
+            try {
+                octo = this.forNode(builtOn, taskListener);
+            } catch (Exception e) {
+                taskListener.getLogger().println("Failed to resolve octo path on node");
+            }
+        }
+        else if (env != null) {
+            octo = this.forEnvironment(env);
+        }
+
+        return octo.getHome();
     }
 
     public static OctoInstallation getDefaultInstallation() {

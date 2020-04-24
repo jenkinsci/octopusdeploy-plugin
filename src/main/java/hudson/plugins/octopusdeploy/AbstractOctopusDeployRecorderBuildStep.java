@@ -5,9 +5,7 @@ import com.octopusdeploy.api.data.Space;
 import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.Proc;
-import hudson.model.BuildListener;
-import hudson.model.Descriptor;
-import hudson.model.Result;
+import hudson.model.*;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.plugins.octopusdeploy.utils.Lazy;
 import hudson.tasks.BuildStepDescriptor;
@@ -210,9 +208,9 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder {
         return ids;
     }
 
-    public static String getOctopusToolPath(String name) {
+    public static String getOctopusToolPath(String name, Node builtOn, EnvVars env, TaskListener taskListener) {
         OctoInstallation.DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) Jenkins.getInstance().getDescriptor(OctoInstallation.class);
-        return descriptor.getInstallation(name).getPathToOctoExe();
+        return descriptor.getInstallation(name).getPathToOctoExe(builtOn, env, taskListener);
     }
 
     /**
@@ -306,15 +304,17 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder {
         return masks;
     }
 
-    public Result launchOcto(Launcher launcher, List<String> commands, Boolean[] masks, EnvVars environment, BuildListener listener) {
+    public Result launchOcto(Node builtOn, Launcher launcher, List<String> commands, Boolean[] masks, EnvVars environment, BuildListener listener) {
         Log log = new Log(listener);
         int exitCode = -1;
         final String octopusCli = this.getToolId();
 
         checkState(StringUtils.isNotBlank(octopusCli), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus CLI"));
 
-        final String cliPath = getOctopusToolPath(octopusCli);
-        if(StringUtils.isNotBlank(cliPath) && new File(cliPath).exists()) {
+        TaskListener taskListener = launcher.getListener();
+
+        final String cliPath = getOctopusToolPath(octopusCli, builtOn, environment, launcher.getListener());
+        if(StringUtils.isNotBlank(cliPath)) {
             final List<String> cmdArgs = new ArrayList<>();
             final List<Boolean> cmdMasks = new ArrayList<>();
 

@@ -3,17 +3,14 @@ package hudson.plugins.octopusdeploy;
 import com.google.common.base.Splitter;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.FilePath;
-import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
-import hudson.model.Result;
+import hudson.*;
+import hudson.model.*;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.plugins.octopusdeploy.services.FileService;
 import hudson.plugins.octopusdeploy.services.ServiceModule;
+import hudson.slaves.NodeProperty;
+import hudson.slaves.NodePropertyDescriptor;
+import hudson.util.DescribableList;
 import hudson.util.VariableResolver;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
@@ -24,6 +21,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.FileSystem;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -90,23 +88,25 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
          /*
             Get the list of matching files that need to be uploaded
          */
-        final List<File> files = new ArrayList<>();
+        final List<FilePath> files = new ArrayList<>();
 
         final Iterable<String> patternSplit = Splitter.on("\n")
                 .trimResults()
                 .omitEmptyStrings()
                 .split(packagePathPattern);
         for (final String pattern : patternSplit) {
-            final List<File> matchingFiles = fileService.getMatchingFile(build.getWorkspace(), pattern);
+            FilePath ws = build.getWorkspace();
+            final List<FilePath> matchingFiles = fileService.getMatchingFile(ws, pattern);
             /*
                 Don't add duplicates
              */
-            for (final File file : matchingFiles) {
+            for (final FilePath file : matchingFiles) {
+                files.add(file);
                 if (file != null) {
-                    final File existing = CollectionUtils.find(files, new Predicate<File>() {
+                    final FilePath existing = CollectionUtils.find(files, new Predicate<FilePath>() {
                         @Override
-                        public boolean evaluate(File existingFile) {
-                            return existingFile.getAbsolutePath().equals(file.getAbsolutePath());
+                        public boolean evaluate(FilePath existingFile) {
+                            return existingFile.getBaseName().equals(file.getBaseName());
                         }
                     });
 
@@ -120,7 +120,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
         try {
             final List<String> commands = buildCommands(envInjector, files);
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(launcher, commands, masks, envVars, listener);
+            Result result = launchOcto(build.getBuiltOn(), launcher, commands, masks, envVars, listener);
             success = result.equals(Result.SUCCESS);
         } catch (Exception ex) {
             log.fatal("Failed to push the packages: " + ex.getMessage());
@@ -130,7 +130,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
         return success;
     }
 
-    private List<String> buildCommands(final EnvironmentVariableValueInjector envInjector, final List<File> files) throws IOException {
+    private List<String> buildCommands(final EnvironmentVariableValueInjector envInjector, final List<FilePath> files) throws IOException {
         final List<String> commands = new ArrayList<>();
 
         OctopusDeployServer server = getOctopusDeployServer(this.serverId);
@@ -158,9 +158,9 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
             commands.add(spaceId);
         }
 
-        for (final File file : files) {
+        for (final FilePath file : files) {
             commands.add("--package");
-            commands.add(file.getCanonicalPath());
+            commands.add(file.getName());
         }
 
         if (overwriteMode != OverwriteMode.FailIfExists) {
