@@ -311,8 +311,6 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder {
 
         checkState(StringUtils.isNotBlank(octopusCli), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus CLI"));
 
-        TaskListener taskListener = launcher.getListener();
-
         final String cliPath = getOctopusToolPath(octopusCli, builtOn, environment, launcher.getListener());
         if(StringUtils.isNotBlank(cliPath)) {
             final List<String> cmdArgs = new ArrayList<>();
