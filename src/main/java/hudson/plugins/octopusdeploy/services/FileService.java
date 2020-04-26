@@ -17,5 +17,5 @@ public interface FileService {
      * @return A list of matching files
      */
     @NotNull
-    List<File> getMatchingFile(@NotNull FilePath workingDir, @NotNull String pattern);
+    List<FilePath> getMatchingFile(@NotNull FilePath workingDir, @NotNull String pattern);
 }

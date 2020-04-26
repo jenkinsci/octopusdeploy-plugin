@@ -155,6 +155,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
         boolean success = true;
+
         Log log = new Log(listener);
         if (Result.FAILURE.equals(build.getResult())) {
             log.info("Not creating a release due to job being in FAILED state.");
@@ -301,7 +302,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
 
         try {
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(launcher, commands, masks, envVars, listener);
+            Result result = launchOcto(build.getBuiltOn(), launcher, commands, masks, envVars, listener);
             success = result.equals(Result.SUCCESS);
             if (success) {
                 String serverUrl = getOctopusDeployServer(serverId).getUrl();

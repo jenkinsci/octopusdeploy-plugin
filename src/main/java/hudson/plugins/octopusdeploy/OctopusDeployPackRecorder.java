@@ -91,7 +91,7 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
 
         try {
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(launcher, commands, masks, envVars, listener);
+            Result result = launchOcto(build.getBuiltOn(), launcher, commands, masks, envVars, listener);
             success = result.equals(Result.SUCCESS);
         } catch (Exception ex) {
             log.fatal("Failed to package application: " + ex.getMessage());
