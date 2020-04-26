@@ -37,10 +37,8 @@ public class FileServiceImpl implements FileService {
         List<FilePath> list = new ArrayList<FilePath>();
         try {
             list = Arrays.asList(workingDir.list(pattern));
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (final Exception ex) {
+            throw new ResourceException(ex);
         }
 
         return list;
