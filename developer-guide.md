@@ -106,6 +106,8 @@ Select `Run` and fill in the new version in the dialog:
 
 ![run custom build](./developer-guide-images/run-custom-build.png)
 
+**Please note**: The [plugin repository](https://plugins.jenkins.io/) can take several days before the new version shows on the [download page](https://plugins.jenkins.io/octopusdeploy/). Be patient.
+
 # Inside Jenkins #
 
 ## Configure Octo CLI ##
