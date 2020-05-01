@@ -2,6 +2,7 @@ package hudson.plugins.octopusdeploy.services;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import hudson.FilePath;
 import hudson.plugins.octopusdeploy.Log;
 import hudson.plugins.octopusdeploy.OctopusBuildInformation;
 
@@ -20,7 +21,7 @@ public class OctopusBuildInformationWriter {
         this.verboseLogging = verboseLogging;
     }
 
-    public void writeToFile(final OctopusBuildInformation octopusBuildInformation, final String buildInformationFile) throws IOException {
+    public void writeToFile(FilePath workspace, final OctopusBuildInformation octopusBuildInformation, final String buildInformationFile) throws IOException, InterruptedException {
         try {
             final Gson gson = new GsonBuilder()
                     .setPrettyPrinting()
@@ -34,15 +35,15 @@ public class OctopusBuildInformationWriter {
             if (verboseLogging) {
                 log.info("Serialized Octopus build information - " + jsonData);
             }
-            OutputStreamWriter bw = new OutputStreamWriter(new FileOutputStream(buildInformationFile), StandardCharsets.UTF_16);
-            bw.write(jsonData);
-            bw.close();
+
+            FilePath newBuildInfoFile = new FilePath(workspace, buildInformationFile);
+            newBuildInfoFile.write(jsonData, StandardCharsets.UTF_16.toString());
 
             if (verboseLogging) {
                 log.info("Wrote " + buildInformationFile);
             }
 
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
             log.error("Error writing " + buildInformationFile + " file");
             throw e;
