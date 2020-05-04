@@ -3,11 +3,9 @@ package hudson.plugins.octopusdeploy;
 import com.google.common.base.Splitter;
 import hudson.EnvVars;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
-import hudson.model.Result;
+import hudson.model.*;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.plugins.octopusdeploy.services.OctopusBuildInformationBuilder;
 import hudson.plugins.octopusdeploy.services.OctopusBuildInformationWriter;
@@ -166,8 +164,7 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
      * @return path to build information file
      */
     private String getBuildInformationFromScm(AbstractBuild build, EnvironmentVariableValueInjector envInjector) throws IOException, InterruptedException {
-        String checkoutDir = build.getWorkspace().getRemote();
-        final String buildInformationFile = Paths.get(checkoutDir, "octopus.buildinfo").toAbsolutePath().toString();
+        FilePath ws = build.getWorkspace();
         AbstractProject project = build.getProject();
 
         final OctopusBuildInformationBuilder builder = new OctopusBuildInformationBuilder();
@@ -181,11 +178,12 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
                 Integer.toString(build.getNumber())
         );
 
+        final String buildInformationFile = "octopus.buildinfo";
         if (verboseLogging) {
-            log.info("Creating " + buildInformationFile);
+            log.info("Creating " + buildInformationFile + " in " + ws.getRemote());
         }
         final OctopusBuildInformationWriter writer = new OctopusBuildInformationWriter(log, verboseLogging);
-        writer.writeToFile(buildInformation, buildInformationFile);
+        writer.writeToFile(ws, buildInformation, buildInformationFile);
 
         return buildInformationFile;
     }
