@@ -94,8 +94,8 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
                 .trimResults()
                 .omitEmptyStrings()
                 .split(packagePathPattern);
+        FilePath ws = build.getWorkspace();
         for (final String pattern : patternSplit) {
-            FilePath ws = build.getWorkspace();
             final List<FilePath> matchingFiles = fileService.getMatchingFile(ws, pattern);
             /*
                 Don't add duplicates
@@ -118,7 +118,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
         }
 
         try {
-            final List<String> commands = buildCommands(envInjector, files);
+            final List<String> commands = buildCommands(envInjector, files, ws);
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
             Result result = launchOcto(build.getBuiltOn(), launcher, commands, masks, envVars, listener);
             success = result.equals(Result.SUCCESS);
@@ -130,7 +130,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
         return success;
     }
 
-    private List<String> buildCommands(final EnvironmentVariableValueInjector envInjector, final List<FilePath> files) throws IOException {
+    private List<String> buildCommands(final EnvironmentVariableValueInjector envInjector, final List<FilePath> files, FilePath workspace) throws IOException, InterruptedException {
         final List<String> commands = new ArrayList<>();
 
         OctopusDeployServer server = getOctopusDeployServer(this.serverId);
@@ -160,7 +160,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
 
         for (final FilePath file : files) {
             commands.add("--package");
-            commands.add(file.getName());
+            commands.add(file.absolutize().getRemote());
         }
 
         if (overwriteMode != OverwriteMode.FailIfExists) {
