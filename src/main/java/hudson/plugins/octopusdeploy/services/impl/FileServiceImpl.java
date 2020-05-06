@@ -33,10 +33,15 @@ public class FileServiceImpl implements FileService {
     public List<FilePath> getMatchingFile(@NotNull final FilePath workingDir, @NotNull final String pattern) {
         checkNotNull(workingDir);
         checkArgument(StringUtils.isNotBlank(pattern));
+        String p = pattern;
+        if (pattern.startsWith("/") || (pattern.startsWith("/") && !pattern.startsWith("//"))) {
+            // leading slashes are not valid glob patterns, remove them
+            p = pattern.replaceAll("^/+", "").replaceAll("^\\+", "");
+        }
 
-        List<FilePath> list = new ArrayList<FilePath>();
+        List<FilePath> list;
         try {
-            list = Arrays.asList(workingDir.list(pattern));
+            list = Arrays.asList(workingDir.list(p));
         } catch (final Exception ex) {
             throw new ResourceException(ex);
         }
