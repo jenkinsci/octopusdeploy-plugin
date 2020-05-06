@@ -32,7 +32,7 @@ THE SOFTWARE.
   <name>Octopus Deploy</name>
   <groupId>hudson.plugins.octopusdeploy</groupId>
   <artifactId>octopusdeploy</artifactId>
-  <version>2.1.4</version>
+  <version>2.1.5-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <url>https://github.com/OctopusDeploy/octopus-jenkins-plugin</url>
 
@@ -40,7 +40,7 @@ THE SOFTWARE.
     <connection>scm:git:https://github.com/OctopusDeploy/octopus-jenkins-plugin.git</connection>
     <developerConnection>scm:git:https://git@github.com/OctopusDeploy/octopus-jenkins-plugin.git</developerConnection>
     <url>https://github.com/OctopusDeploy/octopus-jenkins-plugin</url>
-    <tag>2.1.4</tag>
+    <tag>1.9.0</tag>
   </scm>
   <organization>
     <name>Octopus Deploy</name>
