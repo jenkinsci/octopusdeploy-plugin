@@ -6,8 +6,10 @@ import hudson.model.Computer;
 import hudson.plugins.octopusdeploy.Log;
 import hudson.plugins.octopusdeploy.exception.ResourceException;
 import hudson.plugins.octopusdeploy.services.FileService;
+import hudson.remoting.VirtualChannel;
 import hudson.slaves.WorkspaceList;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.remoting.RoleChecker;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -36,12 +38,16 @@ public class FileServiceImpl implements FileService {
         checkNotNull(workingDir);
         checkArgument(StringUtils.isNotBlank(pattern));
 
-        final File absoluteFile = new File(pattern);
-        if (absoluteFile.exists()) {
-            return new ArrayList<FilePath>() {{
-                add(new FilePath(absoluteFile));
-            }};
-        }
+        try
+        {
+            File absoluteFile = workingDir.act(new CheckFileExistsOnNode(pattern));
+            if(absoluteFile != null)
+            {
+                return new ArrayList<FilePath>() {{
+                    add(new FilePath(absoluteFile));
+                }};
+            }
+        } catch (Exception e) { /* don't need to worry if it fails, just fall back to using an ant glob */ }
 
         String p = pattern;
         if (pattern.startsWith("/") || (pattern.startsWith("/") && !pattern.startsWith("//"))) {
@@ -58,5 +64,29 @@ public class FileServiceImpl implements FileService {
         }
 
         return list;
+    }
+
+    private static final class CheckFileExistsOnNode implements FilePath.FileCallable<File> {
+        private final String pattern;
+
+        public CheckFileExistsOnNode(String pattern)
+        {
+            this.pattern = pattern;
+        }
+
+        @Override public File invoke(File f, VirtualChannel channel) {
+            // f and file represent the same thing
+            final File absoluteFile = new File(pattern);
+            if(absoluteFile.exists())
+            {
+                return absoluteFile;
+            }
+
+            return null;
+        }
+
+        @Override
+        public void checkRoles(RoleChecker roleChecker) throws SecurityException {
+        }
     }
 }
