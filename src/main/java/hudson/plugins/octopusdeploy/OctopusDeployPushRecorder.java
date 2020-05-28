@@ -96,7 +96,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
                 .split(packagePathPattern);
         FilePath ws = build.getWorkspace();
         for (final String pattern : patternSplit) {
-            final List<FilePath> matchingFiles = fileService.getMatchingFile(ws, pattern);
+            final List<FilePath> matchingFiles = fileService.getMatchingFile(ws, pattern, log);
             /*
                 Don't add duplicates
              */
