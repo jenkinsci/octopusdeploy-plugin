@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,6 +38,13 @@ public class FileServiceImpl implements FileService {
         if (pattern.startsWith("/") || (pattern.startsWith("/") && !pattern.startsWith("//"))) {
             // leading slashes are not valid glob patterns, remove them
             p = pattern.replaceAll("^/+", "").replaceAll("^\\+", "");
+        }
+
+        final File absoluteFile = new File(pattern);
+        if (absoluteFile.exists()) {
+            return new ArrayList<FilePath>() {{
+                add(new FilePath(absoluteFile));
+            }};
         }
 
         List<FilePath> list;
