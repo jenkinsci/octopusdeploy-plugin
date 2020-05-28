@@ -2,6 +2,7 @@ package hudson.plugins.octopusdeploy.services;
 
 
 import hudson.FilePath;
+import hudson.plugins.octopusdeploy.Log;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -17,5 +18,5 @@ public interface FileService {
      * @return A list of matching files
      */
     @NotNull
-    List<FilePath> getMatchingFile(@NotNull FilePath workingDir, @NotNull String pattern);
+    List<FilePath> getMatchingFile(@NotNull FilePath workingDir, @NotNull String pattern, Log log);
 }

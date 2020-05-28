@@ -3,6 +3,7 @@ package hudson.plugins.octopusdeploy.services.impl;
 
 import hudson.FilePath;
 import hudson.model.Computer;
+import hudson.plugins.octopusdeploy.Log;
 import hudson.plugins.octopusdeploy.exception.ResourceException;
 import hudson.plugins.octopusdeploy.services.FileService;
 import hudson.slaves.WorkspaceList;
@@ -31,14 +32,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class FileServiceImpl implements FileService {
     @NotNull
     @Override
-    public List<FilePath> getMatchingFile(@NotNull final FilePath workingDir, @NotNull final String pattern) {
+    public List<FilePath> getMatchingFile(@NotNull final FilePath workingDir, @NotNull final String pattern, @NotNull Log log) {
         checkNotNull(workingDir);
         checkArgument(StringUtils.isNotBlank(pattern));
-        String p = pattern;
-        if (pattern.startsWith("/") || (pattern.startsWith("/") && !pattern.startsWith("//"))) {
-            // leading slashes are not valid glob patterns, remove them
-            p = pattern.replaceAll("^/+", "").replaceAll("^\\+", "");
-        }
 
         final File absoluteFile = new File(pattern);
         if (absoluteFile.exists()) {
@@ -47,10 +43,17 @@ public class FileServiceImpl implements FileService {
             }};
         }
 
+        String p = pattern;
+        if (pattern.startsWith("/") || (pattern.startsWith("/") && !pattern.startsWith("//"))) {
+            // leading slashes are not valid glob patterns, remove them
+            p = pattern.replaceAll("^/+", "").replaceAll("^\\+", "");
+        }
+
         List<FilePath> list;
         try {
             list = Arrays.asList(workingDir.list(p));
         } catch (final Exception ex) {
+            log.info("If supplying an absolute path to a file, it's likely your file doesn't exist.");
             throw new ResourceException(ex);
         }
 
