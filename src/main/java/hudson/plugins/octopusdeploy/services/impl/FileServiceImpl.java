@@ -44,7 +44,7 @@ public class FileServiceImpl implements FileService {
             if(absoluteFile != null)
             {
                 return new ArrayList<FilePath>() {{
-                    add(new FilePath(absoluteFile));
+                    add(new FilePath(workingDir.getChannel(), absoluteFile.getPath()));
                 }};
             }
         } catch (Exception e) { /* don't need to worry if it fails, just fall back to using an ant glob */ }
