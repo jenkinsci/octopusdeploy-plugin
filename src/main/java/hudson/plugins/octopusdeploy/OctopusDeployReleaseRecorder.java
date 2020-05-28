@@ -260,7 +260,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         if (releaseNotes) {
             if (isReleaseNotesSourceFile()) {
                 try {
-                    releaseNotesContent += getReleaseNotesFromFile(build, releaseNotesFile);
+                    releaseNotesContent += getReleaseNotesFromFile(build, releaseNotesFile, log);
                 } catch (Exception ex) {
                     log.fatal(String.format("Unable to get file contents from release notes file! - %s", ex.getMessage()));
                     success = false;
@@ -444,9 +444,9 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
      * @throws IOException if there was a file read io problem
      * @throws InterruptedException if the action for reading was interrupted
      */
-    private String getReleaseNotesFromFile(AbstractBuild build, String releaseNotesFilename) throws IOException, InterruptedException {
+    private String getReleaseNotesFromFile(AbstractBuild build, String releaseNotesFilename, Log log) throws IOException, InterruptedException {
         FilePath path = new FilePath(build.getWorkspace(), releaseNotesFilename);
-        return path.act(new ReadFileCallable());
+        return path.act(new ReadFileCallable(log));
     }
 
     /**
@@ -454,6 +454,13 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
      */
     private static final class ReadFileCallable implements FileCallable<String> {
         public final static String ERROR_READING = "<Error Reading File>";
+
+        private final Log log;
+
+        public ReadFileCallable(Log log)
+        {
+            this.log = log;
+        }
 
         @Override
         public String invoke(File f, VirtualChannel channel) {
