@@ -56,7 +56,8 @@ THE SOFTWARE.
   </developers>
 
   <properties>
-    <jenkins.version>2.138.4</jenkins.version>
+    <jenkins.version>2.190.1</jenkins.version>
+    <slf4jVersion>1.7.26</slf4jVersion>
     <java.level>8</java.level>
     <spotbugs.skip>true</spotbugs.skip>
   </properties>
