@@ -262,7 +262,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             String resolvedJobNameVar = envInjector.injectEnvironmentVariableValues(jobNameVar);
             String resolvedBuildNumberVar = envInjector.injectEnvironmentVariableValues(buildNumberVar);
 
-            releaseNotesContent = String.format("Release created by Build [%s #%s](%s)",
+            releaseNotesContent = String.format("Release created by Build [%s #%s](%s)\n",
                 resolvedJobNameVar,
                 resolvedBuildNumberVar,
                 resolvedBuildUrlVar);
