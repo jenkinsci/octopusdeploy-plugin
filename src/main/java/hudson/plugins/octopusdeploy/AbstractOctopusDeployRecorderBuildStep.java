@@ -118,7 +118,7 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder {
     }
 
     /**
-     * The additional arguments to pass to octo
+     * The additional arguments to pass to Octopus CLI
      */
     protected String additionalArgs;
     public String getAdditionalArgs() {
@@ -337,14 +337,14 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder {
 
                 exitCode = process.join();
 
-                log.info(String.format("octo CLI exit code: %d", exitCode));
+                log.info(String.format("Octopus CLI exit code: %d", exitCode));
 
             } catch (IOException e) {
-                final String message = "Error from octo CLI: " + e.getMessage();
+                final String message = "Error from Octopus CLI: " + e.getMessage();
                 log.error(message);
                 return Result.FAILURE;
             } catch (InterruptedException e) {
-                final String message = "Unable to wait for octo CLI: " + e.getMessage();
+                final String message = "Unable to wait for Octopus CLI: " + e.getMessage();
                 log.error(message);
                 return Result.FAILURE;
             }
