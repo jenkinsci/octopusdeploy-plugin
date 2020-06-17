@@ -12,12 +12,17 @@ import hudson.slaves.NodeProperty;
 import hudson.slaves.NodePropertyDescriptor;
 import hudson.util.DescribableList;
 import hudson.util.VariableResolver;
+import jenkins.tasks.SimpleBuildStep;
+import jenkins.util.BuildListenerAdapter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.types.Commandline;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -58,28 +63,31 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
     }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
         if (fileService == null)
         {
             Guice.createInjector(new ServiceModule()).injectMembers(this);
         }
 
         boolean success = true;
-        Log log = new Log(listener);
-        if (Result.FAILURE.equals(build.getResult())) {
+        BuildListenerAdapter listenerAdapter = new BuildListenerAdapter(listener);
+        Log log = new Log(listenerAdapter);
+        if (Result.FAILURE.equals(run.getResult())) {
             log.info("Not packaging the application due to job being in FAILED state.");
-            return success;
+            return;
         }
 
-        VariableResolver resolver = build.getBuildVariableResolver();
         EnvVars envVars;
         try {
-            envVars = build.getEnvironment(listener);
+            envVars = run.getEnvironment(listener);
         } catch (Exception ex) {
             log.fatal(String.format("Failed to retrieve environment variables for this build '%s' - '%s'",
-                    build.getProject().getName(), ex.getMessage()));
-            return false;
+                    run.getParent().getName(), ex.getMessage()));
+            run.setResult(Result.FAILURE);
+            return;
         }
+        VariableResolver resolver =  new VariableResolver.ByMap<>(envVars);
+
         EnvironmentVariableValueInjector envInjector = new EnvironmentVariableValueInjector(resolver, envVars);
 
         String packagePathPattern = envInjector.injectEnvironmentVariableValues(this.packagePaths);
@@ -94,7 +102,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
                 .trimResults()
                 .omitEmptyStrings()
                 .split(packagePathPattern);
-        FilePath ws = build.getWorkspace();
+        FilePath ws = workspace;
         for (final String pattern : patternSplit) {
             final List<FilePath> matchingFiles = fileService.getMatchingFile(ws, pattern, log);
             /*
@@ -120,14 +128,16 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
         try {
             final List<String> commands = buildCommands(envInjector, files, ws);
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(build.getBuiltOn(), launcher, commands, masks, envVars, listener);
+            Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
             success = result.equals(Result.SUCCESS);
         } catch (Exception ex) {
             log.fatal("Failed to push the packages: " + ex.getMessage());
             success = false;
         }
 
-        return success;
+        if (!success) {
+            run.setResult(Result.FAILURE);
+        }
     }
 
     private List<String> buildCommands(final EnvironmentVariableValueInjector envInjector, final List<FilePath> files, FilePath workspace) throws IOException, InterruptedException {
@@ -184,7 +194,9 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
         return commands;
     }
 
+
     @Extension
+    @Symbol("octopusPushPackage")
     public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImplStep {
 
         @Override

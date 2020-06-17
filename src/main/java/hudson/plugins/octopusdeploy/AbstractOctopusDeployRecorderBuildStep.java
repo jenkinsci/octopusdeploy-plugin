@@ -3,6 +3,7 @@ package hudson.plugins.octopusdeploy;
 import com.octopusdeploy.api.OctopusApi;
 import com.octopusdeploy.api.data.Space;
 import hudson.EnvVars;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Proc;
 import hudson.model.*;
@@ -15,6 +16,7 @@ import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
+import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -36,7 +38,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Deploy server access.
  * @author wbenayed
  */
-public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder {
+public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder implements SimpleBuildStep {
 
     /**
      * Cache for OctopusDeployServer instance used in deployment
@@ -304,13 +306,13 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder {
         return masks;
     }
 
-    public Result launchOcto(Node builtOn, Launcher launcher, List<String> commands, Boolean[] masks, EnvVars environment, BuildListener listener) {
+    public Result launchOcto(FilePath workspace, Launcher launcher, List<String> commands, Boolean[] masks, EnvVars environment, BuildListener listener) {
         Log log = new Log(listener);
         int exitCode = -1;
         final String octopusCli = this.getToolId();
 
         checkState(StringUtils.isNotBlank(octopusCli), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus CLI"));
-
+        Node builtOn = workspace.toComputer().getNode();
         final String cliPath = getOctopusToolPath(octopusCli, builtOn, environment, launcher.getListener());
         if(StringUtils.isNotBlank(cliPath)) {
             final List<String> cmdArgs = new ArrayList<>();

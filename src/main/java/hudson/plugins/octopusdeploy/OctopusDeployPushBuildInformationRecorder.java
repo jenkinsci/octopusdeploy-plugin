@@ -10,18 +10,23 @@ import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.plugins.octopusdeploy.services.OctopusBuildInformationBuilder;
 import hudson.plugins.octopusdeploy.services.OctopusBuildInformationWriter;
 import hudson.scm.ChangeLogSet;
+import hudson.scm.SCM;
 import hudson.util.ListBoxModel;
 import hudson.util.VariableResolver;
+import jenkins.util.BuildListenerAdapter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.types.Commandline;
+import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jetbrains.annotations.NotNull;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.Serializable;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -57,42 +62,47 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
     }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
         boolean success = true;
-        log = new Log(listener);
-        if (Result.FAILURE.equals(build.getResult())) {
+        BuildListenerAdapter listenerAdapter = new BuildListenerAdapter(listener);
+
+        log = new Log(listenerAdapter);
+        if (Result.FAILURE.equals(run.getResult())) {
             log.info("Not pushing build information due to job being in FAILED state.");
-            return success;
+            return;
         }
 
-        VariableResolver resolver = build.getBuildVariableResolver();
         EnvVars envVars;
         try {
-            envVars = build.getEnvironment(listener);
+            envVars = run.getEnvironment(listener);
         } catch (Exception ex) {
             log.fatal(String.format("Failed to retrieve environment variables for this build '%s' - '%s'",
-                    build.getProject().getName(), ex.getMessage()));
-            return false;
+                    run.getParent().getName(), ex.getMessage()));
+            run.setResult(Result.FAILURE);
+            return;
         }
+        VariableResolver resolver =  new VariableResolver.ByMap<>(envVars);
         EnvironmentVariableValueInjector envInjector = new EnvironmentVariableValueInjector(resolver, envVars);
 
         //logStartHeader
 
 
         try {
-            final List<String> commands = buildCommands(build, envInjector);
+            final List<String> commands = buildCommands(run, envInjector, workspace);
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(build.getBuiltOn(), launcher, commands, masks, envVars, listener);
+            Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
             success = result.equals(Result.SUCCESS);
         } catch (Exception ex) {
             log.fatal("Failed to push the build information: " + ex.getMessage());
             success = false;
         }
 
-        return success;
+        if (!success) {
+            run.setResult(Result.FAILURE);
+        }
     }
 
-    private List<String> buildCommands(final AbstractBuild build, final EnvironmentVariableValueInjector envInjector) throws IOException, InterruptedException {
+    private List<String> buildCommands(final Run<?, ?> build, final EnvironmentVariableValueInjector envInjector, FilePath workspace) throws IOException, InterruptedException {
         final List<String> commands = new ArrayList<>();
 
         OctopusDeployServer server = getOctopusDeployServer(this.serverId);
@@ -133,7 +143,7 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
         commands.add("--version");
         commands.add(packageVersion);
 
-        final String buildInformationFile = getBuildInformationFromScm(build, envInjector);
+        final String buildInformationFile = getBuildInformationFromScm(build, envInjector, workspace);
         commands.add("--file");
         commands.add(buildInformationFile);
 
@@ -161,11 +171,12 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
      * Attempt to load release notes info from SCM.
      * @param build the jenkins build
      * @param envInjector the environment variable injector
+     * @param workspace
      * @return path to build information file
      */
-    private String getBuildInformationFromScm(AbstractBuild build, EnvironmentVariableValueInjector envInjector) throws IOException, InterruptedException {
-        FilePath ws = build.getWorkspace();
-        AbstractProject project = build.getProject();
+    private String getBuildInformationFromScm(Run<?, ?> build, EnvironmentVariableValueInjector envInjector, FilePath workspace) throws IOException, InterruptedException {
+        FilePath ws = workspace;
+        Job project = build.getParent();
 
         final OctopusBuildInformationBuilder builder = new OctopusBuildInformationBuilder();
         final OctopusBuildInformation buildInformation = builder.build(
@@ -188,8 +199,21 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
         return buildInformationFile;
     }
 
-    private String getVcsType(AbstractProject project) {
-        final String scmType = project.getScm().getType().toLowerCase();
+    private String getVcsType(Job job) {
+        SCM scm;
+        if (job instanceof AbstractProject) {
+            AbstractProject project = (AbstractProject) job;
+            scm = project.getScm();
+        }
+        else {
+            WorkflowJob workflowJob = (WorkflowJob) job;
+            scm = workflowJob.getTypicalSCM();
+        }
+
+        if (scm == null)
+            return "Unknown";
+
+        final String scmType = scm.getType().toLowerCase();
         if (scmType.contains("git")) {
             return "Git";
         } else if (scmType.contains("cvs")) {
@@ -198,12 +222,12 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
         return "Unknown";
     }
 
-    private List<Commit> getCommits(AbstractBuild build, AbstractProject project) {
+    private List<Commit> getCommits(Run<?,?> build, Job project) {
         List<Commit> commits = new ArrayList<>();
-        AbstractBuild lastSuccessfulBuild = (AbstractBuild)project.getLastSuccessfulBuild();
-        AbstractBuild currentBuild = null;
+        Run lastSuccessfulBuild = project.getLastSuccessfulBuild();
+        Run currentBuild = null;
         if (lastSuccessfulBuild == null) {
-            AbstractBuild lastBuild = (AbstractBuild)project.getLastBuild();
+            Run lastBuild = project.getLastBuild();
             currentBuild = lastBuild;
         }
         else
@@ -225,25 +249,40 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
 
     /**
      * Convert a build's change set to a string, each entry on a new line
-     * @param build The build to poll changesets from
+     * @param run The build to poll changesets from
      * @return The changeset as a string
      */
-    private List<Commit> convertChangeSetToCommits(AbstractBuild build) {
+    private List<Commit> convertChangeSetToCommits(Run<?,?> run) {
         List<Commit> commits = new ArrayList<>();
-        if (build != null) {
-            ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = build.getChangeSet();
-            for (Object item : changeSet.getItems()) {
-                ChangeLogSet.Entry entry = (ChangeLogSet.Entry) item;
-                final Commit commit = new Commit();
-                commit.Id = entry.getCommitId();
-                commit.Comment = entry.getMsg();
-                commits.add(commit);
-            }
+        if (run != null) {
+            List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = getChangeSets(run);
+
+            for (ChangeLogSet<? extends ChangeLogSet.Entry> changeSet : changeSets)
+                for (Object item : changeSet.getItems()) {
+                    ChangeLogSet.Entry entry = (ChangeLogSet.Entry) item;
+                    final Commit commit = new Commit();
+                    commit.Id = entry.getCommitId();
+                    commit.Comment = entry.getMsg();
+                    commits.add(commit);
+                }
         }
         return commits;
     }
 
+    @NotNull
+    private List<ChangeLogSet<? extends ChangeLogSet.Entry>> getChangeSets(Run<?, ?> run) {
+        if (run instanceof AbstractBuild) {
+            AbstractBuild build = (AbstractBuild) run;
+            return Collections.singletonList(build.getChangeSet());
+        }
+        else {
+            WorkflowRun workflowRun = (WorkflowRun) run;
+            return workflowRun.getChangeSets();
+        }
+    }
+
     @Extension
+    @Symbol("octopusPushBuildInformation")
     public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImplStep {
 
         @Override

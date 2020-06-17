@@ -20,11 +20,19 @@ import hudson.tasks.*;
 import hudson.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 
+import jenkins.model.lazy.LazyBuildMixIn;
+import jenkins.util.BuildListenerAdapter;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.remoting.RoleChecker;
+import org.jetbrains.annotations.NotNull;
 import org.kohsuke.stapler.*;
 import org.kohsuke.stapler.export.*;
+
+import javax.annotation.Nonnull;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -153,24 +161,27 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
     }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
+        BuildListenerAdapter listenerAdapter = new BuildListenerAdapter(listener);
+        Log log = new Log(listenerAdapter);
+
         boolean success = true;
 
-        Log log = new Log(listener);
-        if (Result.FAILURE.equals(build.getResult())) {
+        if (Result.FAILURE.equals(run.getResult())) {
             log.info("Not creating a release due to job being in FAILED state.");
-            return success;
+            return;
         }
 
-        VariableResolver resolver = build.getBuildVariableResolver();
         EnvVars envVars;
         try {
-            envVars = build.getEnvironment(listener);
+            envVars = run.getEnvironment(listener);
         } catch (Exception ex) {
             log.fatal(String.format("Failed to retrieve environment variables for this project '%s' - '%s'",
                 project, ex.getMessage()));
-            return false;
+            run.setResult(Result.FAILURE);
+            return ;
         }
+        VariableResolver resolver =  new VariableResolver.ByMap<>(envVars);
         EnvironmentVariableValueInjector envInjector = new EnvironmentVariableValueInjector(resolver, envVars);
 
         // NOTE: hiding the member variables of the same name with their env-injected equivalents
@@ -260,13 +271,13 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         if (releaseNotes) {
             if (isReleaseNotesSourceFile()) {
                 try {
-                    releaseNotesContent += getReleaseNotesFromFile(build, releaseNotesFile, log);
+                    releaseNotesContent += getReleaseNotesFromFile(workspace, releaseNotesFile, log);
                 } catch (Exception ex) {
                     log.fatal(String.format("Unable to get file contents from release notes file! - %s", ex.getMessage()));
                     success = false;
                 }
             } else if (isReleaseNotesSourceScm()) {
-                releaseNotesContent += getReleaseNotesFromScm(build);
+                releaseNotesContent += getReleaseNotesFromScm(run);
             } else {
                 log.fatal(String.format("Bad configuration: if using release notes, should have source of file or scm. Found '%s'", releaseNotesSource));
                 success = false;
@@ -274,7 +285,8 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         }
 
         if (!success) { // Early exit
-            return success;
+            run.setResult(Result.FAILURE);
+            return;
         }
 
         if (StringUtils.isNotBlank(releaseNotesContent)) {
@@ -302,7 +314,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
 
         try {
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(build.getBuiltOn(), launcher, commands, masks, envVars, listener);
+            Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
             success = result.equals(Result.SUCCESS);
             if (success) {
                 String serverUrl = getOctopusDeployServer(serverId).getUrl();
@@ -314,7 +326,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
                 String urlSuffix = api.getReleasesApi().getPortalUrlForRelease(fullProject.getId(), releaseVersion);
                 String portalUrl = serverUrl + urlSuffix;
                 log.info("Release created: \n\t" + portalUrl);
-                build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Release, portalUrl));
+                run.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Release, portalUrl));
 
                 if(deployThisRelease)
                 {
@@ -331,7 +343,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
                     if (urlSuffix != null && !urlSuffix.isEmpty()) {
                         String portalDeploymentUrl = serverUrl + deploymenturlSuffix;
                         log.info("Deployment executed: \n\t" + portalDeploymentUrl);
-                        build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Deployment, portalDeploymentUrl));
+                        run.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Deployment, portalDeploymentUrl));
                     }
                 }
             }
@@ -340,7 +352,9 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             success = false;
         }
 
-        return success;
+        if (!success) {
+            run.setResult(Result.FAILURE);
+        }
     }
 
     /**
@@ -439,13 +453,13 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
 
     /**
      * Return the release notes contents from a file.
-     * @param build our build
+     * @param workspace our build
      * @return string contents of file
      * @throws IOException if there was a file read io problem
      * @throws InterruptedException if the action for reading was interrupted
      */
-    private String getReleaseNotesFromFile(AbstractBuild build, String releaseNotesFilename, Log log) throws IOException, InterruptedException {
-        FilePath path = new FilePath(build.getWorkspace(), releaseNotesFilename);
+    private String getReleaseNotesFromFile(FilePath workspace, String releaseNotesFilename, Log log) throws IOException, InterruptedException {
+        FilePath path = new FilePath(workspace, releaseNotesFilename);
         return path.act(new ReadFileCallable(log));
     }
 
@@ -483,13 +497,14 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
      * @param build the jenkins build
      * @return release notes as a single string
      */
-    private String getReleaseNotesFromScm(AbstractBuild build) {
+    private String getReleaseNotesFromScm(Run<?, ?> build) {
         StringBuilder notes = new StringBuilder();
-        AbstractProject project = build.getProject();
-        AbstractBuild lastSuccessfulBuild = (AbstractBuild)project.getLastSuccessfulBuild();
-        AbstractBuild currentBuild = null;
+
+        Job project = build.getParent();
+        Run lastSuccessfulBuild = project.getLastSuccessfulBuild();
+        Run currentBuild = null;
         if (lastSuccessfulBuild == null) {
-            AbstractBuild lastBuild = (AbstractBuild)project.getLastBuild();
+            Run lastBuild = project.getLastBuild();
             currentBuild = lastBuild;
         }
         else
@@ -518,19 +533,34 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
 
     /**
      * Convert a build's change set to a string, each entry on a new line
-     * @param build The build to poll changesets from
+     * @param run The build to poll changesets from
      * @return The changeset as a string
      */
-    private String convertChangeSetToString(AbstractBuild build) {
+    private String convertChangeSetToString(Run<?, ?> run) {
         StringBuilder allChangeNotes = new StringBuilder();
-        if (build != null) {
-            ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = build.getChangeSet();
-            for (Object item : changeSet.getItems()) {
-                ChangeLogSet.Entry entry = (ChangeLogSet.Entry) item;
-                allChangeNotes.append(entry.getMsg()).append("\n");
-            }
+        if (run != null) {
+            List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = getChangeSets(run);
+
+            for (ChangeLogSet<? extends ChangeLogSet.Entry> changeSet : changeSets)
+                for (Object item : changeSet.getItems()) {
+                    ChangeLogSet.Entry entry = (ChangeLogSet.Entry) item;
+                    allChangeNotes.append(entry.getMsg()).append("\n");
+                }
+
         }
         return allChangeNotes.toString();
+    }
+
+    @NotNull
+    private List<ChangeLogSet<? extends ChangeLogSet.Entry>> getChangeSets(Run<?, ?> run) {
+        if (run instanceof AbstractBuild) {
+            AbstractBuild build = (AbstractBuild) run;
+            return Collections.singletonList(build.getChangeSet());
+        }
+        else {
+            WorkflowRun workflowRun = (WorkflowRun) run;
+            return workflowRun.getChangeSets();
+        }
     }
 
     /**
@@ -538,6 +568,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
      * The class is marked as public so that it can be accessed from views.
      */
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
+    @Symbol("octopusCreateRelease")
     public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImplPost {
         private static final String PROJECT_RELEASE_VALIDATION_MESSAGE = "Project must be set to validate release.";
         private static final String SERVER_ID_VALIDATION_MESSAGE = "Could not validate without a valid Server ID.";

@@ -20,9 +20,14 @@ import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import jenkins.util.BuildListenerAdapter;
 import net.sf.json.*;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.*;
+
+import javax.annotation.Nonnull;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -61,24 +66,28 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
     }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
         // This method deserves a refactor and cleanup.
         boolean success = true;
-        Log log = new Log(listener);
-        if (Result.FAILURE.equals(build.getResult())) {
+        BuildListenerAdapter listenerAdapter = new BuildListenerAdapter(listener);
+
+        Log log = new Log(listenerAdapter);
+        if (Result.FAILURE.equals(run.getResult())) {
             log.info("Not deploying due to job being in FAILED state.");
-            return success;
+            return;
         }
 
-        VariableResolver resolver = build.getBuildVariableResolver();
         EnvVars envVars;
         try {
-            envVars = build.getEnvironment(listener);
+            envVars = run.getEnvironment(listener);
         } catch (Exception ex) {
             log.fatal(String.format("Failed to retrieve environment variables for this build - '%s'", ex.getMessage()));
-            return false;
+            run.setResult(Result.FAILURE);
+            return;
         }
+        VariableResolver resolver =  new VariableResolver.ByMap<>(envVars);
         EnvironmentVariableValueInjector envInjector = new EnvironmentVariableValueInjector(resolver, envVars);
+
         // NOTE: hiding the member variables of the same name with their env-injected equivalents
         String project = envInjector.injectEnvironmentVariableValues(this.project);
         String releaseVersion = envInjector.injectEnvironmentVariableValues(this.releaseVersion);
@@ -97,7 +106,8 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             properties.load(new StringReader(variables));
         } catch (Exception ex) {
             log.fatal(String.format("Unable to load entry variables: '%s'", ex.getMessage()));
-            return false;
+            run.setResult(Result.FAILURE);
+            return;
         }
 
         final List<String> commands = new ArrayList<>();
@@ -152,7 +162,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         if(success) {
             try {
                 final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-                Result result = launchOcto(build.getBuiltOn(), launcher, commands, masks, envVars, listener);
+                Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
                 success = result.equals(Result.SUCCESS);
                 if(success) {
                     String serverUrl = getOctopusDeployServer(serverId).getUrl();
@@ -175,7 +185,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
                     if (urlSuffix != null && !urlSuffix.isEmpty()) {
                         String portalUrl = serverUrl + urlSuffix;
                         log.info("Deployment executed: \n\t" + portalUrl);
-                        build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Deployment, portalUrl));
+                        run.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Deployment, portalUrl));
                     }
                 }
             } catch (Exception ex) {
@@ -184,7 +194,9 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             }
         }
 
-        return success;
+        if (!success) {
+            run.setResult(Result.FAILURE);
+        }
     }
 
     private DescriptorImpl getDescriptorImpl() {
@@ -281,6 +293,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
      * The class is marked as public so that it can be accessed from views.
      */
     @Extension
+    @Symbol("octopusDeployRelease")
     public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImplPost {
         private static final String PROJECT_RELEASE_VALIDATION_MESSAGE = "Project must be set to validate release.";
         private static final String SERVER_ID_VALIDATION_MESSAGE = "Could not validate without a valid Server ID.";

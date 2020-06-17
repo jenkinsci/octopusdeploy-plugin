@@ -3,19 +3,21 @@ package hudson.plugins.octopusdeploy;
 import com.google.common.base.Splitter;
 import hudson.EnvVars;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
-import hudson.model.Result;
+import hudson.model.*;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.util.FormValidation;
 import hudson.util.VariableResolver;
+import jenkins.util.BuildListenerAdapter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.types.Commandline;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,23 +68,26 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
     }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
         boolean success = true;
-        Log log = new Log(listener);
-        if (Result.FAILURE.equals(build.getResult())) {
+        BuildListenerAdapter listenerAdapter = new BuildListenerAdapter(listener);
+
+        Log log = new Log(listenerAdapter);
+        if (Result.FAILURE.equals(run.getResult())) {
             log.info("Not packaging the application due to job being in FAILED state.");
-            return success;
+            return;
         }
 
-        VariableResolver resolver = build.getBuildVariableResolver();
         EnvVars envVars;
         try {
-            envVars = build.getEnvironment(listener);
+            envVars = run.getEnvironment(listener);
         } catch (Exception ex) {
             log.fatal(String.format("Failed to retrieve environment variables for this build '%s' - '%s'",
-                    build.getProject().getName(), ex.getMessage()));
-            return false;
+                    run.getParent().getName(), ex.getMessage()));
+            run.setResult(Result.FAILURE);
+            return;
         }
+        VariableResolver resolver =  new VariableResolver.ByMap<>(envVars);
         EnvironmentVariableValueInjector envInjector = new EnvironmentVariableValueInjector(resolver, envVars);
 
         //logStartHeader
@@ -91,14 +96,17 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
 
         try {
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(build.getBuiltOn(), launcher, commands, masks, envVars, listener);
+
+            Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
             success = result.equals(Result.SUCCESS);
         } catch (Exception ex) {
             log.fatal("Failed to package application: " + ex.getMessage());
             success = false;
         }
 
-        return success;
+        if (!success) {
+            run.setResult(Result.FAILURE);
+        }
     }
 
     private List<String> buildCommands(final EnvironmentVariableValueInjector envInjector) {
@@ -168,6 +176,7 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
     }
 
     @Extension
+    @Symbol("octopusPack")
     public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImplStep {
 
         @Override
