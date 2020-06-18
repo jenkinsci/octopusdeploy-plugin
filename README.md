@@ -22,3 +22,5 @@ The way the plugin interacts with Octopus changed from version 1.x to 2.x. Some 
 We welcome contributions; issues, bug fixes, enhancements. If you are starting to work on something more detailed please reach out to support@octopus.com to ensure it aligns with what we have going on, and that we are not doubling up efforts.
 
 We have the following [developer focussed guidelines](./developer-guide.md) to get started working on the plugin.
+
+
