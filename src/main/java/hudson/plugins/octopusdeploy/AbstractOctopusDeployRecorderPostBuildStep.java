@@ -3,6 +3,7 @@ package hudson.plugins.octopusdeploy;
 import com.octopusdeploy.api.OctopusApi;
 import com.octopusdeploy.api.data.Space;
 import hudson.EnvVars;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Proc;
 import hudson.model.*;
@@ -13,11 +14,13 @@ import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
+import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.taskdefs.Parallel;
 import org.apache.tools.ant.types.Commandline;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -38,7 +41,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Deploy server access.
  * @author wbenayed
  */
-public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorder {
+public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorder implements SimpleBuildStep {
 
     /**
      * Cache for OctopusDeployServer instance used in deployment
@@ -98,12 +101,21 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
         return environment;
     }
 
+    @DataBoundSetter
+    public void setEnvironment(String environment) {
+        this.environment = environment.trim();
+    }
     /**
      * The variables to use for a deploy to in Octopus.
      */
     protected String variables;
     public String getVariables() {
         return variables;
+    }
+
+    @DataBoundSetter
+    public void setVariables(String variables) {
+        this.variables = variables;
     }
 
     /**
@@ -114,9 +126,19 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
         return tenant;
     }
 
+    @DataBoundSetter
+    public void setTenant(String tenant) {
+        this.tenant = tenant == null ? null : tenant.trim();
+    }
+
     protected String tenantTag;
     public String getTenantTag() {
         return tenantTag;
+    }
+
+    @DataBoundSetter
+    public void setTenantTag(String tenantTag) {
+        this.tenantTag = tenantTag == null ? null : tenantTag.trim();
     }
 
     /**
@@ -136,12 +158,22 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
         return waitForDeployment;
     }
 
+    @DataBoundSetter
+    public void setWaitForDeployment(boolean waitForDeployment) {
+        this.waitForDeployment = waitForDeployment;
+    }
+
     /**
      * Whether or not to enable verbose logging
      */
     protected boolean verboseLogging;
     public boolean getVerboseLogging() {
         return verboseLogging;
+    }
+
+    @DataBoundSetter
+    public void setVerboseLogging(boolean verboseLogging) {
+        this.verboseLogging = verboseLogging;
     }
 
     /**
@@ -153,12 +185,22 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
         return deploymentTimeout;
     }
 
+    @DataBoundSetter
+    public void setDeploymentTimeout(String deploymentTimeout) {
+        this.deploymentTimeout = deploymentTimeout == null ? null : deploymentTimeout.trim();
+    }
+
     /**
      * Whether to cancel the deployment if the deployment timeout is reached
      */
     protected boolean cancelOnTimeout;
     public boolean getCancelOnTimeout() {
         return cancelOnTimeout;
+    }
+
+    @DataBoundSetter
+    public void setCancelOnTimeout(boolean cancelOnTimeout) {
+        this.cancelOnTimeout = cancelOnTimeout;
     }
 
     /**
@@ -306,14 +348,14 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
         return masks;
     }
 
-    public Result launchOcto(Node builtOn, Launcher launcher, List<String> commands, Boolean[] masks, EnvVars environment, BuildListener listener) {
+    public Result launchOcto(FilePath workspace, Launcher launcher, List<String> commands, Boolean[] masks, EnvVars environment, BuildListener listener) {
         Log log = new Log(listener);
 
         int exitCode = -1;
         final String octopusCli = this.getToolId();
 
         checkState(StringUtils.isNotBlank(octopusCli), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus CLI"));
-
+        Node builtOn = workspace.toComputer().getNode();
         final String cliPath = getOctopusToolPath(octopusCli, builtOn, environment, launcher.getListener());
         if(StringUtils.isNotBlank(cliPath)) {
             final List<String> cmdArgs = new ArrayList<>();
@@ -335,7 +377,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
                         .masks(ArrayUtils.toPrimitive(cmdMasks.toArray((Boolean[])Array.newInstance(Boolean.class, 0))))
                         .stdout(listener)
                         .envs(environment)
-                        .pwd(environment.get("WORKSPACE", ""))
+                        .pwd(workspace)
                         .start();
 
                 exitCode = process.join();
