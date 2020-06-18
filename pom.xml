@@ -32,7 +32,7 @@ THE SOFTWARE.
   <name>Octopus Deploy</name>
   <groupId>hudson.plugins.octopusdeploy</groupId>
   <artifactId>octopusdeploy</artifactId>
-  <version>3.0.0</version>
+  <version>3.0.1-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <url>https://github.com/OctopusDeploy/octopus-jenkins-plugin</url>
 
