@@ -30,7 +30,7 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
     private final String packageId;
     public String getPackageId() { return packageId; }
 
-    private final String packageVersion;
+    private String packageVersion;
     public String getPackageVersion() { return packageVersion; }
 
     private final String packageFormat;
@@ -42,29 +42,46 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
     private final String sourcePath;
     public String getSourcePath() { return sourcePath; }
 
-    private final String includePaths;
+    private String includePaths;
     public String getIncludePaths() { return includePaths; }
 
-    private final String outputPath;
+    private String outputPath;
     public String getOutputPath() { return outputPath; }
 
-    private final Boolean overwriteExisting;
+    @DataBoundSetter
+    public void setOutputPath(String outputPath) {
+        this.outputPath = outputPath == null ? null : outputPath.trim();
+    }
+
+    private Boolean overwriteExisting;
     public Boolean getOverwriteExisting() { return overwriteExisting; }
 
+    @DataBoundSetter
+    public void setPackageVersion(String packageVersion) {
+        this.packageVersion = packageVersion == null ? null : packageVersion.trim();
+    }
+
+    @DataBoundSetter
+    public void setIncludePaths(String includePaths) {
+        this.includePaths = includePaths == null ? null : includePaths.trim();
+    }
+
+    @DataBoundSetter
+    public void setOverwriteExisting(Boolean overwriteExisting) {
+        this.overwriteExisting = overwriteExisting;
+    }
+
     @DataBoundConstructor
-    public OctopusDeployPackRecorder(String toolId, String packageId, String packageVersion, String packageFormat,
-                                     String sourcePath, String includePaths, String outputPath,
-                                     Boolean overwriteExisting, Boolean verboseLogging, String additionalArgs) {
+    public OctopusDeployPackRecorder(String toolId, String packageId, String packageFormat, String sourcePath) {
         this.toolId = toolId.trim();
         this.packageId = packageId.trim();
-        this.packageVersion = packageVersion.trim();
         this.packageFormat = packageFormat.trim();
         this.sourcePath = sourcePath.trim();
-        this.includePaths = includePaths.trim();
-        this.outputPath = outputPath.trim();
-        this.overwriteExisting = overwriteExisting;
-        this.verboseLogging = verboseLogging;
-        this.additionalArgs = additionalArgs.trim();
+
+        this.outputPath = ".";
+        this.includePaths = "**";
+        this.overwriteExisting = false;
+        this.verboseLogging = false;
     }
 
     @Override

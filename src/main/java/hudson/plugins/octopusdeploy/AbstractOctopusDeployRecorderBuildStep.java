@@ -21,6 +21,7 @@ import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.types.Commandline;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -127,6 +128,11 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
         return additionalArgs;
     }
 
+    @DataBoundSetter
+    public void setAdditionalArgs(String additionalArgs) {
+        this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
+    }
+
     /**
      * Whether or not perform will return control immediately, or wait until the Deployment
      * task is completed.
@@ -142,6 +148,11 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
     protected boolean verboseLogging;
     public boolean getVerboseLogging() {
         return verboseLogging;
+    }
+
+    @DataBoundSetter
+    public void setVerboseLogging(boolean verboseLogging) {
+        this.verboseLogging = verboseLogging;
     }
 
     /**

@@ -20,6 +20,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.taskdefs.Parallel;
 import org.apache.tools.ant.types.Commandline;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -100,12 +101,21 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
         return environment;
     }
 
+    @DataBoundSetter
+    public void setEnvironment(String environment) {
+        this.environment = environment.trim();
+    }
     /**
      * The variables to use for a deploy to in Octopus.
      */
     protected String variables;
     public String getVariables() {
         return variables;
+    }
+
+    @DataBoundSetter
+    public void setVariables(String variables) {
+        this.variables = variables;
     }
 
     /**
@@ -116,9 +126,19 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
         return tenant;
     }
 
+    @DataBoundSetter
+    public void setTenant(String tenant) {
+        this.tenant = tenant == null ? null : tenant.trim();
+    }
+
     protected String tenantTag;
     public String getTenantTag() {
         return tenantTag;
+    }
+
+    @DataBoundSetter
+    public void setTenantTag(String tenantTag) {
+        this.tenantTag = tenantTag == null ? null : tenantTag.trim();
     }
 
     /**
@@ -138,12 +158,22 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
         return waitForDeployment;
     }
 
+    @DataBoundSetter
+    public void setWaitForDeployment(boolean waitForDeployment) {
+        this.waitForDeployment = waitForDeployment;
+    }
+
     /**
      * Whether or not to enable verbose logging
      */
     protected boolean verboseLogging;
     public boolean getVerboseLogging() {
         return verboseLogging;
+    }
+
+    @DataBoundSetter
+    public void setVerboseLogging(boolean verboseLogging) {
+        this.verboseLogging = verboseLogging;
     }
 
     /**
@@ -155,12 +185,22 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
         return deploymentTimeout;
     }
 
+    @DataBoundSetter
+    public void setDeploymentTimeout(String deploymentTimeout) {
+        this.deploymentTimeout = deploymentTimeout == null ? null : deploymentTimeout.trim();
+    }
+
     /**
      * Whether to cancel the deployment if the deployment timeout is reached
      */
     protected boolean cancelOnTimeout;
     public boolean getCancelOnTimeout() {
         return cancelOnTimeout;
+    }
+
+    @DataBoundSetter
+    public void setCancelOnTimeout(boolean cancelOnTimeout) {
+        this.cancelOnTimeout = cancelOnTimeout;
     }
 
     /**

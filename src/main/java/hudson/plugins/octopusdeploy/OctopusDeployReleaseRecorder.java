@@ -51,15 +51,20 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
     /**
      * Are there release notes for this release?
      */
-    private final boolean releaseNotes;
+    private boolean releaseNotes;
     public boolean getReleaseNotes() {
         return releaseNotes;
+    }
+
+    @DataBoundSetter
+    public void setReleaseNotes(boolean releaseNotes) {
+        this.releaseNotes = releaseNotes;
     }
 
     /**
      * Where are the release notes located?
      */
-    private final String releaseNotesSource;
+    private String releaseNotesSource;
     public String getReleaseNotesSource() {
         return releaseNotesSource;
     }
@@ -72,7 +77,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         return "scm".equals(releaseNotesSource);
     }
     
-    private final String channel;
+    private String channel;
     public String getChannel() {
         return channel;
     }
@@ -81,23 +86,34 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
      * Write a link back to the originating Jenkins build to the
      * Octopus release notes?
      */
-    private final boolean releaseNotesJenkinsLinkback;
+    private boolean releaseNotesJenkinsLinkback;
     public boolean getJenkinsUrlLinkback() {
         return releaseNotesJenkinsLinkback;
     }
 
+    @DataBoundSetter
+    public void setJenkinsUrlLinkback(boolean jenkinsUrlLinkback) {
+        this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
+    }
+
+
     /**
      * The file that the release notes are in.
      */
-    private final String releaseNotesFile;
+    private String releaseNotesFile;
     public String getReleaseNotesFile() {
         return releaseNotesFile;
+    }
+
+    @DataBoundSetter
+    public void setReleaseNotesFile(String releaseNotesFile) {
+        this.releaseNotesFile = releaseNotesFile.trim();
     }
 
     /**
      * Should this release be deployed right after it is created?
      */
-    private final boolean deployThisRelease;
+    private boolean deployThisRelease;
     @Exported
     public boolean getDeployThisRelease() {
         return deployThisRelease;
@@ -106,7 +122,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
     /**
      * All packages needed to create this new release.
      */
-    private final List<PackageConfiguration> packageConfigs;
+    private List<PackageConfiguration> packageConfigs;
     @Exported
     public List<PackageConfiguration> getPackageConfigs() {
         return packageConfigs;
@@ -116,43 +132,71 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
      * Default package version to use for required packages that are not
      * specified in the Package Configurations
      */
-    private final String defaultPackageVersion;
+    private String defaultPackageVersion;
     @Exported
     public String getDefaultPackageVersion() {
         return defaultPackageVersion;
     }
 
+    @DataBoundSetter
+    public void setDefaultPackageVersion(String defaultPackageVersion) {
+        this.defaultPackageVersion = defaultPackageVersion;
+    }
+
+    @DataBoundSetter
+    public void setReleaseNotesSource(String releaseNotesSource) {
+        this.releaseNotesSource = releaseNotesSource;
+    }
+
+    @DataBoundSetter
+    public void setPackageConfigs(List<PackageConfiguration> packageConfigs) {
+        this.packageConfigs = packageConfigs;
+    }
+
+    @DataBoundSetter
+    public void setAdditionalArgs(String addtionalArgs) {
+        this.additionalArgs = addtionalArgs == null ? null : addtionalArgs.trim();
+    }
+
+    public String getAdditionalArgs() {
+        return this.additionalArgs;
+    }
+
+    @DataBoundSetter
+    public void setSpaceId(String spaceId) {
+        this.spaceId = spaceId == null ? null : spaceId.trim();
+    }
+
+    public String getSpaceId() {
+        return this.spaceId;
+    }
+
+    @DataBoundSetter
+    public void setChannel(String channel) {
+        this.channel = channel == null ? null : channel.trim();
+    }
+
+    @DataBoundSetter
+    public void setDeployThisRelease(boolean deployThisRelease) {
+        this.deployThisRelease = deployThisRelease;
+    }
+
+
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public OctopusDeployReleaseRecorder(
-            String serverId, String toolId, String spaceId, String project, String releaseVersion,
-            boolean releaseNotes, String releaseNotesSource, String releaseNotesFile,
-            boolean deployThisRelease, String environment, String tenant, String tenantTag, String channel, boolean waitForDeployment,
-            String deploymentTimeout, boolean cancelOnTimeout,
-            List<PackageConfiguration> packageConfigs, boolean jenkinsUrlLinkback,
-            String defaultPackageVersion, boolean verboseLogging, String additionalArgs) {
+    public OctopusDeployReleaseRecorder(String serverId, String toolId, String project, String releaseVersion, String spaceId) {
 
         this.serverId = serverId.trim();
         this.toolId = toolId.trim();
-        this.spaceId = spaceId.trim();
         this.project = project.trim();
         this.releaseVersion = releaseVersion.trim();
-        this.releaseNotes = releaseNotes;
-        this.releaseNotesSource = releaseNotesSource;
-        this.releaseNotesFile = releaseNotesFile.trim();
-        this.deployThisRelease = deployThisRelease;
-        this.packageConfigs = packageConfigs;
-        this.environment = environment.trim();
-        this.tenant = tenant == null ? null : tenant.trim();
-        this.tenantTag = tenantTag == null ? null : tenantTag.trim();
-        this.channel = channel == null ? null : channel.trim();
-        this.waitForDeployment = waitForDeployment;
-        this.deploymentTimeout = deploymentTimeout == null ? null : deploymentTimeout.trim();
-        this.cancelOnTimeout = cancelOnTimeout;
-        this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
-        this.defaultPackageVersion = defaultPackageVersion;
-        this.verboseLogging = verboseLogging;
-        this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
+        this.spaceId = spaceId;
+
+        this.releaseNotes = false;
+        this.verboseLogging = false;
+        this.channel = "Default";
+        this.deployThisRelease = false;
+        this.cancelOnTimeout = false;
     }
 
     @Override

@@ -46,10 +46,29 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
     private final OverwriteMode overwriteMode;
     public OverwriteMode getOverwriteMode() { return overwriteMode; }
 
+    private String gitUrl;
+    public String getGitUrl() {
+        return this.gitUrl;
+    }
+
+    @DataBoundSetter
+    public void setGitUrl(String gitUrl) {
+        this.gitUrl = gitUrl == null ? null : gitUrl.trim();
+    }
+
+    private String gitCommit;
+    public String getGitCommit() {
+        return this.gitCommit;
+    }
+
+    @DataBoundSetter
+    public void setGitCommit(String gitCommit) {
+        this.gitCommit = gitCommit == null ? null : gitCommit.trim();
+    }
+
     @DataBoundConstructor
     public OctopusDeployPushBuildInformationRecorder(String serverId, String spaceId, String toolId, String packageId,
-                                                     String packageVersion, String commentParser, OverwriteMode overwriteMode,
-                                                     Boolean verboseLogging, String additionalArgs) {
+                                                     String packageVersion, String commentParser, OverwriteMode overwriteMode) {
         this.serverId = serverId.trim();
         this.spaceId = spaceId.trim();
         this.toolId = toolId.trim();
@@ -57,8 +76,7 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
         this.packageVersion = packageVersion.trim();
         this.commentParser = commentParser.trim();
         this.overwriteMode = overwriteMode;
-        this.verboseLogging = verboseLogging;
-        this.additionalArgs = additionalArgs.trim();
+        this.verboseLogging = false;
     }
 
     @Override

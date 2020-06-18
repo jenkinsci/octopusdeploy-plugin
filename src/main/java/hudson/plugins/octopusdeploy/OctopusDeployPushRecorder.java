@@ -44,16 +44,32 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
     private final OverwriteMode overwriteMode;
     public OverwriteMode getOverwriteMode() { return overwriteMode; }
 
+    @DataBoundSetter
+    public void setAdditionalArgs(String additionalArgs) {
+        this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
+    }
+
+    public String getAdditionalArgs() {
+        return this.additionalArgs;
+    }
+
+    @DataBoundSetter
+    public void setSpaceId(String spaceId) {
+        this.spaceId = spaceId == null ? null : spaceId.trim();
+    }
+
+    public String getSpaceId() {
+        return this.spaceId;
+    }
+
     @DataBoundConstructor
-    public OctopusDeployPushRecorder(String serverId, String spaceId, String toolId, String packagePaths,
-                                     OverwriteMode overwriteMode, Boolean verboseLogging, String additionalArgs) {
+    public OctopusDeployPushRecorder(String serverId, String toolId, String packagePaths,
+                                     OverwriteMode overwriteMode) {
         this.serverId = serverId.trim();
-        this.spaceId = spaceId.trim();
         this.toolId = toolId.trim();
         this.packagePaths = packagePaths.trim();
         this.overwriteMode = overwriteMode;
-        this.verboseLogging = verboseLogging;
-        this.additionalArgs = additionalArgs.trim();
+        this.verboseLogging = false;
     }
 
     @Inject
