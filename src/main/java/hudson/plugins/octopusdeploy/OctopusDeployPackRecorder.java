@@ -3,19 +3,21 @@ package hudson.plugins.octopusdeploy;
 import com.google.common.base.Splitter;
 import hudson.EnvVars;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
-import hudson.model.Result;
+import hudson.model.*;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.util.FormValidation;
 import hudson.util.VariableResolver;
+import jenkins.util.BuildListenerAdapter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.types.Commandline;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,7 +30,7 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
     private final String packageId;
     public String getPackageId() { return packageId; }
 
-    private final String packageVersion;
+    private String packageVersion;
     public String getPackageVersion() { return packageVersion; }
 
     private final String packageFormat;
@@ -40,49 +42,69 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
     private final String sourcePath;
     public String getSourcePath() { return sourcePath; }
 
-    private final String includePaths;
+    private String includePaths;
     public String getIncludePaths() { return includePaths; }
 
-    private final String outputPath;
+    private String outputPath;
     public String getOutputPath() { return outputPath; }
 
-    private final Boolean overwriteExisting;
+    @DataBoundSetter
+    public void setOutputPath(String outputPath) {
+        this.outputPath = outputPath == null ? null : outputPath.trim();
+    }
+
+    private Boolean overwriteExisting;
     public Boolean getOverwriteExisting() { return overwriteExisting; }
 
+    @DataBoundSetter
+    public void setPackageVersion(String packageVersion) {
+        this.packageVersion = packageVersion == null ? null : packageVersion.trim();
+    }
+
+    @DataBoundSetter
+    public void setIncludePaths(String includePaths) {
+        this.includePaths = includePaths == null ? null : includePaths.trim();
+    }
+
+    @DataBoundSetter
+    public void setOverwriteExisting(Boolean overwriteExisting) {
+        this.overwriteExisting = overwriteExisting;
+    }
+
     @DataBoundConstructor
-    public OctopusDeployPackRecorder(String toolId, String packageId, String packageVersion, String packageFormat,
-                                     String sourcePath, String includePaths, String outputPath,
-                                     Boolean overwriteExisting, Boolean verboseLogging, String additionalArgs) {
+    public OctopusDeployPackRecorder(String toolId, String packageId, String packageFormat, String sourcePath) {
         this.toolId = toolId.trim();
         this.packageId = packageId.trim();
-        this.packageVersion = packageVersion.trim();
         this.packageFormat = packageFormat.trim();
         this.sourcePath = sourcePath.trim();
-        this.includePaths = includePaths.trim();
-        this.outputPath = outputPath.trim();
-        this.overwriteExisting = overwriteExisting;
-        this.verboseLogging = verboseLogging;
-        this.additionalArgs = additionalArgs.trim();
+
+        this.outputPath = ".";
+        this.includePaths = "**";
+        this.overwriteExisting = false;
+        this.verboseLogging = false;
     }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
         boolean success = true;
-        Log log = new Log(listener);
-        if (Result.FAILURE.equals(build.getResult())) {
+        BuildListenerAdapter listenerAdapter = new BuildListenerAdapter(listener);
+
+        Log log = new Log(listenerAdapter);
+        if (Result.FAILURE.equals(run.getResult())) {
             log.info("Not packaging the application due to job being in FAILED state.");
-            return success;
+            return;
         }
 
-        VariableResolver resolver = build.getBuildVariableResolver();
         EnvVars envVars;
         try {
-            envVars = build.getEnvironment(listener);
+            envVars = run.getEnvironment(listener);
         } catch (Exception ex) {
             log.fatal(String.format("Failed to retrieve environment variables for this build '%s' - '%s'",
-                    build.getProject().getName(), ex.getMessage()));
-            return false;
+                    run.getParent().getName(), ex.getMessage()));
+            run.setResult(Result.FAILURE);
+            return;
         }
+        VariableResolver resolver =  new VariableResolver.ByMap<>(envVars);
         EnvironmentVariableValueInjector envInjector = new EnvironmentVariableValueInjector(resolver, envVars);
 
         //logStartHeader
@@ -91,14 +113,17 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
 
         try {
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(build.getBuiltOn(), launcher, commands, masks, envVars, listener);
+
+            Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
             success = result.equals(Result.SUCCESS);
         } catch (Exception ex) {
             log.fatal("Failed to package application: " + ex.getMessage());
             success = false;
         }
 
-        return success;
+        if (!success) {
+            run.setResult(Result.FAILURE);
+        }
     }
 
     private List<String> buildCommands(final EnvironmentVariableValueInjector envInjector) {
@@ -168,6 +193,7 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
     }
 
     @Extension
+    @Symbol("octopusPack")
     public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImplStep {
 
         @Override

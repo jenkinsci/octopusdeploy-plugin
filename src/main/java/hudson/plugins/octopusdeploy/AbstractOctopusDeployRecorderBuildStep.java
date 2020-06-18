@@ -3,6 +3,7 @@ package hudson.plugins.octopusdeploy;
 import com.octopusdeploy.api.OctopusApi;
 import com.octopusdeploy.api.data.Space;
 import hudson.EnvVars;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Proc;
 import hudson.model.*;
@@ -15,10 +16,12 @@ import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
+import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.types.Commandline;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -36,7 +39,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Deploy server access.
  * @author wbenayed
  */
-public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder {
+public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder implements SimpleBuildStep {
 
     /**
      * Cache for OctopusDeployServer instance used in deployment
@@ -118,11 +121,16 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder {
     }
 
     /**
-     * The additional arguments to pass to octo.exe
+     * The additional arguments to pass to Octopus CLI
      */
     protected String additionalArgs;
     public String getAdditionalArgs() {
         return additionalArgs;
+    }
+
+    @DataBoundSetter
+    public void setAdditionalArgs(String additionalArgs) {
+        this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
     }
 
     /**
@@ -140,6 +148,11 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder {
     protected boolean verboseLogging;
     public boolean getVerboseLogging() {
         return verboseLogging;
+    }
+
+    @DataBoundSetter
+    public void setVerboseLogging(boolean verboseLogging) {
+        this.verboseLogging = verboseLogging;
     }
 
     /**
@@ -304,13 +317,13 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder {
         return masks;
     }
 
-    public Result launchOcto(Node builtOn, Launcher launcher, List<String> commands, Boolean[] masks, EnvVars environment, BuildListener listener) {
+    public Result launchOcto(FilePath workspace, Launcher launcher, List<String> commands, Boolean[] masks, EnvVars environment, BuildListener listener) {
         Log log = new Log(listener);
         int exitCode = -1;
         final String octopusCli = this.getToolId();
 
         checkState(StringUtils.isNotBlank(octopusCli), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus CLI"));
-
+        Node builtOn = workspace.toComputer().getNode();
         final String cliPath = getOctopusToolPath(octopusCli, builtOn, environment, launcher.getListener());
         if(StringUtils.isNotBlank(cliPath)) {
             final List<String> cmdArgs = new ArrayList<>();
@@ -332,19 +345,19 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder {
                         .masks(ArrayUtils.toPrimitive(cmdMasks.toArray((Boolean[])Array.newInstance(Boolean.class, 0))))
                         .stdout(listener)
                         .envs(environment)
-                        .pwd(environment.get("WORKSPACE", ""))
+                        .pwd(workspace)
                         .start();
 
                 exitCode = process.join();
 
-                log.info(String.format("Octo.exe exit code: %d", exitCode));
+                log.info(String.format("Octopus CLI exit code: %d", exitCode));
 
             } catch (IOException e) {
-                final String message = "Error from Octo.exe: " + e.getMessage();
+                final String message = "Error from Octopus CLI: " + e.getMessage();
                 log.error(message);
                 return Result.FAILURE;
             } catch (InterruptedException e) {
-                final String message = "Unable to wait for Octo.exe: " + e.getMessage();
+                final String message = "Unable to wait for Octopus CLI: " + e.getMessage();
                 log.error(message);
                 return Result.FAILURE;
             }

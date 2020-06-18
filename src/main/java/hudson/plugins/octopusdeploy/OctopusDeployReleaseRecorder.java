@@ -20,11 +20,19 @@ import hudson.tasks.*;
 import hudson.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 
+import jenkins.model.lazy.LazyBuildMixIn;
+import jenkins.util.BuildListenerAdapter;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.remoting.RoleChecker;
+import org.jetbrains.annotations.NotNull;
 import org.kohsuke.stapler.*;
 import org.kohsuke.stapler.export.*;
+
+import javax.annotation.Nonnull;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -43,15 +51,20 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
     /**
      * Are there release notes for this release?
      */
-    private final boolean releaseNotes;
+    private boolean releaseNotes;
     public boolean getReleaseNotes() {
         return releaseNotes;
+    }
+
+    @DataBoundSetter
+    public void setReleaseNotes(boolean releaseNotes) {
+        this.releaseNotes = releaseNotes;
     }
 
     /**
      * Where are the release notes located?
      */
-    private final String releaseNotesSource;
+    private String releaseNotesSource;
     public String getReleaseNotesSource() {
         return releaseNotesSource;
     }
@@ -64,7 +77,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         return "scm".equals(releaseNotesSource);
     }
     
-    private final String channel;
+    private String channel;
     public String getChannel() {
         return channel;
     }
@@ -73,23 +86,34 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
      * Write a link back to the originating Jenkins build to the
      * Octopus release notes?
      */
-    private final boolean releaseNotesJenkinsLinkback;
+    private boolean releaseNotesJenkinsLinkback;
     public boolean getJenkinsUrlLinkback() {
         return releaseNotesJenkinsLinkback;
     }
 
+    @DataBoundSetter
+    public void setJenkinsUrlLinkback(boolean jenkinsUrlLinkback) {
+        this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
+    }
+
+
     /**
      * The file that the release notes are in.
      */
-    private final String releaseNotesFile;
+    private String releaseNotesFile;
     public String getReleaseNotesFile() {
         return releaseNotesFile;
+    }
+
+    @DataBoundSetter
+    public void setReleaseNotesFile(String releaseNotesFile) {
+        this.releaseNotesFile = releaseNotesFile.trim();
     }
 
     /**
      * Should this release be deployed right after it is created?
      */
-    private final boolean deployThisRelease;
+    private boolean deployThisRelease;
     @Exported
     public boolean getDeployThisRelease() {
         return deployThisRelease;
@@ -98,7 +122,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
     /**
      * All packages needed to create this new release.
      */
-    private final List<PackageConfiguration> packageConfigs;
+    private List<PackageConfiguration> packageConfigs;
     @Exported
     public List<PackageConfiguration> getPackageConfigs() {
         return packageConfigs;
@@ -108,43 +132,71 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
      * Default package version to use for required packages that are not
      * specified in the Package Configurations
      */
-    private final String defaultPackageVersion;
+    private String defaultPackageVersion;
     @Exported
     public String getDefaultPackageVersion() {
         return defaultPackageVersion;
     }
 
+    @DataBoundSetter
+    public void setDefaultPackageVersion(String defaultPackageVersion) {
+        this.defaultPackageVersion = defaultPackageVersion;
+    }
+
+    @DataBoundSetter
+    public void setReleaseNotesSource(String releaseNotesSource) {
+        this.releaseNotesSource = releaseNotesSource;
+    }
+
+    @DataBoundSetter
+    public void setPackageConfigs(List<PackageConfiguration> packageConfigs) {
+        this.packageConfigs = packageConfigs;
+    }
+
+    @DataBoundSetter
+    public void setAdditionalArgs(String addtionalArgs) {
+        this.additionalArgs = addtionalArgs == null ? null : addtionalArgs.trim();
+    }
+
+    public String getAdditionalArgs() {
+        return this.additionalArgs;
+    }
+
+    @DataBoundSetter
+    public void setSpaceId(String spaceId) {
+        this.spaceId = spaceId == null ? null : spaceId.trim();
+    }
+
+    public String getSpaceId() {
+        return this.spaceId;
+    }
+
+    @DataBoundSetter
+    public void setChannel(String channel) {
+        this.channel = channel == null ? null : channel.trim();
+    }
+
+    @DataBoundSetter
+    public void setDeployThisRelease(boolean deployThisRelease) {
+        this.deployThisRelease = deployThisRelease;
+    }
+
+
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public OctopusDeployReleaseRecorder(
-            String serverId, String toolId, String spaceId, String project, String releaseVersion,
-            boolean releaseNotes, String releaseNotesSource, String releaseNotesFile,
-            boolean deployThisRelease, String environment, String tenant, String tenantTag, String channel, boolean waitForDeployment,
-            String deploymentTimeout, boolean cancelOnTimeout,
-            List<PackageConfiguration> packageConfigs, boolean jenkinsUrlLinkback,
-            String defaultPackageVersion, boolean verboseLogging, String additionalArgs) {
+    public OctopusDeployReleaseRecorder(String serverId, String toolId, String project, String releaseVersion, String spaceId) {
 
         this.serverId = serverId.trim();
         this.toolId = toolId.trim();
-        this.spaceId = spaceId.trim();
         this.project = project.trim();
         this.releaseVersion = releaseVersion.trim();
-        this.releaseNotes = releaseNotes;
-        this.releaseNotesSource = releaseNotesSource;
-        this.releaseNotesFile = releaseNotesFile.trim();
-        this.deployThisRelease = deployThisRelease;
-        this.packageConfigs = packageConfigs;
-        this.environment = environment.trim();
-        this.tenant = tenant == null ? null : tenant.trim();
-        this.tenantTag = tenantTag == null ? null : tenantTag.trim();
-        this.channel = channel == null ? null : channel.trim();
-        this.waitForDeployment = waitForDeployment;
-        this.deploymentTimeout = deploymentTimeout == null ? null : deploymentTimeout.trim();
-        this.cancelOnTimeout = cancelOnTimeout;
-        this.releaseNotesJenkinsLinkback = jenkinsUrlLinkback;
-        this.defaultPackageVersion = defaultPackageVersion;
-        this.verboseLogging = verboseLogging;
-        this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
+        this.spaceId = spaceId;
+
+        this.releaseNotes = false;
+        this.verboseLogging = false;
+        this.channel = "Default";
+        this.deployThisRelease = false;
+        this.cancelOnTimeout = false;
     }
 
     @Override
@@ -153,24 +205,27 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
     }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
+        BuildListenerAdapter listenerAdapter = new BuildListenerAdapter(listener);
+        Log log = new Log(listenerAdapter);
+
         boolean success = true;
 
-        Log log = new Log(listener);
-        if (Result.FAILURE.equals(build.getResult())) {
+        if (Result.FAILURE.equals(run.getResult())) {
             log.info("Not creating a release due to job being in FAILED state.");
-            return success;
+            return;
         }
 
-        VariableResolver resolver = build.getBuildVariableResolver();
         EnvVars envVars;
         try {
-            envVars = build.getEnvironment(listener);
+            envVars = run.getEnvironment(listener);
         } catch (Exception ex) {
             log.fatal(String.format("Failed to retrieve environment variables for this project '%s' - '%s'",
                 project, ex.getMessage()));
-            return false;
+            run.setResult(Result.FAILURE);
+            return ;
         }
+        VariableResolver resolver =  new VariableResolver.ByMap<>(envVars);
         EnvironmentVariableValueInjector envInjector = new EnvironmentVariableValueInjector(resolver, envVars);
 
         // NOTE: hiding the member variables of the same name with their env-injected equivalents
@@ -251,7 +306,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             String resolvedJobNameVar = envInjector.injectEnvironmentVariableValues(jobNameVar);
             String resolvedBuildNumberVar = envInjector.injectEnvironmentVariableValues(buildNumberVar);
 
-            releaseNotesContent = String.format("Release created by Build [%s #%s](%s)",
+            releaseNotesContent = String.format("Release created by Build [%s #%s](%s)\n",
                 resolvedJobNameVar,
                 resolvedBuildNumberVar,
                 resolvedBuildUrlVar);
@@ -260,13 +315,13 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         if (releaseNotes) {
             if (isReleaseNotesSourceFile()) {
                 try {
-                    releaseNotesContent += getReleaseNotesFromFile(build, releaseNotesFile, log);
+                    releaseNotesContent += getReleaseNotesFromFile(workspace, releaseNotesFile, log);
                 } catch (Exception ex) {
                     log.fatal(String.format("Unable to get file contents from release notes file! - %s", ex.getMessage()));
                     success = false;
                 }
             } else if (isReleaseNotesSourceScm()) {
-                releaseNotesContent += getReleaseNotesFromScm(build);
+                releaseNotesContent += getReleaseNotesFromScm(run);
             } else {
                 log.fatal(String.format("Bad configuration: if using release notes, should have source of file or scm. Found '%s'", releaseNotesSource));
                 success = false;
@@ -274,7 +329,8 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         }
 
         if (!success) { // Early exit
-            return success;
+            run.setResult(Result.FAILURE);
+            return;
         }
 
         if (StringUtils.isNotBlank(releaseNotesContent)) {
@@ -302,7 +358,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
 
         try {
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
-            Result result = launchOcto(build.getBuiltOn(), launcher, commands, masks, envVars, listener);
+            Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
             success = result.equals(Result.SUCCESS);
             if (success) {
                 String serverUrl = getOctopusDeployServer(serverId).getUrl();
@@ -314,7 +370,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
                 String urlSuffix = api.getReleasesApi().getPortalUrlForRelease(fullProject.getId(), releaseVersion);
                 String portalUrl = serverUrl + urlSuffix;
                 log.info("Release created: \n\t" + portalUrl);
-                build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Release, portalUrl));
+                run.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Release, portalUrl));
 
                 if(deployThisRelease)
                 {
@@ -331,7 +387,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
                     if (urlSuffix != null && !urlSuffix.isEmpty()) {
                         String portalDeploymentUrl = serverUrl + deploymenturlSuffix;
                         log.info("Deployment executed: \n\t" + portalDeploymentUrl);
-                        build.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Deployment, portalDeploymentUrl));
+                        run.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Deployment, portalDeploymentUrl));
                     }
                 }
             }
@@ -340,7 +396,9 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             success = false;
         }
 
-        return success;
+        if (!success) {
+            run.setResult(Result.FAILURE);
+        }
     }
 
     /**
@@ -439,13 +497,13 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
 
     /**
      * Return the release notes contents from a file.
-     * @param build our build
+     * @param workspace our build
      * @return string contents of file
      * @throws IOException if there was a file read io problem
      * @throws InterruptedException if the action for reading was interrupted
      */
-    private String getReleaseNotesFromFile(AbstractBuild build, String releaseNotesFilename, Log log) throws IOException, InterruptedException {
-        FilePath path = new FilePath(build.getWorkspace(), releaseNotesFilename);
+    private String getReleaseNotesFromFile(FilePath workspace, String releaseNotesFilename, Log log) throws IOException, InterruptedException {
+        FilePath path = new FilePath(workspace, releaseNotesFilename);
         return path.act(new ReadFileCallable(log));
     }
 
@@ -483,13 +541,14 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
      * @param build the jenkins build
      * @return release notes as a single string
      */
-    private String getReleaseNotesFromScm(AbstractBuild build) {
+    private String getReleaseNotesFromScm(Run<?, ?> build) {
         StringBuilder notes = new StringBuilder();
-        AbstractProject project = build.getProject();
-        AbstractBuild lastSuccessfulBuild = (AbstractBuild)project.getLastSuccessfulBuild();
-        AbstractBuild currentBuild = null;
+
+        Job project = build.getParent();
+        Run lastSuccessfulBuild = project.getLastSuccessfulBuild();
+        Run currentBuild = null;
         if (lastSuccessfulBuild == null) {
-            AbstractBuild lastBuild = (AbstractBuild)project.getLastBuild();
+            Run lastBuild = project.getLastBuild();
             currentBuild = lastBuild;
         }
         else
@@ -518,19 +577,34 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
 
     /**
      * Convert a build's change set to a string, each entry on a new line
-     * @param build The build to poll changesets from
+     * @param run The build to poll changesets from
      * @return The changeset as a string
      */
-    private String convertChangeSetToString(AbstractBuild build) {
+    private String convertChangeSetToString(Run<?, ?> run) {
         StringBuilder allChangeNotes = new StringBuilder();
-        if (build != null) {
-            ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = build.getChangeSet();
-            for (Object item : changeSet.getItems()) {
-                ChangeLogSet.Entry entry = (ChangeLogSet.Entry) item;
-                allChangeNotes.append(entry.getMsg()).append("\n");
-            }
+        if (run != null) {
+            List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = getChangeSets(run);
+
+            for (ChangeLogSet<? extends ChangeLogSet.Entry> changeSet : changeSets)
+                for (Object item : changeSet.getItems()) {
+                    ChangeLogSet.Entry entry = (ChangeLogSet.Entry) item;
+                    allChangeNotes.append(entry.getMsg()).append("\n");
+                }
+
         }
         return allChangeNotes.toString();
+    }
+
+    @NotNull
+    private List<ChangeLogSet<? extends ChangeLogSet.Entry>> getChangeSets(Run<?, ?> run) {
+        if (run instanceof AbstractBuild) {
+            AbstractBuild build = (AbstractBuild) run;
+            return Collections.singletonList(build.getChangeSet());
+        }
+        else {
+            WorkflowRun workflowRun = (WorkflowRun) run;
+            return workflowRun.getChangeSets();
+        }
     }
 
     /**
@@ -538,6 +612,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
      * The class is marked as public so that it can be accessed from views.
      */
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
+    @Symbol("octopusCreateRelease")
     public static final class DescriptorImpl extends AbstractOctopusDeployDescriptorImplPost {
         private static final String PROJECT_RELEASE_VALIDATION_MESSAGE = "Project must be set to validate release.";
         private static final String SERVER_ID_VALIDATION_MESSAGE = "Could not validate without a valid Server ID.";
