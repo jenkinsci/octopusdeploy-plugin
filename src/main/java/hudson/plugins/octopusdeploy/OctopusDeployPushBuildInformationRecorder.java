@@ -196,11 +196,13 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
         FilePath ws = workspace;
         Job project = build.getParent();
 
+        String gitUrl = isNullOrEmpty(this.getGitUrl()) ? envInjector.injectEnvironmentVariableValues("${GIT_URL}") : envInjector.injectEnvironmentVariableValues(this.getGitUrl());
+        String gitCommit = isNullOrEmpty(this.getGitCommit())?  envInjector.injectEnvironmentVariableValues("${GIT_COMMIT}") : envInjector.injectEnvironmentVariableValues(this.getGitCommit());
         final OctopusBuildInformationBuilder builder = new OctopusBuildInformationBuilder();
         final OctopusBuildInformation buildInformation = builder.build(
                 getVcsType(project),
-                envInjector.injectEnvironmentVariableValues("${GIT_URL}"),
-                envInjector.injectEnvironmentVariableValues("${GIT_COMMIT}"),
+                gitUrl,
+                gitCommit,
                 getCommits(build, project),
                 commentParser,
                 envInjector.injectEnvironmentVariableValues("${BUILD_URL}"),
@@ -215,6 +217,10 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
         writer.writeToFile(ws, buildInformation, buildInformationFile);
 
         return buildInformationFile;
+    }
+
+    private boolean isNullOrEmpty(String s) {
+        return s == null || s.isEmpty();
     }
 
     private String getVcsType(Job job) {
