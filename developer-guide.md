@@ -106,6 +106,9 @@ Select `Run` and fill in the new version in the dialog:
 
 ![run custom build](./developer-guide-images/run-custom-build.png)
 
+### Managing the version number
+For most changes the version number is self-managed by the build process. If you need to bump the version number manually, such as bumping the major version number, you will need to update the version number in the `<version>` tag in [pom.xml](https://github.com/OctopusDeploy/octopus-jenkins-plugin/blob/master/pom.xml). The version number format should be a 3  `major.minor.patch-SNAPSHOT`. The `-SNAPSHOT` suffix is required.
+
 **Please note**: The [plugin repository](https://plugins.jenkins.io/) can take several days before the new version shows on the [download page](https://plugins.jenkins.io/octopusdeploy/). Be patient.
 
 # Inside Jenkins #
