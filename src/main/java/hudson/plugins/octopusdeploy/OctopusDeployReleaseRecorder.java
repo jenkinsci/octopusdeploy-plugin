@@ -739,8 +739,8 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
          * @param spaceId The id of the space where to load this resource from
          * @return ListBoxModel
          */
-        public ListBoxModel doFillEnvironmentItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
-            ListBoxModel names = new ListBoxModel();
+        public ComboBoxModel doFillEnvironmentItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
+            ComboBoxModel names = new ComboBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return names;
@@ -816,10 +816,10 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
          * Data binding that returns all possible project names to be used in the project autocomplete.
          * @param serverId The id of OctopusDeployServer in the configuration.
          * @param spaceId The id of the space where to load this resource from
-         * @return ListBoxModel
+         * @return ComboBoxModel
          */
-        public ListBoxModel doFillProjectItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
-            ListBoxModel names = new ListBoxModel();
+        public ComboBoxModel doFillProjectItems(@QueryParameter String serverId, @QueryParameter String spaceId) {
+            ComboBoxModel names = new ComboBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return names;
@@ -844,8 +844,8 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
          * @param spaceId The id of the space where to load this resource from
          * @return ComboBoxModel
          */
-        public ListBoxModel doFillChannelItems(@QueryParameter String project, @QueryParameter String serverId, @QueryParameter String spaceId) {
-            ListBoxModel names = new ListBoxModel();
+        public ComboBoxModel doFillChannelItems(@QueryParameter String project, @QueryParameter String serverId, @QueryParameter String spaceId) {
+            ComboBoxModel names = new ComboBoxModel();
 
             if (doCheckServerId(serverId).kind != FormValidation.Kind.OK) {
                 return names;

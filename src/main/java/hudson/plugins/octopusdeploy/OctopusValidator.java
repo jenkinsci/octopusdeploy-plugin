@@ -39,7 +39,7 @@ public class OctopusValidator {
             com.octopusdeploy.api.data.Project p = api.getProjectsApi().getProjectByName(projectName, true);
             if (p == null)
             {
-                return FormValidation.error("Project not found.");
+                return FormValidation.warning("Project '%s' doesn't exist. If this field is computed you can disregard this warning.", projectName);
             }
             if (!projectName.equals(p.getName()))
             {
@@ -76,12 +76,12 @@ public class OctopusValidator {
                 if (project != null) {
                     channel = api.getChannelsApi().getChannelByName(project.getId(), channelName);
                     if (channel == null) {
-                        return FormValidation.error("Channel not found.");
+                        return FormValidation.warning("Channel '%s' doesn't exist. If this field is computed you can disregard this warning.", channelName);
                     }
                 }
                 else
                 {
-                    return FormValidation.warning("Project must be set to validate this field.");
+                    return FormValidation.warning("Unable to validate channel because the project '%s' couldn't be found.", projectName);
                 }
             } catch (IllegalArgumentException ex) {
                 return FormValidation.warning("Unable to validate field - " + ex.getMessage());
@@ -109,7 +109,7 @@ public class OctopusValidator {
             com.octopusdeploy.api.data.Environment env = api.getEnvironmentsApi().getEnvironmentByName(environmentName, true);
             if (env == null)
             {
-                return FormValidation.error("The '%s' environment was not found.", environmentName);
+                return FormValidation.warning("Environment '%s' doesn't exist. If this field is computed you can disregard this warning.", environmentName);
             }
             if (!environmentName.equals(env.getName()))
             {
