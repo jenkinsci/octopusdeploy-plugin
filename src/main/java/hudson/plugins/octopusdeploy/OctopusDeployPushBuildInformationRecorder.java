@@ -29,6 +29,7 @@ import java.io.Serializable;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Strings.isNullOrEmpty;
 
 public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDeployRecorderBuildStep implements Serializable {
 
@@ -217,10 +218,6 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
         writer.writeToFile(ws, buildInformation, buildInformationFile);
 
         return buildInformationFile;
-    }
-
-    private boolean isNullOrEmpty(String s) {
-        return s == null || s.isEmpty();
     }
 
     private String getVcsType(Job job) {

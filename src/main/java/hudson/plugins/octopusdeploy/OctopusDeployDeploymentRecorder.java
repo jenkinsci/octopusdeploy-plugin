@@ -94,17 +94,6 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         checkState(StringUtils.isNotBlank(environment), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Environment name"));
         checkState(StringUtils.isNotBlank(releaseVersion), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Version"));
 
-        Properties properties = new Properties();
-        if (variables != null && !variables.isEmpty()) {
-            try {
-                properties.load(new StringReader(variables));
-            } catch (Exception ex) {
-                log.fatal(String.format("Unable to load entry variables: '%s'", ex.getMessage()));
-                run.setResult(Result.FAILURE);
-                return;
-            }
-        }
-
         final List<String> commands = new ArrayList<>();
         commands.add(OctoConstants.Commands.DEPLOY_RELEASE);
 
@@ -146,10 +135,9 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             commands.add("--progress");
         }
 
-        for(String variableName : properties.stringPropertyNames()) {
-            String variableValue = properties.getProperty(variableName);
-            commands.add("--variable");
-            commands.add(String.format("%s:%s", variableName, variableValue));
+        commands.addAll(getVariableCommands(run, envInjector, log, variables));
+        if (run.getResult() == Result.FAILURE) {
+            return;
         }
 
         commands.addAll(getCommonCommandArguments(envInjector));

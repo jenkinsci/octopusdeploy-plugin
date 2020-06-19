@@ -23,12 +23,12 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import javax.annotation.Nonnull;
+import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -282,6 +282,28 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
      */
     public OctopusApi getApi() {
         return getOctopusDeployServer().getApi();
+    }
+
+    List<String> getVariableCommands(@Nonnull Run<?, ?> run, EnvironmentVariableValueInjector envInjector, Log log, String variables) {
+        Properties properties = new Properties();
+        if (variables != null && !variables.isEmpty()) {
+            try {
+                properties.load(new StringReader(variables));
+            } catch (Exception ex) {
+                log.fatal(String.format("Unable to load entry variables: '%s'", ex.getMessage()));
+                run.setResult(Result.FAILURE);
+            }
+        }
+
+        List<String> variableCommands = new ArrayList<>();
+
+        for(String variableName : properties.stringPropertyNames()) {
+            String variableValue = envInjector.injectEnvironmentVariableValues(properties.getProperty(variableName));
+            variableCommands.add("--variable");
+            variableCommands.add(String.format("%s:%s", variableName, variableValue));
+        }
+
+        return variableCommands;
     }
 
     List<String> getCommonCommandArguments(EnvironmentVariableValueInjector envInjector) {

@@ -33,6 +33,7 @@ import org.kohsuke.stapler.export.*;
 import javax.annotation.Nonnull;
 
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Strings.isNullOrEmpty;
 
 /**
  * Creates a release and optionally deploys it.
@@ -214,6 +215,12 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             return;
         }
 
+        if (this.deployThisRelease && isNullOrEmpty(this.environment)) {
+            log.error("Must provide the environment when deploying the release.");
+            run.setResult(Result.FAILURE);
+            return;
+        }
+
         EnvVars envVars;
         try {
             envVars = run.getEnvironment(listener);
@@ -349,6 +356,13 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
                 } else {
                     commands.add(String.format("%s:%s", pkg.getPackageName(), pkg.getPackageVersion()));
                 }
+            }
+        }
+
+        if (this.deployThisRelease) {
+            commands.addAll(getVariableCommands(run, envInjector, log, variables));
+            if (run.getResult() == Result.FAILURE) {
+                return;
             }
         }
 
