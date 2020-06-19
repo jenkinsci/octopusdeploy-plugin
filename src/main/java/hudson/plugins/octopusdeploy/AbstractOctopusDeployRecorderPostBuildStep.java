@@ -104,7 +104,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
         this.environment = environment.trim();
     }
     /**
-     * The variables to use for a deploy to in Octopus.
+     * The variables to use for a deploy in Octopus.
      */
     protected String variables;
     public String getVariables() {
