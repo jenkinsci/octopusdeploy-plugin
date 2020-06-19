@@ -152,7 +152,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             commands.add(String.format("%s:%s", variableName, variableValue));
         }
 
-        commands.addAll(getCommonCommandArguments());
+        commands.addAll(getCommonCommandArguments(envInjector));
 
         if(success) {
             try {

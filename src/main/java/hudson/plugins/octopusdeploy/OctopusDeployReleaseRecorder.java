@@ -20,9 +20,7 @@ import hudson.tasks.*;
 import hudson.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 
-import jenkins.model.lazy.LazyBuildMixIn;
 import jenkins.util.BuildListenerAdapter;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
@@ -354,7 +352,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             }
         }
 
-        commands.addAll(getCommonCommandArguments());
+        commands.addAll(getCommonCommandArguments(envInjector));
 
         try {
             final Boolean[] masks = getMasks(commands, OctoConstants.Commands.Arguments.MaskedArguments);
