@@ -255,57 +255,6 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
         return getOctopusDeployServer().getApi();
     }
 
-    List<String> getCommonCommandArguments() {
-        List<String> commands = new ArrayList<>();
-
-        OctopusDeployServer server = getOctopusDeployServer(this.serverId);
-        String serverUrl = server.getUrl();
-        String apiKey = server.getApiKey().getPlainText();
-        boolean ignoreSslErrors = server.getIgnoreSslErrors();
-
-        checkState(StringUtils.isNotBlank(serverUrl), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "Octopus URL"));
-        checkState(StringUtils.isNotBlank(apiKey), String.format(OctoConstants.Errors.INPUT_CANNOT_BE_BLANK_MESSAGE_FORMAT, "API Key"));
-
-        commands.add(OctoConstants.Commands.Arguments.PROJECT_NAME);
-        commands.add(project);
-
-        commands.add(OctoConstants.Commands.Arguments.SERVER_URL);
-        commands.add(serverUrl);
-        commands.add(OctoConstants.Commands.Arguments.API_KEY);
-        commands.add(apiKey);
-        if (StringUtils.isNotBlank(spaceId)) {
-            commands.add(OctoConstants.Commands.Arguments.SPACE_NAME);
-            commands.add(spaceId);
-        }
-
-        if (waitForDeployment) {
-            if (StringUtils.isNotBlank(deploymentTimeout)) {
-                checkState(OctopusValidator.isValidTimeSpan(deploymentTimeout), String.format(OctoConstants.Errors.INPUT_IS_INVALID_MESSAGE_FORMAT, "Deployment Timeout (expects format:\"HH:mm:ss\")"));
-                commands.add("--deploymentTimeout");
-                commands.add(deploymentTimeout);
-            }
-
-            if (cancelOnTimeout) {
-                commands.add("--cancelOnTimeout");
-            }
-        }
-
-        if (ignoreSslErrors) {
-            commands.add("--ignoreSslErrors");
-        }
-
-        if (verboseLogging) {
-            commands.add("--debug");
-        }
-
-        if(StringUtils.isNotBlank(additionalArgs)) {
-            final String[] myArgs = Commandline.translateCommandline(additionalArgs);
-            commands.addAll(Arrays.asList(myArgs));
-        }
-
-        return commands;
-    }
-
     Boolean[] getMasks(List<String> commands, String... commandArgumentsToMask) {
         final Boolean[] masks = new Boolean[commands.size()];
         Arrays.fill(masks, Boolean.FALSE);
