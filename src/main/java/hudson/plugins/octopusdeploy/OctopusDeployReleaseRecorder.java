@@ -689,7 +689,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             try {
                 p = api.getProjectsApi().getProjectByName(project);
                 if (p == null) {
-                    return FormValidation.warning(PROJECT_RELEASE_VALIDATION_MESSAGE);
+                    return FormValidation.warning("Unable to validate release because the project '%s' couldn't be found.", project);
                 }
             } catch (Exception ex) {
                 return FormValidation.warning(PROJECT_RELEASE_VALIDATION_MESSAGE);
