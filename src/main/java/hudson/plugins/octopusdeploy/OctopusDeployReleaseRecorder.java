@@ -34,6 +34,7 @@ import javax.annotation.Nonnull;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static hudson.plugins.octopusdeploy.services.StringUtil.cleanValue;
 
 /**
  * Creates a release and optionally deploys it.
@@ -105,9 +106,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
     }
 
     @DataBoundSetter
-    public void setReleaseNotesFile(String releaseNotesFile) {
-        this.releaseNotesFile = releaseNotesFile.trim();
-    }
+    public void setReleaseNotesFile(String releaseNotesFile) { this.releaseNotesFile = cleanValue(releaseNotesFile); }
 
     /**
      * Should this release be deployed right after it is created?
@@ -139,12 +138,12 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
 
     @DataBoundSetter
     public void setDefaultPackageVersion(String defaultPackageVersion) {
-        this.defaultPackageVersion = defaultPackageVersion;
+        this.defaultPackageVersion = cleanValue(defaultPackageVersion);
     }
 
     @DataBoundSetter
     public void setReleaseNotesSource(String releaseNotesSource) {
-        this.releaseNotesSource = releaseNotesSource;
+        this.releaseNotesSource = cleanValue(releaseNotesSource);
     }
 
     @DataBoundSetter
@@ -153,9 +152,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
     }
 
     @DataBoundSetter
-    public void setAdditionalArgs(String addtionalArgs) {
-        this.additionalArgs = addtionalArgs == null ? null : addtionalArgs.trim();
-    }
+    public void setAdditionalArgs(String addtionalArgs) { this.additionalArgs = cleanValue(addtionalArgs); }
 
     public String getAdditionalArgs() {
         return this.additionalArgs;
@@ -163,7 +160,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
 
     @DataBoundSetter
     public void setSpaceId(String spaceId) {
-        this.spaceId = spaceId == null ? null : spaceId.trim();
+        this.spaceId = cleanValue(spaceId);
     }
 
     public String getSpaceId() {
@@ -172,7 +169,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
 
     @DataBoundSetter
     public void setChannel(String channel) {
-        this.channel = channel == null ? null : channel.trim();
+        this.channel = cleanValue(channel);
     }
 
     @DataBoundSetter
@@ -185,11 +182,11 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
     @DataBoundConstructor
     public OctopusDeployReleaseRecorder(String serverId, String toolId, String project, String releaseVersion, String spaceId) {
 
-        this.serverId = serverId.trim();
-        this.toolId = toolId.trim();
-        this.project = project.trim();
-        this.releaseVersion = releaseVersion.trim();
-        this.spaceId = spaceId;
+        this.serverId = cleanValue(serverId);
+        this.toolId = cleanValue(toolId);
+        this.project = cleanValue(project);
+        this.releaseVersion = cleanValue(releaseVersion);
+        this.spaceId = cleanValue(spaceId);
 
         this.releaseNotes = false;
         this.verboseLogging = false;

@@ -33,6 +33,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hudson.plugins.octopusdeploy.services.StringUtil.cleanValue;
 
 /**
  * The AbstractOctopusDeployRecorder tries to take care of most of the Octopus
@@ -130,7 +131,7 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
 
     @DataBoundSetter
     public void setAdditionalArgs(String additionalArgs) {
-        this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
+        this.additionalArgs = cleanValue(additionalArgs);
     }
 
     /**

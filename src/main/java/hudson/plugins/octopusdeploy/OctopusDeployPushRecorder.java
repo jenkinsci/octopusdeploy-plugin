@@ -33,6 +33,7 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static hudson.plugins.octopusdeploy.services.StringUtil.cleanValue;
 
 public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuildStep implements Serializable {
 
@@ -45,8 +46,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
     public OverwriteMode getOverwriteMode() { return overwriteMode; }
 
     @DataBoundSetter
-    public void setAdditionalArgs(String additionalArgs) {
-        this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
+    public void setAdditionalArgs(String additionalArgs) { this.additionalArgs = cleanValue(additionalArgs);
     }
 
     public String getAdditionalArgs() {
@@ -54,9 +54,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
     }
 
     @DataBoundSetter
-    public void setSpaceId(String spaceId) {
-        this.spaceId = spaceId == null ? null : spaceId.trim();
-    }
+    public void setSpaceId(String spaceId) { this.spaceId = cleanValue(spaceId); }
 
     public String getSpaceId() {
         return this.spaceId;
@@ -65,9 +63,9 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
     @DataBoundConstructor
     public OctopusDeployPushRecorder(String serverId, String toolId, String packagePaths,
                                      OverwriteMode overwriteMode) {
-        this.serverId = serverId.trim();
-        this.toolId = toolId.trim();
-        this.packagePaths = packagePaths.trim();
+        this.serverId = cleanValue(serverId);
+        this.toolId = cleanValue(toolId);
+        this.packagePaths = cleanValue(packagePaths);
         this.overwriteMode = overwriteMode;
         this.verboseLogging = false;
     }
