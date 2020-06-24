@@ -20,12 +20,10 @@ import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.tools.ant.types.Commandline;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.*;
@@ -33,6 +31,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hudson.plugins.octopusdeploy.services.StringUtil.sanitizeValue;
 
 /**
  * The AbstractOctopusDeployRecorder tries to take care of most of the Octopus
@@ -130,7 +129,7 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
 
     @DataBoundSetter
     public void setAdditionalArgs(String additionalArgs) {
-        this.additionalArgs = additionalArgs == null ? null : additionalArgs.trim();
+        this.additionalArgs = sanitizeValue(additionalArgs);
     }
 
     /**

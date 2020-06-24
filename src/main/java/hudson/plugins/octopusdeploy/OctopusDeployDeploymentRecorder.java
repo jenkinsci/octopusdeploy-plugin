@@ -4,12 +4,6 @@ import com.google.common.base.Splitter;
 import com.octopusdeploy.api.data.*;
 import com.octopusdeploy.api.*;
 import java.io.*;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.Duration;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 
 import com.octopusdeploy.api.data.Environment;
@@ -30,6 +24,7 @@ import org.kohsuke.stapler.*;
 import javax.annotation.Nonnull;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hudson.plugins.octopusdeploy.services.StringUtil.sanitizeValue;
 
 /**
  * Executes deployments of releases.
@@ -47,12 +42,12 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
     @DataBoundConstructor
     public OctopusDeployDeploymentRecorder(String serverId, String toolId, String spaceId, String project,
                                            String releaseVersion, String environment) {
-        this.serverId = serverId.trim();
-        this.toolId = toolId.trim();
-        this.spaceId = spaceId.trim();
-        this.project = project.trim();
-        this.releaseVersion = releaseVersion.trim();
-        this.environment = environment.trim();
+        this.serverId = sanitizeValue(serverId);
+        this.toolId = sanitizeValue(toolId);
+        this.spaceId = sanitizeValue(spaceId);
+        this.project = sanitizeValue(project);
+        this.releaseVersion = sanitizeValue(releaseVersion);
+        this.setEnvironment(environment);
         this.cancelOnTimeout = false;
         this.waitForDeployment = false;
         this.verboseLogging = false;
