@@ -5,10 +5,7 @@ import com.google.gson.GsonBuilder;
 import hudson.FilePath;
 import hudson.plugins.octopusdeploy.Log;
 import hudson.plugins.octopusdeploy.OctopusBuildInformation;
-
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 
 public class OctopusBuildInformationWriter {

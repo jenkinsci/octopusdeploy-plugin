@@ -5,7 +5,6 @@ import hudson.EnvVars;
 import hudson.Extension;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
-import hudson.model.Descriptor;
 import hudson.model.EnvironmentSpecific;
 import hudson.model.Node;
 import hudson.model.TaskListener;
@@ -23,9 +22,6 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.nio.file.Files;
-import java.util.Collections;
-import java.util.List;
 
 public class OctoInstallation extends ToolInstallation implements NodeSpecific<OctoInstallation>, EnvironmentSpecific<OctoInstallation> {
 

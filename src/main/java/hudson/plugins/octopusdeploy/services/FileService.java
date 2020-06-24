@@ -4,8 +4,6 @@ package hudson.plugins.octopusdeploy.services;
 import hudson.FilePath;
 import hudson.plugins.octopusdeploy.Log;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
 import java.util.List;
 
 /**
