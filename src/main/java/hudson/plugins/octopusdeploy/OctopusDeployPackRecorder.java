@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hudson.plugins.octopusdeploy.services.StringUtil.cleanValue;
+import static hudson.plugins.octopusdeploy.services.StringUtil.sanitizeValue;
 
 public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuildStep implements Serializable {
 
@@ -50,16 +50,16 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
     public String getOutputPath() { return outputPath; }
 
     @DataBoundSetter
-    public void setOutputPath(String outputPath) { this.outputPath = cleanValue(outputPath); }
+    public void setOutputPath(String outputPath) { this.outputPath = sanitizeValue(outputPath); }
 
     private Boolean overwriteExisting;
     public Boolean getOverwriteExisting() { return overwriteExisting; }
 
     @DataBoundSetter
-    public void setPackageVersion(String packageVersion) { this.packageVersion = cleanValue(packageVersion); }
+    public void setPackageVersion(String packageVersion) { this.packageVersion = sanitizeValue(packageVersion); }
 
     @DataBoundSetter
-    public void setIncludePaths(String includePaths) { this.includePaths = cleanValue(includePaths); }
+    public void setIncludePaths(String includePaths) { this.includePaths = sanitizeValue(includePaths); }
 
     @DataBoundSetter
     public void setOverwriteExisting(Boolean overwriteExisting) {
@@ -68,10 +68,10 @@ public class OctopusDeployPackRecorder extends AbstractOctopusDeployRecorderBuil
 
     @DataBoundConstructor
     public OctopusDeployPackRecorder(String toolId, String packageId, String packageFormat, String sourcePath) {
-        this.toolId = cleanValue(toolId);
-        this.packageId = cleanValue(packageId);
-        this.packageFormat = cleanValue(packageFormat);
-        this.sourcePath = cleanValue(sourcePath);
+        this.toolId = sanitizeValue(toolId);
+        this.packageId = sanitizeValue(packageId);
+        this.packageFormat = sanitizeValue(packageFormat);
+        this.sourcePath = sanitizeValue(sourcePath);
 
         this.outputPath = ".";
         this.includePaths = "**";

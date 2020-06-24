@@ -33,7 +33,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hudson.plugins.octopusdeploy.services.StringUtil.cleanValue;
+import static hudson.plugins.octopusdeploy.services.StringUtil.sanitizeValue;
 
 /**
  * The AbstractOctopusDeployRecorder tries to take care of most of the Octopus
@@ -102,7 +102,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
 
     @DataBoundSetter
     public void setEnvironment(String environment) {
-        this.environment = cleanValue(environment);
+        this.environment = sanitizeValue(environment);
     }
     /**
      * The variables to use for a deploy in Octopus.
@@ -127,7 +127,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
 
     @DataBoundSetter
     public void setTenant(String tenant) {
-        this.tenant = cleanValue(tenant);
+        this.tenant = sanitizeValue(tenant);
     }
 
     protected String tenantTag;
@@ -136,7 +136,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
     }
 
     @DataBoundSetter
-    public void setTenantTag(String tenantTag) { this.tenantTag = cleanValue(tenantTag); }
+    public void setTenantTag(String tenantTag) { this.tenantTag = sanitizeValue(tenantTag); }
 
     /**
      * The additional arguments to pass to Octopus CLI
@@ -183,7 +183,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
     }
 
     @DataBoundSetter
-    public void setDeploymentTimeout(String deploymentTimeout) { this.deploymentTimeout = cleanValue(deploymentTimeout); }
+    public void setDeploymentTimeout(String deploymentTimeout) { this.deploymentTimeout = sanitizeValue(deploymentTimeout); }
 
     /**
      * Whether to cancel the deployment if the deployment timeout is reached

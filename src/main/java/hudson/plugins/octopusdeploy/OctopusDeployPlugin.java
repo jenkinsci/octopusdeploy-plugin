@@ -24,8 +24,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static hudson.plugins.octopusdeploy.services.StringUtil.cleanValue;
-import static org.apache.commons.lang.StringUtils.trim;
+import static hudson.plugins.octopusdeploy.services.StringUtil.sanitizeValue;
 
 /**
  * This plugin is only responsible for containing global configuration information
@@ -109,7 +108,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
          * @return Form validation to present on the Jenkins UI
          */
         public FormValidation doCheckServerId(@QueryParameter String serverId,@QueryParameter String url,@QueryParameter String apiKey) {
-            serverId = cleanValue(serverId);
+            serverId = sanitizeValue(serverId);
             if (serverId.isEmpty()) {
                 return FormValidation.warning("Please set a Server Id");
             }
@@ -178,7 +177,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
          */
         public FormValidation doCheckApiKey(@QueryParameter String apiKey) {
             final String apiKeyRegex = "API\\-\\w{25,27}";
-            apiKey = cleanValue(apiKey);
+            apiKey = sanitizeValue(apiKey);
             if (apiKey.isEmpty()) {
                 return FormValidation.warning("Please set a API Key generated from Octopus Deploy Server.");
             }

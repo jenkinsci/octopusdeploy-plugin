@@ -30,7 +30,7 @@ import org.kohsuke.stapler.*;
 import javax.annotation.Nonnull;
 
 import static com.google.common.base.Preconditions.checkState;
-import static hudson.plugins.octopusdeploy.services.StringUtil.cleanValue;
+import static hudson.plugins.octopusdeploy.services.StringUtil.sanitizeValue;
 
 /**
  * Executes deployments of releases.
@@ -48,11 +48,11 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
     @DataBoundConstructor
     public OctopusDeployDeploymentRecorder(String serverId, String toolId, String spaceId, String project,
                                            String releaseVersion, String environment) {
-        this.serverId = cleanValue(serverId);
-        this.toolId = cleanValue(toolId);
-        this.spaceId = cleanValue(spaceId);
-        this.project = cleanValue(project);
-        this.releaseVersion = cleanValue(releaseVersion);
+        this.serverId = sanitizeValue(serverId);
+        this.toolId = sanitizeValue(toolId);
+        this.spaceId = sanitizeValue(spaceId);
+        this.project = sanitizeValue(project);
+        this.releaseVersion = sanitizeValue(releaseVersion);
         this.setEnvironment(environment);
         this.cancelOnTimeout = false;
         this.waitForDeployment = false;

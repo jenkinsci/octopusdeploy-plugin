@@ -6,7 +6,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.Serializable;
 
-import static hudson.plugins.octopusdeploy.services.StringUtil.cleanValue;
+import static hudson.plugins.octopusdeploy.services.StringUtil.sanitizeValue;
 
 /**
  * @author wbenayed
@@ -50,8 +50,8 @@ public class OctopusDeployServer implements Serializable {
     }
 
     public OctopusDeployServer(String serverId, String url, Secret apiKey, boolean isDefault, boolean ignoreSslErrors) {
-        this.id = cleanValue(serverId);
-        this.url = cleanValue(url);
+        this.id = sanitizeValue(serverId);
+        this.url = sanitizeValue(url);
         this.apiKey = apiKey;
         this.isDefault = isDefault;
         this.ignoreSslErrors = ignoreSslErrors;

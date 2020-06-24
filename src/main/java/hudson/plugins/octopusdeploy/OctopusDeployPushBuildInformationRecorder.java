@@ -30,7 +30,7 @@ import java.util.*;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static hudson.plugins.octopusdeploy.services.StringUtil.cleanValue;
+import static hudson.plugins.octopusdeploy.services.StringUtil.sanitizeValue;
 
 public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDeployRecorderBuildStep implements Serializable {
 
@@ -55,7 +55,7 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
 
     @DataBoundSetter
     public void setGitUrl(String gitUrl) {
-        this.gitUrl = cleanValue(gitUrl);
+        this.gitUrl = sanitizeValue(gitUrl);
     }
 
     private String gitCommit;
@@ -64,17 +64,17 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
     }
 
     @DataBoundSetter
-    public void setGitCommit(String gitCommit) { this.gitCommit = cleanValue(gitCommit); }
+    public void setGitCommit(String gitCommit) { this.gitCommit = sanitizeValue(gitCommit); }
 
     @DataBoundConstructor
     public OctopusDeployPushBuildInformationRecorder(String serverId, String spaceId, String toolId, String packageId,
                                                      String packageVersion, String commentParser, OverwriteMode overwriteMode) {
-        this.serverId = cleanValue(serverId);
-        this.spaceId = cleanValue(spaceId);
-        this.toolId = cleanValue(toolId);
-        this.packageId = cleanValue(packageId);
-        this.packageVersion = cleanValue(packageVersion);
-        this.commentParser = cleanValue(commentParser);
+        this.serverId = sanitizeValue(serverId);
+        this.spaceId = sanitizeValue(spaceId);
+        this.toolId = sanitizeValue(toolId);
+        this.packageId = sanitizeValue(packageId);
+        this.packageVersion = sanitizeValue(packageVersion);
+        this.commentParser = sanitizeValue(commentParser);
         this.overwriteMode = overwriteMode;
         this.verboseLogging = false;
     }
