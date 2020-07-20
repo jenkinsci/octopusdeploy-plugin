@@ -104,7 +104,7 @@ public class OctoInstallation extends ToolInstallation implements NodeSpecific<O
 
     @Override
     public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(getClass());
+        return (DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(OctoInstallation.class);
     }
 
     private static boolean isWindows() {
@@ -141,13 +141,15 @@ public class OctoInstallation extends ToolInstallation implements NodeSpecific<O
          * @param home the path of the file
          * @return Form validation to present on the Jenkins UI
          */
-        public FormValidation doCheckHome(@QueryParameter String home){
-            if(home != null && !home.isEmpty())
+        public FormValidation doCheckHome(@QueryParameter File home){
+            // this can be used to check the existence of a file on the server, so needs to be protected
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+
+            if(home != null && !home.getPath().isEmpty())
             {
-                File file = new File(home);
-                if (!file.exists()){
+                if (!home.exists()){
                     return FormValidation.warning("No file was found at this path");
-                } else if(!file.canExecute()){
+                } else if(!home.canExecute()){
                     return FormValidation.warning("The file at this path is not executable");
                 }
             }
