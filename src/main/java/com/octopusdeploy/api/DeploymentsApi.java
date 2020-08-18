@@ -1,20 +1,16 @@
 package com.octopusdeploy.api;
 
-import com.octopusdeploy.api.data.DeploymentProcess;
-import com.octopusdeploy.api.data.DeploymentProcessStep;
-import com.octopusdeploy.api.data.DeploymentProcessStepAction;
-import com.octopusdeploy.api.data.DeploymentProcessTemplate;
-import com.octopusdeploy.api.data.SelectedPackage;
-import com.octopusdeploy.api.data.Variable;
+import com.octopusdeploy.api.data.*;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import net.sf.json.JSONSerializer;
+import org.apache.commons.lang.StringUtils;
+
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
-import org.apache.commons.lang.StringUtils;
 
 public class DeploymentsApi {
     private final static String UTF8 = "UTF-8";
