@@ -143,12 +143,14 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
                 Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
                 success = result.equals(Result.SUCCESS);
                 if(success) {
-                    String serverUrl = getOctopusDeployServer(serverId).getUrl();
+
+                    OctopusDeployServer octopusDeployServer = getOctopusDeployServer(serverId);
+                    String serverUrl = octopusDeployServer.getUrl();
                     if (serverUrl.endsWith("/")) {
                         serverUrl = serverUrl.substring(0, serverUrl.length() - 1);
                     }
 
-                    OctopusApi api = getOctopusDeployServer(serverId).getApi().forSpace(spaceId);
+                    OctopusApi api = octopusDeployServer.getApi().forSpace(spaceId);
                     Project fullProject = api.getProjectsApi().getProjectByName(project, true);
                     Environment fullEnvironment = api.getEnvironmentsApi().getEnvironmentByName(environment, true);
 

@@ -378,11 +378,12 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
             success = result.equals(Result.SUCCESS);
             if (success) {
-                String serverUrl = getOctopusDeployServer(serverId).getUrl();
+                OctopusDeployServer server = getOctopusDeployServer(serverId);
+                String serverUrl = server.getUrl();
                 if (serverUrl.endsWith("/")) {
                     serverUrl = serverUrl.substring(0, serverUrl.length() - 1);
                 }
-                OctopusApi api = getOctopusDeployServer(serverId).getApi().forSpace(spaceId);
+                OctopusApi api = server.getApi().forSpace(spaceId);
                 Project fullProject = api.getProjectsApi().getProjectByName(project, true);
                 /*
                     It is not necessary to supply the release version, as this can (and probably will be in most cases)

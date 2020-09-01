@@ -45,11 +45,14 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
      * Cache for OctopusDeployServer instance used in deployment
      * transient keyword prevents leaking API key to Job configuration
      */
-    protected transient Lazy<OctopusDeployServer> lazyOctopusDeployServer;
+    protected transient OctopusDeployServer octopusDeployServer;
 
     public OctopusDeployServer getOctopusDeployServer() {
-        return lazyOctopusDeployServer
-                .getOrCompute(()->getOctopusDeployServer(getServerId()));
+        if (octopusDeployServer == null) {
+            octopusDeployServer = getOctopusDeployServer(getServerId());
+        }
+
+        return octopusDeployServer;
     }
 
     /**
