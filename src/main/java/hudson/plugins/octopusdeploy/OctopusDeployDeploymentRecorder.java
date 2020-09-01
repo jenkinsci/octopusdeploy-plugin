@@ -69,7 +69,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         try {
             envVars = run.getEnvironment(listener);
         } catch (Exception ex) {
-            log.fatal(String.format("Failed to retrieve environment variables for this build - '%s'", ex.getMessage()));
+            log.fatal(String.format("Failed to retrieve environment variables for this build - '%s'", getExceptionMessage(ex)));
             run.setResult(Result.FAILURE);
             return;
         }
@@ -167,7 +167,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
                     }
                 }
             } catch (Exception ex) {
-                log.fatal("Failed to deploy: " + ex.getMessage());
+                log.fatal("Failed to deploy: " + getExceptionMessage(ex));
                 success = false;
             }
         }
@@ -229,7 +229,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         try {
             task = api.getTasksApi().getTask(id);
         } catch (IOException ex) {
-            logger.error("Error getting task: " + ex.getMessage());
+            logger.error("Error getting task: " + getExceptionMessage(ex));
             return null;
         }
 
@@ -245,7 +245,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
             try {
                 task = api.getTasksApi().getTask(id);
             } catch (IOException ex) {
-                logger.error("Error getting task: " + ex.getMessage());
+                logger.error("Error getting task: " + getExceptionMessage(ex));
                 return null;
             }
 
@@ -259,7 +259,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
                 Thread.sleep(WAIT_TIME + (long)(Math.random() * WAIT_RANDOM_SCALER));
             } catch (InterruptedException ex) {
                 logger.info("Wait interrupted!");
-                logger.info(ex.getMessage());
+                logger.info(getExceptionMessage(ex));
                 completed = true; // bail out of wait loop
             }
         }

@@ -294,7 +294,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
             try {
                 properties.load(new StringReader(variables));
             } catch (Exception ex) {
-                log.fatal(String.format("Unable to load entry variables: '%s'", ex.getMessage()));
+                log.fatal(String.format("Unable to load entry variables: '%s'", getExceptionMessage(ex)));
                 run.setResult(Result.FAILURE);
             }
         }
@@ -409,11 +409,11 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
                 log.info(String.format("Octopus CLI exit code: %d", exitCode));
 
             } catch (IOException e) {
-                final String message = "Error from Octopus CLI: " + e.getMessage();
+                final String message = "Error from Octopus CLI: " + getExceptionMessage(e);
                 log.error(message);
                 return Result.FAILURE;
             } catch (InterruptedException e) {
-                final String message = "Unable to wait for Octopus CLI: " + e.getMessage();
+                final String message = "Unable to wait for Octopus CLI: " + getExceptionMessage(e);
                 log.error(message);
                 return Result.FAILURE;
             }
@@ -432,6 +432,15 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
+    }
+
+    protected static String getExceptionMessage(Exception ex) {
+        String exceptionMessage = ex.getMessage();
+        if (exceptionMessage == null) {
+            exceptionMessage = ex.toString();
+        }
+
+        return exceptionMessage;
     }
 
     public static abstract class AbstractOctopusDeployDescriptorImplPost extends BuildStepDescriptor<Publisher>

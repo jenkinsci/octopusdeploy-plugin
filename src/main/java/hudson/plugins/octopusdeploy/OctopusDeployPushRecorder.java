@@ -91,7 +91,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
             envVars = run.getEnvironment(listener);
         } catch (Exception ex) {
             log.fatal(String.format("Failed to retrieve environment variables for this build '%s' - '%s'",
-                    run.getParent().getName(), ex.getMessage()));
+                    run.getParent().getName(), getExceptionMessage(ex)));
             run.setResult(Result.FAILURE);
             return;
         }
@@ -140,7 +140,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
             Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
             success = result.equals(Result.SUCCESS);
         } catch (Exception ex) {
-            log.fatal("Failed to push the packages: " + ex.getMessage());
+            log.fatal("Failed to push the packages: " + getExceptionMessage(ex));
             success = false;
         }
 

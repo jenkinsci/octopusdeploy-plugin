@@ -320,11 +320,11 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
                 log.info(String.format("Octopus CLI exit code: %d", exitCode));
 
             } catch (IOException e) {
-                final String message = "Error from Octopus CLI: " + e.getMessage();
+                final String message = "Error from Octopus CLI: " + getExceptionMessage(e);
                 log.error(message);
                 return Result.FAILURE;
             } catch (InterruptedException e) {
-                final String message = "Unable to wait for Octopus CLI: " + e.getMessage();
+                final String message = "Unable to wait for Octopus CLI: " + getExceptionMessage(e);
                 log.error(message);
                 return Result.FAILURE;
             }
@@ -343,6 +343,15 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
+    }
+
+    protected static String getExceptionMessage(Exception ex) {
+        String exceptionMessage = ex.getMessage();
+        if (exceptionMessage == null) {
+            exceptionMessage = ex.toString();
+        }
+
+        return exceptionMessage;
     }
 
     public static abstract class AbstractOctopusDeployDescriptorImplStep extends BuildStepDescriptor<Builder>
