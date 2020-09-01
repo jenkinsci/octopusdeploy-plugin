@@ -44,11 +44,14 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
      * Cache for OctopusDeployServer instance used in deployment
      * transient keyword prevents leaking API key to Job configuration
      */
-    protected transient Lazy<OctopusDeployServer> lazyOctopusDeployServer;
+    protected transient OctopusDeployServer octopusDeployServer;
 
-    public OctopusDeployServer getOctopusDeployServer() {
-        return lazyOctopusDeployServer
-                .getOrCompute(()->getOctopusDeployServer(getServerId()));
+    public OctopusDeployServer getOctopusDeployServer() throws ServerConfigurationNotFoundException {
+        if (octopusDeployServer == null) {
+            octopusDeployServer = getOctopusDeployServer(getServerId());
+        }
+
+        return octopusDeployServer;
     }
 
     /**
@@ -238,16 +241,24 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
      * @param serverId The id of OctopusDeployServer in the configuration.
      * @return the server by id
      * */
-    public static OctopusDeployServer getOctopusDeployServer(String serverId) {
+    public static OctopusDeployServer getOctopusDeployServer(String serverId) throws ServerConfigurationNotFoundException {
+        OctopusDeployServer octopusDeployServer = null;
         if (serverId == null || serverId.isEmpty()){
-            return getDefaultOctopusDeployServer();
+            octopusDeployServer = getDefaultOctopusDeployServer();
         }
-        for(OctopusDeployServer server : getOctopusDeployServers()) {
-            if(server.getId().equals(serverId)) {
-                return server;
+        else {
+            for (OctopusDeployServer server : getOctopusDeployServers()) {
+                if (server.getId().equals(serverId)) {
+                    octopusDeployServer = server;
+                }
             }
         }
-        return null;
+
+        if (octopusDeployServer == null) {
+            throw new ServerConfigurationNotFoundException(serverId);
+        }
+
+        return octopusDeployServer;
     }
 
     public Boolean hasAdvancedOptions() {
@@ -258,7 +269,7 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
      * Get OctopusApi instance for this deployment
      * @return the api for a given server
      */
-    public OctopusApi getApi() {
+    public OctopusApi getApi() throws ServerConfigurationNotFoundException {
         return getOctopusDeployServer().getApi();
     }
 

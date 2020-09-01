@@ -6,6 +6,7 @@ import com.google.inject.Inject;
 import hudson.*;
 import hudson.model.*;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
+import hudson.plugins.octopusdeploy.exception.ServerConfigurationNotFoundException;
 import hudson.plugins.octopusdeploy.services.FileService;
 import hudson.plugins.octopusdeploy.services.ServiceModule;
 import hudson.util.VariableResolver;
@@ -148,7 +149,7 @@ public class OctopusDeployPushRecorder extends AbstractOctopusDeployRecorderBuil
         }
     }
 
-    private List<String> buildCommands(final EnvironmentVariableValueInjector envInjector, final List<FilePath> files, FilePath workspace) throws IOException, InterruptedException {
+    private List<String> buildCommands(final EnvironmentVariableValueInjector envInjector, final List<FilePath> files, FilePath workspace) throws IOException, InterruptedException, ServerConfigurationNotFoundException {
         final List<String> commands = new ArrayList<>();
 
         OctopusDeployServer server = getOctopusDeployServer(this.serverId);
