@@ -202,7 +202,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
      * @return the default server
      * */
     protected static OctopusDeployServer getDefaultOctopusDeployServer() {
-        Jenkins jenkinsInstance = Jenkins.getInstance();
+        Jenkins jenkinsInstance = Jenkins.getInstanceOrNull();
         if (jenkinsInstance == null) {
             throw new IllegalStateException("Jenkins instance is null");
         }
@@ -215,7 +215,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
      * @return all configured servers
      * */
     public static List<OctopusDeployServer> getOctopusDeployServers() {
-        Jenkins jenkinsInstance = Jenkins.getInstance();
+        Jenkins jenkinsInstance = Jenkins.getInstanceOrNull();
         if (jenkinsInstance == null) {
             throw new IllegalStateException("Jenkins instance is null");
         }
@@ -234,7 +234,11 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
     }
 
     public static OctoInstallation[] getOctopusToolInstallations() {
-        OctoInstallation.DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) Jenkins.getInstance().getDescriptor(OctoInstallation.class);
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
+        if (jenkins == null) {
+            throw new NullPointerException("Jenkins instance not found");
+        }
+        OctoInstallation.DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) jenkins.getDescriptor(OctoInstallation.class);
         return descriptor.getInstallations();
     }
 
@@ -247,7 +251,11 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
     }
 
     public static String getOctopusToolPath(String name, Node builtOn, EnvVars env, TaskListener taskListener) {
-        OctoInstallation.DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) Jenkins.getInstance().getDescriptor(OctoInstallation.class);
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
+        if (jenkins == null) {
+            throw new NullPointerException("Jenkins instance not found");
+        }
+        OctoInstallation.DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) jenkins.getDescriptor(OctoInstallation.class);
         return descriptor.getInstallation(name).getPathToOctoExe(builtOn, env, taskListener);
     }
 
