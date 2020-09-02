@@ -9,6 +9,7 @@ import hudson.Proc;
 import hudson.model.*;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
 import hudson.plugins.octopusdeploy.exception.ServerConfigurationNotFoundException;
+import hudson.plugins.octopusdeploy.utils.JenkinsHelpers;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Builder;
@@ -179,10 +180,7 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
      * @return the default server
      * */
     protected static OctopusDeployServer getDefaultOctopusDeployServer() {
-        Jenkins jenkinsInstance = Jenkins.getInstanceOrNull();
-        if (jenkinsInstance == null) {
-            throw new IllegalStateException("Jenkins instance is null");
-        }
+        Jenkins jenkinsInstance = JenkinsHelpers.getJenkins();
         OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl) jenkinsInstance.getDescriptor(OctopusDeployPlugin.class);
         return descriptor.getDefaultOctopusDeployServer();
     }
@@ -192,17 +190,13 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
      * @return all configured servers
      * */
     public static List<OctopusDeployServer> getOctopusDeployServers() {
-        Jenkins jenkinsInstance = Jenkins.getInstanceOrNull();
-        if (jenkinsInstance == null) {
-            throw new IllegalStateException("Jenkins instance is null");
-        }
+        Jenkins jenkinsInstance = JenkinsHelpers.getJenkins();
         OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl) jenkinsInstance.getDescriptor(OctopusDeployPlugin.class);
         return descriptor.getOctopusDeployServers();
     }
 
 
-    public static List<String> getOctopusDeployServersIds() {
-
+    public static List<String> getOctopusDeployServersIds()  {
         List<String> ids = new ArrayList<>();
         for (OctopusDeployServer s:getOctopusDeployServers()) {
             ids.add(s.getId());
@@ -211,10 +205,7 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
     }
 
     public static OctoInstallation[] getOctopusToolInstallations() {
-        Jenkins jenkins = Jenkins.getInstanceOrNull();
-        if (jenkins == null) {
-            throw new NullPointerException("Jenkins instance not found");
-        }
+        Jenkins jenkins = JenkinsHelpers.getJenkins();
         OctoInstallation.DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) jenkins.getDescriptor(OctoInstallation.class);
         return descriptor.getInstallations();
     }
@@ -228,10 +219,7 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
     }
 
     public static String getOctopusToolPath(String name, Node builtOn, EnvVars env, TaskListener taskListener) {
-        Jenkins jenkins = Jenkins.getInstanceOrNull();
-        if (jenkins == null) {
-            throw new NullPointerException("Jenkins instance not found");
-        }
+        Jenkins jenkins = JenkinsHelpers.getJenkins();
         OctoInstallation.DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) jenkins.getDescriptor(OctoInstallation.class);
         return descriptor.getInstallation(name).getPathToOctoExe(builtOn, env, taskListener);
     }
