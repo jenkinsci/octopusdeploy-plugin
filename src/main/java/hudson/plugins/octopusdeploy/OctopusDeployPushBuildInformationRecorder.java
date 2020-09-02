@@ -7,6 +7,7 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.*;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
+import hudson.plugins.octopusdeploy.exception.ServerConfigurationNotFoundException;
 import hudson.plugins.octopusdeploy.services.OctopusBuildInformationBuilder;
 import hudson.plugins.octopusdeploy.services.OctopusBuildInformationWriter;
 import hudson.scm.ChangeLogSet;
@@ -95,7 +96,7 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
             envVars = run.getEnvironment(listener);
         } catch (Exception ex) {
             log.fatal(String.format("Failed to retrieve environment variables for this build '%s' - '%s'",
-                    run.getParent().getName(), ex.getMessage()));
+                    run.getParent().getName(), getExceptionMessage(ex)));
             run.setResult(Result.FAILURE);
             return;
         }
@@ -111,7 +112,7 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
             Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
             success = result.equals(Result.SUCCESS);
         } catch (Exception ex) {
-            log.fatal("Failed to push the build information: " + ex.getMessage());
+            log.fatal("Failed to push the build information: " + getExceptionMessage(ex));
             success = false;
         }
 
@@ -120,7 +121,7 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
         }
     }
 
-    private List<String> buildCommands(final Run<?, ?> build, final EnvironmentVariableValueInjector envInjector, FilePath workspace) throws IOException, InterruptedException {
+    private List<String> buildCommands(final Run<?, ?> build, final EnvironmentVariableValueInjector envInjector, FilePath workspace) throws IOException, InterruptedException, ServerConfigurationNotFoundException {
         final List<String> commands = new ArrayList<>();
 
         OctopusDeployServer server = getOctopusDeployServer(this.serverId);

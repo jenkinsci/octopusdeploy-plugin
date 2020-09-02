@@ -8,7 +8,7 @@ import hudson.Launcher;
 import hudson.Proc;
 import hudson.model.*;
 import hudson.plugins.octopusdeploy.constants.OctoConstants;
-import hudson.plugins.octopusdeploy.utils.Lazy;
+import hudson.plugins.octopusdeploy.utils.JenkinsHelpers;
 import hudson.tasks.*;
 import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
@@ -45,11 +45,14 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
      * Cache for OctopusDeployServer instance used in deployment
      * transient keyword prevents leaking API key to Job configuration
      */
-    protected transient Lazy<OctopusDeployServer> lazyOctopusDeployServer;
+    protected transient OctopusDeployServer octopusDeployServer;
 
     public OctopusDeployServer getOctopusDeployServer() {
-        return lazyOctopusDeployServer
-                .getOrCompute(()->getOctopusDeployServer(getServerId()));
+        if (octopusDeployServer == null) {
+            octopusDeployServer = getOctopusDeployServer(getServerId());
+        }
+
+        return octopusDeployServer;
     }
 
     /**
@@ -202,10 +205,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
      * @return the default server
      * */
     protected static OctopusDeployServer getDefaultOctopusDeployServer() {
-        Jenkins jenkinsInstance = Jenkins.getInstance();
-        if (jenkinsInstance == null) {
-            throw new IllegalStateException("Jenkins instance is null");
-        }
+        Jenkins jenkinsInstance = JenkinsHelpers.getJenkins();
         OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl) jenkinsInstance.getDescriptor(OctopusDeployPlugin.class);
         return descriptor.getDefaultOctopusDeployServer();
     }
@@ -215,17 +215,12 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
      * @return all configured servers
      * */
     public static List<OctopusDeployServer> getOctopusDeployServers() {
-        Jenkins jenkinsInstance = Jenkins.getInstance();
-        if (jenkinsInstance == null) {
-            throw new IllegalStateException("Jenkins instance is null");
-        }
+        Jenkins jenkinsInstance = JenkinsHelpers.getJenkins();
         OctopusDeployPlugin.DescriptorImpl descriptor = (OctopusDeployPlugin.DescriptorImpl) jenkinsInstance.getDescriptor(OctopusDeployPlugin.class);
         return descriptor.getOctopusDeployServers();
     }
 
-
     public static List<String> getOctopusDeployServersIds() {
-
         List<String> ids = new ArrayList<>();
         for (OctopusDeployServer s:getOctopusDeployServers()) {
             ids.add(s.getId());
@@ -234,7 +229,8 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
     }
 
     public static OctoInstallation[] getOctopusToolInstallations() {
-        OctoInstallation.DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) Jenkins.getInstance().getDescriptor(OctoInstallation.class);
+        Jenkins jenkins = JenkinsHelpers.getJenkins();
+        OctoInstallation.DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) jenkins.getDescriptor(OctoInstallation.class);
         return descriptor.getInstallations();
     }
 
@@ -247,7 +243,8 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
     }
 
     public static String getOctopusToolPath(String name, Node builtOn, EnvVars env, TaskListener taskListener) {
-        OctoInstallation.DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) Jenkins.getInstance().getDescriptor(OctoInstallation.class);
+        Jenkins jenkins = JenkinsHelpers.getJenkins();
+        OctoInstallation.DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) jenkins.getDescriptor(OctoInstallation.class);
         return descriptor.getInstallation(name).getPathToOctoExe(builtOn, env, taskListener);
     }
 
@@ -286,7 +283,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
             try {
                 properties.load(new StringReader(variables));
             } catch (Exception ex) {
-                log.fatal(String.format("Unable to load entry variables: '%s'", ex.getMessage()));
+                log.fatal(String.format("Unable to load entry variables: '%s'", getExceptionMessage(ex)));
                 run.setResult(Result.FAILURE);
             }
         }
@@ -401,11 +398,11 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
                 log.info(String.format("Octopus CLI exit code: %d", exitCode));
 
             } catch (IOException e) {
-                final String message = "Error from Octopus CLI: " + e.getMessage();
+                final String message = "Error from Octopus CLI: " + getExceptionMessage(e);
                 log.error(message);
                 return Result.FAILURE;
             } catch (InterruptedException e) {
-                final String message = "Unable to wait for Octopus CLI: " + e.getMessage();
+                final String message = "Unable to wait for Octopus CLI: " + getExceptionMessage(e);
                 log.error(message);
                 return Result.FAILURE;
             }
@@ -424,6 +421,15 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
+    }
+
+    protected static String getExceptionMessage(Exception ex) {
+        String exceptionMessage = ex.getMessage();
+        if (exceptionMessage == null) {
+            exceptionMessage = ex.toString();
+        }
+
+        return exceptionMessage;
     }
 
     public static abstract class AbstractOctopusDeployDescriptorImplPost extends BuildStepDescriptor<Publisher>

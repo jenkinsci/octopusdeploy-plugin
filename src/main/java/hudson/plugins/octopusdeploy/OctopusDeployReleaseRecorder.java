@@ -231,7 +231,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             envVars = run.getEnvironment(listener);
         } catch (Exception ex) {
             log.fatal(String.format("Failed to retrieve environment variables for this project '%s' - '%s'",
-                project, ex.getMessage()));
+                project, getExceptionMessage(ex)));
             run.setResult(Result.FAILURE);
             return ;
         }
@@ -327,7 +327,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
                 try {
                     releaseNotesContent += getReleaseNotesFromFile(workspace, releaseNotesFile, log);
                 } catch (Exception ex) {
-                    log.fatal(String.format("Unable to get file contents from release notes file! - %s", ex.getMessage()));
+                    log.fatal(String.format("Unable to get file contents from release notes file! - %s", getExceptionMessage(ex)));
                     success = false;
                 }
             } else if (isReleaseNotesSourceScm()) {
@@ -378,11 +378,12 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
             success = result.equals(Result.SUCCESS);
             if (success) {
-                String serverUrl = getOctopusDeployServer(serverId).getUrl();
+                OctopusDeployServer server = getOctopusDeployServer(serverId);
+                String serverUrl = server.getUrl();
                 if (serverUrl.endsWith("/")) {
                     serverUrl = serverUrl.substring(0, serverUrl.length() - 1);
                 }
-                OctopusApi api = getOctopusDeployServer(serverId).getApi().forSpace(spaceId);
+                OctopusApi api = server.getApi().forSpace(spaceId);
                 Project fullProject = api.getProjectsApi().getProjectByName(project, true);
                 /*
                     It is not necessary to supply the release version, as this can (and probably will be in most cases)
@@ -416,7 +417,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
                 }
             }
         } catch (Exception ex) {
-            log.fatal("Failed to create release: " + ex.getMessage());
+            log.fatal("Failed to create release: " + getExceptionMessage(ex));
             success = false;
         }
 
@@ -549,7 +550,7 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
             try {
                 return StringUtils.join(Files.readAllLines(f.toPath(), StandardCharsets.UTF_8), "\n");
             } catch (IOException ex) {
-                log.error("Failed to read file: " + ex.getMessage());
+                log.error("Failed to read file: " + getExceptionMessage(ex));
                 return ERROR_READING;
             }
         }

@@ -3,6 +3,7 @@ package hudson.plugins.octopusdeploy;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Descriptor;
+import hudson.plugins.octopusdeploy.utils.JenkinsHelpers;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
@@ -140,7 +141,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
             if (url.isEmpty()) {
                 return FormValidation.warning("Please enter a url to your OctopusDeploy Host");
             }
-            Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+            JenkinsHelpers.getJenkins().checkPermission(Jenkins.ADMINISTER);
             try {
 
                 URLConnection connection = new URL(url).openConnection();

@@ -8,6 +8,7 @@ import hudson.init.Initializer;
 import hudson.model.EnvironmentSpecific;
 import hudson.model.Node;
 import hudson.model.TaskListener;
+import hudson.plugins.octopusdeploy.utils.JenkinsHelpers;
 import hudson.slaves.NodeSpecific;
 import hudson.tools.*;
 import hudson.util.FormValidation;
@@ -73,7 +74,7 @@ public class OctoInstallation extends ToolInstallation implements NodeSpecific<O
     }
 
     public static OctoInstallation getDefaultInstallation() {
-        DescriptorImpl octoTools = Jenkins.getInstance().getDescriptorByType(OctoInstallation.DescriptorImpl.class);
+        DescriptorImpl octoTools = JenkinsHelpers.getJenkins().getDescriptorByType(OctoInstallation.DescriptorImpl.class);
         OctoInstallation tool = octoTools.getInstallation(OctoInstallation.DEFAULT);
         if (tool != null) {
             return tool;
@@ -90,7 +91,7 @@ public class OctoInstallation extends ToolInstallation implements NodeSpecific<O
 
     @Initializer(after = InitMilestone.EXTENSIONS_AUGMENTED)
     public static void onLoaded() {
-        DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) Jenkins.getInstance().getDescriptor(OctoInstallation.class);
+        DescriptorImpl descriptor = (OctoInstallation.DescriptorImpl) JenkinsHelpers.getJenkins().getDescriptor(OctoInstallation.class);
         assert descriptor != null;
         OctoInstallation[] installations = descriptor.getInstallations();
         if (installations != null && installations.length > 0) {
@@ -104,7 +105,7 @@ public class OctoInstallation extends ToolInstallation implements NodeSpecific<O
 
     @Override
     public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(OctoInstallation.class);
+        return (DescriptorImpl) JenkinsHelpers.getJenkins().getDescriptorOrDie(OctoInstallation.class);
     }
 
     private static boolean isWindows() {
