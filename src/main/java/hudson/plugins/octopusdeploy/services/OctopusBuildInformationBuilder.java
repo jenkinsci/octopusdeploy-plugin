@@ -14,7 +14,8 @@ public class OctopusBuildInformationBuilder {
             final List<Commit> commits,
             final String commentParser,
             final String buildUrl,
-            final String buildNumber) {
+            final String buildNumber,
+            final String branch) {
 
         final OctopusBuildInformation buildInformation = new OctopusBuildInformation();
 
@@ -25,6 +26,7 @@ public class OctopusBuildInformationBuilder {
         buildInformation.VcsType = vcsType;
         buildInformation.VcsRoot = vcsRoot;
         buildInformation.VcsCommitNumber = vcsCommitNumber;
+        buildInformation.Branch = branch;
 
         return buildInformation;
     }

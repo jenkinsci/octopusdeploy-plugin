@@ -5,6 +5,7 @@ import java.util.List;
 
 public class OctopusBuildInformation {
     public String BuildEnvironment;
+    public String Branch;
     public String CommentParser;
     public String BuildNumber;
     public String BuildUrl;

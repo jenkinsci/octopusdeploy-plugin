@@ -67,6 +67,14 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
     @DataBoundSetter
     public void setGitCommit(String gitCommit) { this.gitCommit = sanitizeValue(gitCommit); }
 
+    private String gitBranch;
+    public String getGitBranch() {
+        return this.gitBranch;
+    }
+
+    @DataBoundSetter
+    public void setGitBranch(String gitBranch) { this.gitBranch = sanitizeValue(gitBranch); }
+
     @DataBoundConstructor
     public OctopusDeployPushBuildInformationRecorder(String serverId, String spaceId, String toolId, String packageId,
                                                      String packageVersion, String commentParser, OverwriteMode overwriteMode) {
@@ -199,6 +207,7 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
 
         String gitUrl = isNullOrEmpty(this.getGitUrl()) ? envInjector.injectEnvironmentVariableValues("${GIT_URL}") : envInjector.injectEnvironmentVariableValues(this.getGitUrl());
         String gitCommit = isNullOrEmpty(this.getGitCommit())?  envInjector.injectEnvironmentVariableValues("${GIT_COMMIT}") : envInjector.injectEnvironmentVariableValues(this.getGitCommit());
+        String gitBranch = isNullOrEmpty(this.getGitBranch())?  envInjector.injectEnvironmentVariableValues("${GIT_BRANCH}") : envInjector.injectEnvironmentVariableValues(this.getGitBranch());
         final OctopusBuildInformationBuilder builder = new OctopusBuildInformationBuilder();
         final OctopusBuildInformation buildInformation = builder.build(
                 getVcsType(project),
@@ -207,7 +216,8 @@ public class OctopusDeployPushBuildInformationRecorder extends AbstractOctopusDe
                 getCommits(build, project),
                 commentParser,
                 envInjector.injectEnvironmentVariableValues("${BUILD_URL}"),
-                Integer.toString(build.getNumber())
+                Integer.toString(build.getNumber()),
+                gitBranch
         );
 
         final String buildInformationFile = "octopus.buildinfo";
