@@ -157,29 +157,33 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
         }
     }
 
-    private void AddBuildSummary(@NotNull Run<?, ?> run, Log log, String project, String releaseVersion, String environment, String tenant) throws IOException {
-        OctopusDeployServer octopusDeployServer = getOctopusDeployServer(serverId);
-        String serverUrl = octopusDeployServer.getUrl();
-        if (serverUrl.endsWith("/")) {
-            serverUrl = serverUrl.substring(0, serverUrl.length() - 1);
-        }
+    private void AddBuildSummary(@NotNull Run<?, ?> run, Log log, String project, String releaseVersion, String environment, String tenant) {
+        try {
+            OctopusDeployServer octopusDeployServer = getOctopusDeployServer(serverId);
+            String serverUrl = octopusDeployServer.getUrl();
+            if (serverUrl.endsWith("/")) {
+                serverUrl = serverUrl.substring(0, serverUrl.length() - 1);
+            }
 
-        OctopusApi api = octopusDeployServer.getApi().forSpace(spaceId);
-        Project fullProject = api.getProjectsApi().getProjectByName(project, true);
-        Environment fullEnvironment = api.getEnvironmentsApi().getEnvironmentByName(environment, true);
+            OctopusApi api = octopusDeployServer.getApi().forSpace(spaceId);
+            Project fullProject = api.getProjectsApi().getProjectByName(project, true);
+            Environment fullEnvironment = api.getEnvironmentsApi().getEnvironmentByName(environment, true);
 
-        String tenantId = null;
-        if (tenant != null && !tenant.isEmpty()) {
-            Tenant fullTenant = api.getTenantsApi().getTenantByName(tenant, true);
-            tenantId = fullTenant.getId();
-        }
+            String tenantId = null;
+            if (tenant != null && !tenant.isEmpty()) {
+                Tenant fullTenant = api.getTenantsApi().getTenantByName(tenant, true);
+                tenantId = fullTenant.getId();
+            }
 
-        String urlSuffix = api.getDeploymentsApi().getPortalUrlForDeployment(fullProject.getId(), releaseVersion, fullEnvironment.getId(), tenantId);
+            String urlSuffix = api.getDeploymentsApi().getPortalUrlForDeployment(fullProject.getId(), releaseVersion, fullEnvironment.getId(), tenantId);
 
-        if (urlSuffix != null && !urlSuffix.isEmpty()) {
-            String portalUrl = serverUrl + urlSuffix;
-            log.info("Deployment executed: \n\t" + portalUrl);
-            run.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Deployment, portalUrl));
+            if (urlSuffix != null && !urlSuffix.isEmpty()) {
+                String portalUrl = serverUrl + urlSuffix;
+                log.info("Deployment executed: \n\t" + portalUrl);
+                run.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Deployment, portalUrl));
+            }
+        } catch (Exception ex) {
+            log.error("Failed to generate build summary: " + getExceptionMessage(ex));
         }
     }
 
