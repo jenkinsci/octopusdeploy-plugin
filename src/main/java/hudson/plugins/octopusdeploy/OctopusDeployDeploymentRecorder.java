@@ -19,6 +19,7 @@ import jenkins.util.BuildListenerAdapter;
 import net.sf.json.*;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
+import org.jetbrains.annotations.NotNull;
 import org.kohsuke.stapler.*;
 
 import javax.annotation.Nonnull;
@@ -143,30 +144,7 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
                 Result result = launchOcto(workspace, launcher, commands, masks, envVars, listenerAdapter);
                 success = result.equals(Result.SUCCESS);
                 if(success) {
-
-                    OctopusDeployServer octopusDeployServer = getOctopusDeployServer(serverId);
-                    String serverUrl = octopusDeployServer.getUrl();
-                    if (serverUrl.endsWith("/")) {
-                        serverUrl = serverUrl.substring(0, serverUrl.length() - 1);
-                    }
-
-                    OctopusApi api = octopusDeployServer.getApi().forSpace(spaceId);
-                    Project fullProject = api.getProjectsApi().getProjectByName(project, true);
-                    Environment fullEnvironment = api.getEnvironmentsApi().getEnvironmentByName(environment, true);
-
-                    String tenantId = null;
-                    if (tenant != null && !tenant.isEmpty()) {
-                        Tenant fullTenant = api.getTenantsApi().getTenantByName(tenant, true);
-                        tenantId = fullTenant.getId();
-                    }
-
-                    String urlSuffix = api.getDeploymentsApi().getPortalUrlForDeployment(fullProject.getId(), releaseVersion, fullEnvironment.getId(), tenantId);
-
-                    if (urlSuffix != null && !urlSuffix.isEmpty()) {
-                        String portalUrl = serverUrl + urlSuffix;
-                        log.info("Deployment executed: \n\t" + portalUrl);
-                        run.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Deployment, portalUrl));
-                    }
+                    AddBuildSummary(run, log, project, releaseVersion, environment, tenant);
                 }
             } catch (Exception ex) {
                 log.fatal("Failed to deploy: " + getExceptionMessage(ex));
@@ -176,6 +154,32 @@ public class OctopusDeployDeploymentRecorder extends AbstractOctopusDeployRecord
 
         if (!success) {
             run.setResult(Result.FAILURE);
+        }
+    }
+
+    private void AddBuildSummary(@NotNull Run<?, ?> run, Log log, String project, String releaseVersion, String environment, String tenant) throws IOException {
+        OctopusDeployServer octopusDeployServer = getOctopusDeployServer(serverId);
+        String serverUrl = octopusDeployServer.getUrl();
+        if (serverUrl.endsWith("/")) {
+            serverUrl = serverUrl.substring(0, serverUrl.length() - 1);
+        }
+
+        OctopusApi api = octopusDeployServer.getApi().forSpace(spaceId);
+        Project fullProject = api.getProjectsApi().getProjectByName(project, true);
+        Environment fullEnvironment = api.getEnvironmentsApi().getEnvironmentByName(environment, true);
+
+        String tenantId = null;
+        if (tenant != null && !tenant.isEmpty()) {
+            Tenant fullTenant = api.getTenantsApi().getTenantByName(tenant, true);
+            tenantId = fullTenant.getId();
+        }
+
+        String urlSuffix = api.getDeploymentsApi().getPortalUrlForDeployment(fullProject.getId(), releaseVersion, fullEnvironment.getId(), tenantId);
+
+        if (urlSuffix != null && !urlSuffix.isEmpty()) {
+            String portalUrl = serverUrl + urlSuffix;
+            log.info("Deployment executed: \n\t" + portalUrl);
+            run.addAction(new BuildInfoSummary(BuildInfoSummary.OctopusDeployEventType.Deployment, portalUrl));
         }
     }
 
