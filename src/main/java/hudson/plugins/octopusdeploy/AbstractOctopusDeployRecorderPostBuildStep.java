@@ -18,6 +18,7 @@ import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.tools.ant.types.Commandline;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -429,7 +430,8 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
             exceptionMessage = ex.toString();
         }
 
-        return exceptionMessage;
+        String stackTrace = ExceptionUtils.getFullStackTrace(ex);
+        return exceptionMessage + "\n" + stackTrace;
     }
 
     public static abstract class AbstractOctopusDeployDescriptorImplPost extends BuildStepDescriptor<Publisher>
