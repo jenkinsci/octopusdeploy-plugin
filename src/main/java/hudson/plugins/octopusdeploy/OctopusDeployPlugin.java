@@ -177,20 +177,40 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
          * @return Form validation to present on the Jenkins UI
          */
         public FormValidation doCheckApiKey(@QueryParameter String apiKey) {
-            final String apiKeyRegex = "API\\-\\w{25,27}";
             apiKey = sanitizeValue(apiKey);
             if (apiKey.isEmpty()) {
                 return FormValidation.warning("Please set a API Key generated from Octopus Deploy Server.");
             }
 
             try {
-                if (!apiKey.matches(apiKeyRegex) && !Secret.decrypt(apiKey).getPlainText().matches(apiKeyRegex)) {
+                if (!isApiKeyValid(apiKey) && !isApiKeyValid(Secret.decrypt(apiKey).getPlainText())) {
                     return FormValidation.error("Supplied Octopus API Key format is invalid. It should look like API-XXXXXXXXXXXXXXXXXXXXXXXXXXX");
                 }
             } catch (NullPointerException ex) {
                 return FormValidation.error("Supplied Octopus API Key format is invalid. It should look like API-XXXXXXXXXXXXXXXXXXXXXXXXXXX");
             }
             return FormValidation.ok();
+        }
+
+        private static boolean isApiKeyValid(String apiKeyValue) {
+            final String apiKeyPrefix = "API-";
+            if (!apiKeyValue.startsWith(apiKeyPrefix)) {
+                return false;
+            }
+
+            int keyLength = apiKeyValue.length();
+            if (keyLength < 29 || keyLength > 36) {
+                return false;
+            }
+
+            String keyWithoutPrefix = apiKeyValue.substring(apiKeyPrefix.length());
+            for (char c : keyWithoutPrefix.toCharArray()) {
+                if (!Character.isDigit(c) && !Character.isUpperCase(c)) {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         @Override
