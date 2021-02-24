@@ -160,13 +160,6 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
     }
 
     @DataBoundSetter
-    public void setAdditionalArgs(String addtionalArgs) { this.additionalArgs = sanitizeValue(addtionalArgs); }
-
-    public String getAdditionalArgs() {
-        return this.additionalArgs;
-    }
-
-    @DataBoundSetter
     public void setSpaceId(String spaceId) {
         this.spaceId = sanitizeValue(spaceId);
     }
