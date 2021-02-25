@@ -149,6 +149,11 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
         return additionalArgs;
     }
 
+    @DataBoundSetter
+    public void setAdditionalArgs(String additionalArgs) {
+        this.additionalArgs = sanitizeValue(additionalArgs);
+    }
+
     /**
      * Whether or not perform will return control immediately, or wait until the Deployment
      * task is completed.
