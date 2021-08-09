@@ -8,7 +8,7 @@
             <f:entry title="Name" field="name">
                 <f:textbox value="${tool.name}"/>
             </f:entry>
-            <f:entry title="Path to tool" field="home">
+            <f:entry title="File path of the Octopus CLI tool (e.g. C:\Octo\Octo.exe, /usr/local/octocli/octo)" field="home">
                 <f:textbox value="${tool.home}"/>
             </f:entry>
             <f:entry title="">
