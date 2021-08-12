@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  jenkins:
+    image: "maven:3.8.1-openjdk-8" #https://hub.docker.com/_/maven
+    ports:
+      - 8080:8080
+      - 50000:50000
+    environment:
+      - DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+    volumes:
+      - ./:/octopus-jenkins-plugin/
+      - ./docker_data/jenkins/m2:/root/.m2/
+      - ./docker_data/jenkins/octocli:/octocli
+    command: mvn -f /octopus-jenkins-plugin/pom.xml hpi:run

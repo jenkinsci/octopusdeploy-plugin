@@ -106,7 +106,7 @@ Select `Run` and fill in the new version in the dialog:
 
 ![run custom build](./developer-guide-images/run-custom-build.png)
 
-**Please note**: Before trigger the build you need to ensure that
+**Please note**: Before triggering the build you need to ensure that
 1. The commit isn't tagged with the version
 1. The version number in the `<version>` tag in [pom.xml](https://github.com/OctopusDeploy/octopus-jenkins-plugin/blob/master/pom.xml) is suffixed with `-SNAPSHOT`.
 1. If the Teamcity build fails, it might have already committed changes to the git repository, you will need to manually revert changes before trying again.
@@ -200,3 +200,14 @@ Packages hello_world.txt
 > Have you bricked / corrupted your Jenkins dev environment?
 
 An option is to blow away the currently set up environment by navigating to the `work` at the root of the cloned git repository
+
+
+## Using Docker
+Some docker files have been provided to assist development for users who may not have all the prerequisite tooling available on their local machine for development. This process may currently be slower and does not provide the benefits of debugging at this point in time.
+1. Run `docker-compose up -d` to build the Octopus plugin and allow the Jenkins server to start. This first time this runs it will take a LONG time to run as it will download all the dependencies and store them in the mounted directory. The subsequent runs will be much quicker since only the compilation process will need to run.
+2. Once the server has started navigate to the instance via `http://localhost:8080/jenkins`.
+3. Configure your Octopus Serer instance by navigating to `Manage Jenkins` -> `Configure System`.  If testing your local Octopus instance on the docker host you can use the domain `host.docker.internal` to access the host from inside your container.
+4. The Octopus cli tool is BYO with jenkins, so find the latest available linux build and add to the `docker_data/jenkins/octocli` directory. This directory will be mounted into the container.
+   ![setup octo cli](./developer-guide-images/octocli.png)
+5. Configure the cli tool via `Manage Jenkins` -> `Global Tool Configuration` and provide the `/octocli/octo` path.
+6. Create and test your builds!

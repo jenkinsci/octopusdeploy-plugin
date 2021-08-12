@@ -149,6 +149,30 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         this.defaultPackageVersion = sanitizeValue(defaultPackageVersion);
     }
 
+
+    private String gitRef;
+    @Exported
+    public String getGitRef() {
+        return gitRef;
+    }
+
+    @DataBoundSetter
+    public void setGitRef(String gitRef) {
+        this.gitRef = sanitizeValue(gitRef);
+    }
+
+
+    private String gitCommit;
+    @Exported
+    public String getGitCommit() {
+        return gitCommit;
+    }
+
+    @DataBoundSetter
+    public void setGitCommit(String gitCommit) {
+        this.gitCommit = sanitizeValue(gitCommit);
+    }
+
     @DataBoundSetter
     public void setReleaseNotesSource(String releaseNotesSource) {
         this.releaseNotesSource = sanitizeValue(releaseNotesSource);
@@ -239,6 +263,8 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         String tenant = envInjector.injectEnvironmentVariableValues(this.tenant);
         String channel = envInjector.injectEnvironmentVariableValues(this.channel);
         String defaultPackageVersion = envInjector.injectEnvironmentVariableValues(this.defaultPackageVersion);
+        String gitRef = envInjector.injectEnvironmentVariableValues(this.gitRef);
+        String gitCommit = envInjector.injectEnvironmentVariableValues(this.gitCommit);
 
         logStartHeader(log);
 
@@ -255,6 +281,16 @@ public class OctopusDeployReleaseRecorder extends AbstractOctopusDeployRecorderP
         if (StringUtils.isNotBlank(channel)) {
             commands.add("--channel");
             commands.add(channel);
+        }
+
+        if (StringUtils.isNotBlank(gitRef)) {
+            commands.add("--gitRef");
+            commands.add(gitRef);
+        }
+
+        if (StringUtils.isNotBlank(gitCommit)) {
+            commands.add("--gitCommit");
+            commands.add(gitCommit);
         }
 
         if (deployThisRelease && StringUtils.isNotBlank(environment)) {

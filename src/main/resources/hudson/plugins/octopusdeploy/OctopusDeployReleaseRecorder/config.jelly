@@ -54,6 +54,15 @@
       </f:block>
     </f:section>
 
+    <f:section title="Version Controlled Projects">
+        <f:entry title="GitRef" field="gitRef">
+            <f:textbox />
+        </f:entry>
+        <f:entry title="Commit" field="gitCommit">
+            <f:textbox />
+        </f:entry>
+    </f:section>
+
     <f:section title="Release Notes">
       <f:entry title="Include Jenkins URL?" field="jenkinsUrlLinkback">
         <f:checkbox />
