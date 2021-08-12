@@ -106,11 +106,6 @@ Select `Run` and fill in the new version in the dialog:
 
 ![run custom build](./developer-guide-images/run-custom-build.png)
 
-**Please note**: Before trigger the build you need to ensure that
-1. The commit isn't tagged with the version
-1. The version number in the `<version>` tag in [pom.xml](https://github.com/OctopusDeploy/octopus-jenkins-plugin/blob/master/pom.xml) is suffixed with `-SNAPSHOT`.
-1. If the Teamcity build fails, it might have already committed changes to the git repository, you will need to manually revert changes before trying again.
-
 ### Managing the version number
 For most changes the version number is self-managed by the build process. If you need to bump the version number manually, such as bumping the major version number, you will need to update the version number in the `<version>` tag in [pom.xml](https://github.com/OctopusDeploy/octopus-jenkins-plugin/blob/master/pom.xml). The version number format should be a 3  `major.minor.patch-SNAPSHOT`. The `-SNAPSHOT` suffix is required.
 
