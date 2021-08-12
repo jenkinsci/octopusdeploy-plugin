@@ -106,7 +106,7 @@ Select `Run` and fill in the new version in the dialog:
 
 ![run custom build](./developer-guide-images/run-custom-build.png)
 
-**Please note**: Before trigger the build you need to ensure that
+**Please note**: Before triggering the build you need to ensure that
 1. The commit isn't tagged with the version
 1. The version number in the `<version>` tag in [pom.xml](https://github.com/OctopusDeploy/octopus-jenkins-plugin/blob/master/pom.xml) is suffixed with `-SNAPSHOT`.
 1. If the Teamcity build fails, it might have already committed changes to the git repository, you will need to manually revert changes before trying again.
