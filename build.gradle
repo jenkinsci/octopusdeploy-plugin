@@ -1,0 +1,57 @@
+plugins {
+  alias(libs.plugins.jenkins)
+  alias(libs.plugins.license)
+  alias(libs.plugins.spotless)
+}
+
+group = 'org.jenkins-ci.plugins'
+version = '3.1.7-SNAPSHOT'
+description = 'Octopus Deploy'
+
+defaultTasks 'build', 'checkLicenses', 'jpi'
+
+// Exclude license tasks provided by plugin (see custom tasks 'check-licenses.gradle')
+project.gradle.startParameter.excludedTaskNames = ['licenseMain', 'licenseTest']
+apply from: "${rootDir}/gradle/check-licenses.gradle"
+
+java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(8)
+  }
+}
+
+dependencies {
+  implementation libs.apache.commons.collections4
+  implementation libs.google.gson
+  implementation libs.jenkins.workflow
+  compileOnly libs.jetbrains.annotations
+}
+
+jenkinsPlugin {
+  jenkinsVersion = '2.190.1'
+  shortName = 'octopusdeploy'
+  displayName = 'Octopus Deploy'
+  url = 'https://octopus.com'
+  gitHubUrl = 'https://github.com/OctopusDeploy/octopus-jenkins-plugin'
+  compatibleSinceVersion = '1.612'
+  fileExtension = 'hpi'
+  configureRepositories = true
+
+  developers {
+    developer {
+      id = 'octopusdeploy'
+      name = 'Octopus Deploy'
+      email = 'support@octopus.com'
+    }
+  }
+}
+
+spotless {
+  groovyGradle {
+    target '**/*.gradle'
+    greclipse()
+    indentWithSpaces(2)
+    trimTrailingWhitespace()
+    endWithNewline()
+  }
+}
