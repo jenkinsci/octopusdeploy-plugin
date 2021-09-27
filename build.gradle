@@ -48,7 +48,7 @@ jenkinsPlugin {
 
 spotless {
   groovyGradle {
-    target '*.gradle'
+    target '**/*.gradle'
     greclipse()
     indentWithSpaces(2)
     trimTrailingWhitespace()
