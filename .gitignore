@@ -4,9 +4,6 @@
 .gradle
 **/build/
 
-# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
-!gradle-wrapper.jar
-
 # Package Files #
 *.jar
 *.nupkg
@@ -16,3 +13,6 @@
 /work/*
 
 /docker_data/*
+
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!**/gradle-wrapper.jar
