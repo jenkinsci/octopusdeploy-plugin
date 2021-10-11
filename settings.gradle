@@ -11,10 +11,28 @@ dependencyResolutionManagement {
       alias('spotless').toPluginId('com.diffplug.spotless').version('5.15.0')
 
       // Libraries
+      version('octopus', '0.0.2-SNAPSHOT')
+      alias('test-support').to('com.octopus', 'test-support').versionRef('octopus')
+      alias('octopus-sdk').to('com.octopus', 'octopus-sdk').versionRef('octopus')
+      bundle('octopus', ['test-support', 'octopus-sdk'])
+
+      version('junit', '5.6.0')
+      alias('jupiter-api').to('org.junit.jupiter', 'junit-jupiter-api').versionRef('junit')
+      alias('jupiter-engine').to('org.junit.jupiter', 'junit-jupiter-engine').versionRef('junit')
+      alias('jupiter-params').to('org.junit.jupiter', 'junit-jupiter-params').versionRef('junit')
+      bundle('junit', [
+        'jupiter-api',
+        'jupiter-engine',
+        'jupiter-params'
+      ])
+
       alias('apache-commons-collections4').to('org.apache.commons', 'commons-collections4').version('4.2')
+      alias('apache-commons-text').to('org.apache.commons', 'commons-text').version('1.9')
       alias('google-gson').to('com.google.code.gson', 'gson').version('2.8.0')
       alias('jenkins-workflow').to('org.jenkins-ci.plugins.workflow', 'workflow-job').version('2.38')
       alias('jetbrains-annotations').to('org.jetbrains', 'annotations').version('15.0')
+      alias('assertj-core').to('org.assertj', 'assertj-core').version('3.18.1')
+      alias('mockito-inline').to('org.mockito', 'mockito-inline').version('3.+')
     }
   }
 }
