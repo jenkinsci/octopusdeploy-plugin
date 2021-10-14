@@ -42,6 +42,7 @@ dependencies {
   integrationTestImplementation libs.bundles.junit
   integrationTestImplementation libs.assertj.core
   integrationTestImplementation libs.mockito.inline
+  integrationTestImplementation libs.mockito.jupiter
   integrationTestImplementation libs.apache.commons.text
 }
 

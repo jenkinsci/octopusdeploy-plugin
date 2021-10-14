@@ -3,6 +3,7 @@ package com.octopus.helper;
 import com.octopus.sdk.Repository;
 import com.octopus.sdk.domain.Channel;
 import com.octopus.sdk.domain.Environment;
+import com.octopus.sdk.domain.Lifecycle;
 import com.octopus.sdk.domain.Project;
 import com.octopus.sdk.domain.ProjectGroup;
 import com.octopus.sdk.domain.Space;
@@ -11,6 +12,7 @@ import com.octopus.sdk.domain.Tenant;
 import com.octopus.sdk.http.OctopusClient;
 import com.octopus.sdk.model.channel.ChannelResource;
 import com.octopus.sdk.model.environment.EnvironmentResourceWithLinks;
+import com.octopus.sdk.model.lifecycle.LifecycleResource;
 import com.octopus.sdk.model.project.ProjectResource;
 import com.octopus.sdk.model.projectgroup.ProjectGroupResource;
 import com.octopus.sdk.model.space.SpaceHome;
@@ -81,7 +83,13 @@ public class SpaceScopedClient {
 
     public Project createProject(String projectName, String existingProjectGroupId) {
         try {
-            return space.projects().create(new ProjectResource(projectName, "Lifecycle-1", existingProjectGroupId));
+            Lifecycle lifecycle;
+            if (space.lifecycles().getByName("LifeCycle1").isPresent()) {
+                lifecycle = space.lifecycles().getByName("LifeCycle1").get();
+            } else {
+                lifecycle = space.lifecycles().create(new LifecycleResource("LifeCycle1"));
+            }
+            return space.projects().create(new ProjectResource(projectName, lifecycle.getProperties().getId(), existingProjectGroupId));
         } catch (IOException e) {
             e.printStackTrace();
         }

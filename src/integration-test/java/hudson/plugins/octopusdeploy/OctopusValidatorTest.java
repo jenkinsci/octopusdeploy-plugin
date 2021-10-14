@@ -3,13 +3,17 @@ package hudson.plugins.octopusdeploy;
 import com.octopus.helper.SpaceScopedClient;
 import com.octopus.helper.TestHelper;
 import com.octopus.sdk.domain.ProjectGroup;
+import com.octopus.sdk.model.release.ReleaseResource;
 import com.octopus.sdk.model.space.SpaceOverviewResource;
 import com.octopus.testsupport.BaseOctopusServerEnabledTest;
 import com.octopusdeploy.api.OctopusApi;
 import com.octopusdeploy.api.data.Project;
 import hudson.util.FormValidation;
 import org.apache.commons.text.StringEscapeUtils;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -196,13 +200,11 @@ class OctopusValidatorTest extends BaseOctopusServerEnabledTest {
                         "If this field is computed you can disregard this warning.");
     }
 
-    // TODO (scl): Create release and enable test
     @Test
-    @Disabled
-    public void validateReleaseWhereReleaseMustExistPassesValidation() {
+    public void validateReleaseWhereReleaseMustExistPassesValidation() throws IOException {
         final com.octopus.sdk.domain.Project newProject =
                 spaceScopedClient.createProject("Proj1", "ProjGroup1");
-        // Create release for Proj1 with matching release version
+        spaceScopedClient.getSpace().releases().create(new ReleaseResource("1.0.0", newProject.getProperties().getId()));
         final Project project = new Project(newProject.getProperties().getId(), newProject.getProperties().getName());
 
         final FormValidation validation = validator.validateRelease("1.0.0",
@@ -212,23 +214,20 @@ class OctopusValidatorTest extends BaseOctopusServerEnabledTest {
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.OK);
     }
 
-    // TODO (scl): - Create release and enable test
     @Test
-    @Disabled
-    public void validateReleaseWhereReleaseMustNotExistFailsValidation() {
+    public void validateReleaseWhereReleaseMustNotExistFailsValidation() throws IOException {
         final com.octopus.sdk.domain.Project newProject =
                 spaceScopedClient.createProject("Proj1", "ProjGroup1");
-        // Create release for Proj1 with matching release version
+        spaceScopedClient.getSpace().releases().create(new ReleaseResource("1.0.0", newProject.getProperties().getId()));
         final Project project = new Project(newProject.getProperties().getId(), newProject.getProperties().getName());
 
         final FormValidation validation = validator.validateRelease("1.0.0",
                 project,
                 OctopusValidator.ReleaseExistenceRequirement.MustNotExist);
 
-        assertThat(validation.kind).isEqualTo(FormValidation.Kind.WARNING);
+        assertThat(validation.kind).isEqualTo(FormValidation.Kind.ERROR);
         assertThat(StringEscapeUtils.unescapeHtml4(validation.getMessage()))
-                .isEqualTo("Release 1.0.0 doesn't exist for project 'Proj1'. " +
-                        "If this field is computed you can disregard this warning.");
+                .isEqualTo("Release 1.0.0 already exists for project 'Proj1'!");
     }
 
     @Test

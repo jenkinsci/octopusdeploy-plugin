@@ -33,6 +33,7 @@ dependencyResolutionManagement {
       alias('jetbrains-annotations').to('org.jetbrains', 'annotations').version('15.0')
       alias('assertj-core').to('org.assertj', 'assertj-core').version('3.18.1')
       alias('mockito-inline').to('org.mockito', 'mockito-inline').version('3.+')
+      alias('mockito-jupiter').to('org.mockito', 'mockito-junit-jupiter').version('4.+')
     }
   }
 }
