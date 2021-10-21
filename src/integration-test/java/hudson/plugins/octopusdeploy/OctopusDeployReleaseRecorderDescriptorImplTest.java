@@ -1,53 +1,39 @@
 package hudson.plugins.octopusdeploy;
 
-import com.octopus.helper.BaseRecorderTest;
-import com.octopus.sdk.domain.Project;
-import com.octopus.sdk.domain.ProjectGroup;
-import com.octopus.sdk.model.tag.TagResource;
-import com.octopus.sdk.model.tenant.TenantResource;
+import com.octopus.helper.BaseIntegrationTest;
 import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import org.apache.commons.text.StringEscapeUtils;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
+class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseIntegrationTest {
 
     private final OctopusDeployReleaseRecorder.DescriptorImpl descriptor =
             new OctopusDeployReleaseRecorder.DescriptorImpl();
 
     @Test
     public void doCheckProject() {
-        final ProjectGroup projGroup = spaceScopedClient.createProjectGroup("ProjGroup1");
-        spaceScopedClient.createProject("Proj1", projGroup.getProperties().getId());
-
-        FormValidation validation = descriptor.doCheckProject("Proj1",
+        FormValidation validation = descriptor.doCheckProject("Project1",
                 JENKINS_OCTOPUS_SERVER_ID,
-                spaceScopedClient.getSpaceId());
+                space.getProperties().getId());
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.OK);
     }
 
     @Test
     public void doCheckChannel() {
-        final ProjectGroup projGroup = spaceScopedClient.createProjectGroup("ProjGroup1");
-        final Project project = spaceScopedClient.createProject("Proj1", projGroup.getProperties().getId());
-        spaceScopedClient.createChannel("Channel1", project.getProperties().getId());
-
         FormValidation validation = descriptor.doCheckChannel("Channel1",
-                "Proj1",
+                "Project1",
                 JENKINS_OCTOPUS_SERVER_ID,
-                spaceScopedClient.getSpaceId());
+                space.getProperties().getId());
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.OK);
     }
@@ -57,7 +43,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
         FormValidation validation = descriptor.doCheckReleaseVersion("1.0.0",
                 null,
                 JENKINS_OCTOPUS_SERVER_ID,
-                spaceScopedClient.getSpaceId());
+                space.getProperties().getId());
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.WARNING);
         assertThat(validation.getMessage()).isEqualTo("Project must be set to validate release.");
@@ -69,7 +55,7 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
                 descriptor.doCheckReleaseVersion("1.0.0",
                         "",
                         JENKINS_OCTOPUS_SERVER_ID,
-                        spaceScopedClient.getSpaceId());
+                        space.getProperties().getId());
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.WARNING);
         assertThat(validation.getMessage()).isEqualTo("Project must be set to validate release.");
@@ -79,25 +65,22 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
     public void doCheckReleaseVersionWithoutCorrespondingProjectFailsValidation() {
         FormValidation validation =
                 descriptor.doCheckReleaseVersion("1.0.0",
-                        "Proj1",
+                        "Proj99",
                         JENKINS_OCTOPUS_SERVER_ID,
-                        spaceScopedClient.getSpaceId());
+                        space.getProperties().getId());
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.WARNING);
         assertThat(StringEscapeUtils.unescapeHtml4(validation.getMessage()))
-                .isEqualTo("Unable to validate release because the project 'Proj1' couldn't be found.");
+                .isEqualTo("Unable to validate release because the project 'Proj99' couldn't be found.");
     }
 
     @Test
     public void doCheckReleaseVersion() {
-        final ProjectGroup projGroup = spaceScopedClient.createProjectGroup("ProjGroup1");
-        spaceScopedClient.createProject("Proj1", projGroup.getProperties().getId());
-
         FormValidation validation =
-                descriptor.doCheckReleaseVersion("1.0.0",
-                        "Proj1",
+                descriptor.doCheckReleaseVersion("9.9.9", // release must not exist
+                        "Project1",
                         JENKINS_OCTOPUS_SERVER_ID,
-                        spaceScopedClient.getSpaceId());
+                        space.getProperties().getId());
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.OK);
     }
@@ -119,94 +102,66 @@ class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseRecorderTest {
 
     @Test
     public void doCheckEnvironment() {
-        spaceScopedClient.createEnvironment("Env1");
-
-        final FormValidation validation = descriptor.doCheckEnvironment("Env1",
+        final FormValidation validation = descriptor.doCheckEnvironment("Environment1",
                 JENKINS_OCTOPUS_SERVER_ID,
-                spaceScopedClient.getSpaceId());
+                space.getProperties().getId());
 
         assertThat(validation.kind).isEqualTo(FormValidation.Kind.OK);
     }
 
     @Test
     public void doFillEnvironmentItems() {
-        List<String> environmentsToCreate = Arrays.asList("Env1", "Env2", "Env3");
-        environmentsToCreate.forEach(name -> spaceScopedClient.createEnvironment(name));
+        List<String> exitingEnvironmentNames = Arrays.asList("Environment1", "Environment2", "Environment3");
 
         final ComboBoxModel model = descriptor.doFillEnvironmentItems(JENKINS_OCTOPUS_SERVER_ID,
-                spaceScopedClient.getSpaceId());
+                space.getProperties().getId());
 
-        assertThat(model).containsExactlyInAnyOrderElementsOf(environmentsToCreate);
+        assertThat(model).containsExactlyInAnyOrderElementsOf(exitingEnvironmentNames);
     }
 
     @Test
     public void doFillProjectItems() {
-        final ProjectGroup projGroup = spaceScopedClient.createProjectGroup("ProjGroup1");
-        List<String> projectsToCreate = Arrays.asList("Proj1", "Proj2", "Proj3");
-        projectsToCreate.forEach(name -> spaceScopedClient.createProject(name, projGroup.getProperties().getId()));
+        List<String> existingProjectNames = Arrays.asList("Project1", "Project2", "Project3");
 
         final ComboBoxModel model = descriptor.doFillProjectItems(JENKINS_OCTOPUS_SERVER_ID,
-                spaceScopedClient.getSpaceId());
+                space.getProperties().getId());
 
-        assertThat(model).containsExactlyInAnyOrderElementsOf(projectsToCreate);
+        assertThat(model).containsExactlyInAnyOrderElementsOf(existingProjectNames);
     }
 
     @Test
     public void doFillChannelItems() {
-        final String projectName = "Proj1";
-        final ProjectGroup projGroup = spaceScopedClient.createProjectGroup("ProjGroup1");
-        final Project project = spaceScopedClient.createProject(projectName, projGroup.getProperties().getId());
-        List<String> channelsToCreate = Arrays.asList("Channel1", "Channel2", "Channel3");
-        channelsToCreate.forEach(name -> spaceScopedClient.createChannel(name, project.getProperties().getId()));
+        List<String> existingChannelNames = Arrays.asList("Channel1", "Channel2", "Channel3");
 
-        final ComboBoxModel model = descriptor.doFillChannelItems(projectName,
+        final ComboBoxModel model = descriptor.doFillChannelItems("Project1",
                 JENKINS_OCTOPUS_SERVER_ID,
-                spaceScopedClient.getSpaceId());
+                space.getProperties().getId());
 
-        assertThat(model.size()).isEqualTo(channelsToCreate.size() + 1); // Increase by 1 for default channel
-        assertThat(model).containsAll(channelsToCreate);
+        assertThat(model.size()).isEqualTo(existingChannelNames.size() + 1); // Increase by 1 for default channel
+        assertThat(model).containsAll(existingChannelNames);
     }
 
     @Test
-    public void doFillTenantTagItems() throws IOException {
-        List<String> tenantTagsToCreate = Arrays.asList("Tag1", "Tag2");
-        spaceScopedClient.createTagSet("TagSet");
-        tenantTagsToCreate.forEach(name ->
-                spaceScopedClient.createTagInTagSet(name, "#333333", "TagSet"));
-        final List<TagResource> tags =
-                Objects.requireNonNull(spaceScopedClient
-                                .getSpace()
-                                .tagSets()
-                                .getByName("TagSet")
-                                .orElse(null))
-                        .getProperties()
-                        .getTags();
-
-        TenantResource tenant = new TenantResource("Tenant1");
-        tenant.setTenantTags(new HashSet<>(tags
-                .stream()
-                .map(TagResource::getCanonicalTagName).collect(Collectors.toList())));
-        spaceScopedClient.getSpace().tenants().create(tenant);
-
+    public void doFillTenantTagItems() {
+        final List<String> existingTagNames = Arrays.asList("Tag1", "Tag2");
         final ComboBoxModel model = descriptor.doFillTenantTagItems(JENKINS_OCTOPUS_SERVER_ID,
-                spaceScopedClient.getSpaceId());
+                space.getProperties().getId());
 
-        assertThat(model.size()).isEqualTo(tenantTagsToCreate.size());
+        assertThat(model.size()).isEqualTo(existingTagNames.size());
         assertThat(model)
-                .containsAll(tenantTagsToCreate.stream().map(tag -> "TagSet/" + tag).collect(Collectors.toList()));
+                .containsAll(existingTagNames.stream().map(tag -> "TagSet1/" + tag).collect(Collectors.toList()));
     }
 
     @Test
     public void doFillTenantItems() {
-        List<String> tenantsToCreate = Arrays.asList("Tenant1", "Tenant2", "Tenant3");
-        tenantsToCreate.forEach(name -> spaceScopedClient.createTenant(name));
+        List<String> existingTenantNames = Arrays.asList("Tenant1", "Tenant2", "Tenant3");
 
         final ListBoxModel model = descriptor.doFillTenantItems(JENKINS_OCTOPUS_SERVER_ID,
-                spaceScopedClient.getSpaceId());
+                space.getProperties().getId());
 
-        assertThat(model.size()).isEqualTo(tenantsToCreate.size());
-        assertThat(model).extracting("name").containsAll(tenantsToCreate);
-        assertThat(model).extracting("value").containsAll(tenantsToCreate);
+        assertThat(model.size()).isEqualTo(existingTenantNames.size());
+        assertThat(model).extracting("name").containsAll(existingTenantNames);
+        assertThat(model).extracting("value").containsAll(existingTenantNames);
     }
 
 }
