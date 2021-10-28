@@ -6,7 +6,7 @@
                                      header="Octopus Deploy" add="${%Add OctopusDeploy Server}">
               <table width="100%">
             <f:entry title="Server Id" field="serverId">
-                <f:textbox value="${server.id}"/>
+                <f:textbox value="${server.serverId}"/>
             </f:entry>
             <f:entry title="URL" field="url">
                 <f:textbox value="${server.url}" checkMethod="post"/>

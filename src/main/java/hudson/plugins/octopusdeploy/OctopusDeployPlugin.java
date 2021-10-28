@@ -10,6 +10,9 @@ import jenkins.model.Jenkins;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.GlobalPluginConfiguration;
 import net.sf.json.JSONObject;
+
+import org.jenkinsci.Symbol;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.interceptor.RequirePOST;
@@ -35,11 +38,14 @@ import static hudson.plugins.octopusdeploy.services.StringUtil.sanitizeValue;
 public class OctopusDeployPlugin extends GlobalPluginConfiguration {
 
     @Extension
+    @Symbol("octopusGlobalConfiguration")
     public static final class DescriptorImpl extends Descriptor<GlobalConfiguration> {
 
         private transient String apiKey;
 
         private transient String octopusHost;
+
+        private List<OctopusDeployServer> octopusDeployServers;
 
         /**
          * Get the default OctopusDeployServer instance
@@ -58,7 +64,6 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
             return null;
         }
 
-        private List<OctopusDeployServer> octopusDeployServers;
         public List<OctopusDeployServer> getOctopusDeployServers() {
             if (octopusDeployServers != null) {
                 return octopusDeployServers;
@@ -66,8 +71,10 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
             return Collections.emptyList();
         }
 
-        private void setOctopusDeployServers(List<OctopusDeployServer> servers) {
+        @DataBoundSetter
+        public void setOctopusDeployServers(List<OctopusDeployServer> servers) {
             octopusDeployServers = servers;
+            save();
         }
 
         public DescriptorImpl() {
@@ -114,7 +121,7 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
                 return FormValidation.warning("Please set a Server Id");
             }
             for (OctopusDeployServer s:getOctopusDeployServers()){
-                boolean serverIdMatches = serverId.equals(s.getId());
+                boolean serverIdMatches = serverId.equals(s.getServerId());
                 boolean urlsDiffer = !url.equals(s.getUrl());
                 boolean apiKeysDiffer = !apiKey.equals(s.getApiKey().getEncryptedValue());
                 // this validation function fires when serverId OR url OR apiKey change, which is documented (poorly) - https://wiki.jenkins.io/display/JENKINS/Form+Validation
@@ -223,7 +230,6 @@ public class OctopusDeployPlugin extends GlobalPluginConfiguration {
             }
             setOctopusDeployServers(servers);
 
-            save();
             return super.configure(req, formData);
         }
     }

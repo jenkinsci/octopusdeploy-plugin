@@ -229,7 +229,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
     public static List<String> getOctopusDeployServersIds() {
         List<String> ids = new ArrayList<>();
         for (OctopusDeployServer s:getOctopusDeployServers()) {
-            ids.add(s.getId());
+            ids.add(s.getServerId());
         }
         return ids;
     }
@@ -264,7 +264,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
             return getDefaultOctopusDeployServer();
         }
         for(OctopusDeployServer server : getOctopusDeployServers()) {
-            if(server.getId().equals(serverId)) {
+            if(server.getServerId().equals(serverId)) {
                 return server;
             }
         }
@@ -455,7 +455,7 @@ public abstract class AbstractOctopusDeployRecorderPostBuildStep extends Recorde
         public String getDefaultOctopusDeployServerId() {
             OctopusDeployServer server = AbstractOctopusDeployRecorderPostBuildStep.getDefaultOctopusDeployServer();
             if(server != null){
-                return server.getId();
+                return server.getServerId();
             }
             return null;
         }

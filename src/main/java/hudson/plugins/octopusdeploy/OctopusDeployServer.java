@@ -20,9 +20,9 @@ public class OctopusDeployServer implements Serializable {
         return isDefault;
     }
 
-    private String id;
-    public String getId() {
-        return id;
+    private String serverId;
+    public String getServerId() {
+        return serverId;
     }
 
     private String url;
@@ -50,7 +50,7 @@ public class OctopusDeployServer implements Serializable {
     }
 
     public OctopusDeployServer(String serverId, String url, Secret apiKey, boolean isDefault, boolean ignoreSslErrors) {
-        this.id = sanitizeValue(serverId);
+        this.serverId = sanitizeValue(serverId);
         this.url = sanitizeValue(url);
         this.apiKey = apiKey;
         this.isDefault = isDefault;

@@ -200,7 +200,7 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
     public static List<String> getOctopusDeployServersIds()  {
         List<String> ids = new ArrayList<>();
         for (OctopusDeployServer s:getOctopusDeployServers()) {
-            ids.add(s.getId());
+            ids.add(s.getServerId());
         }
         return ids;
     }
@@ -237,7 +237,7 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
         }
         else {
             for (OctopusDeployServer server : getOctopusDeployServers()) {
-                if (server.getId().equals(serverId)) {
+                if (server.getServerId().equals(serverId)) {
                     octopusDeployServer = server;
                 }
             }
@@ -360,7 +360,7 @@ public abstract class AbstractOctopusDeployRecorderBuildStep extends Builder imp
         public String getDefaultOctopusDeployServerId() {
             OctopusDeployServer server = AbstractOctopusDeployRecorderPostBuildStep.getDefaultOctopusDeployServer();
             if(server != null){
-                return server.getId();
+                return server.getServerId();
             }
             return null;
         }
