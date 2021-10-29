@@ -47,7 +47,7 @@ dependencies {
 }
 
 jenkinsPlugin {
-  jenkinsVersion = '2.190.1'
+  jenkinsVersion = '2.303.2'
   shortName = 'octopusdeploy'
   displayName = 'Octopus Deploy'
   url = 'https://octopus.com'
