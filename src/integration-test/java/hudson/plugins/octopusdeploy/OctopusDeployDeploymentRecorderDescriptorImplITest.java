@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class OctopusDeployDeploymentRecorderDescriptorImplTest extends BaseIntegrationTest {
+public class OctopusDeployDeploymentRecorderDescriptorImplITest extends BaseIntegrationTest {
 
     final private OctopusDeployDeploymentRecorder.DescriptorImpl descriptor =
             new OctopusDeployDeploymentRecorder.DescriptorImpl();

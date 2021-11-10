@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-class OctopusDeployReleaseRecorderDescriptorImplTest extends BaseIntegrationTest {
+class OctopusDeployReleaseRecorderDescriptorImplITest extends BaseIntegrationTest {
 
     private final OctopusDeployReleaseRecorder.DescriptorImpl descriptor =
             new OctopusDeployReleaseRecorder.DescriptorImpl();
