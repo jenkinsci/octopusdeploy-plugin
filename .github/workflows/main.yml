@@ -14,15 +14,28 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 5.0.x
+      - name: Install Octopus CLI
+        uses: OctopusDeploy/install-octopus-cli-action@v1.1.1
+        with:
+          version: latest
+      - name: Set Octo CLI Path
+        id: cli-path
+        run: echo "::set-output name=install-path::$(which octo)"
       - name: Setup JDK8
         uses: actions/setup-java@v2
         with:
           java-version: '8'
           distribution: 'adopt'
-      - name: Build
-        run: ./gradlew build --exclude-task test
-      - name: Execute Unit Tests
-        run: ./gradlew test
+      - name: Build, Execute Unit Tests & E2E Tests
+        run: ./gradlew build
+        env:
+          OCTOPUS_LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
+          OCTOPUS_SDK_AT_USE_EXISTING_SERVER: false
+          OCTOPUS_CLI_PATH: ${{ steps.cli-path.outputs.install-path }}
       - name: Execute Integration Tests
         run: ./gradlew integrationTest
         env:

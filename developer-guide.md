@@ -68,6 +68,22 @@ To execute tests from the command line, execute:
 **Integration tests**
 > ./gradlew integrationTest
 
+*Note:* Integration tests rely on a running Octopus Deploy instance, behaviour for running/using a server is controlled with the following environment variables:
+- `OCTOPUS_SDK_AT_USE_EXISTING_SERVER` - "true" or "false" value that decides between an existing server or a clean dockerised version
+- `OCTOPUS_SERVER_URL` - Configure the URL of an existing server
+- `OCTOPUS_SERVER_API_KEY` - API key for an existing server
+- `OCTOPUS_LICENSE` - XML License string, required as all tests are confined to unique spaces 
+
+## End-to-end tests
+End-to-end test coverage is currently provided by `E2eTest.java`.
+To avoid adding further dependencies to `pom.xml` as this project is being converted to Gradle, `E2eTest.java` compilation and execution is disabled when running from Maven.
+
+Due to limitations and behaviours of the Jenkins Test Harness, please note the following:
+- e2e tests are run under JUnit-4
+- e2e test class must be located under `src/test/java`
+- The installation path of OctoCLI must be provided via environment variable `OCTOPUS_CLI_PATH`
+- Other required environment variables as per [With Gradle - Integration Tests](#with-gradle)
+
 # Releasing a new version
 ## Deploying the Jenkins plugin
 Jenkins provides hosting for plugins in an artifactory repository: https://repo.jenkins-ci.org/. Jenkins also provides a GitHub repository and CI, but we have elected to use our own GitHub and CI.

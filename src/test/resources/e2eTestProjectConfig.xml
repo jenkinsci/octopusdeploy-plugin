@@ -1,0 +1,55 @@
+<project>
+    <actions/>
+    <description>Package</description>
+    <keepDependencies>false</keepDependencies>
+    <properties/>
+    <scm class="hudson.scm.NullSCM"/>
+    <canRoam>true</canRoam>
+    <disabled>false</disabled>
+    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+    <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+    <triggers/>
+    <concurrentBuild>false</concurrentBuild>
+    <builders>
+        <hudson.plugins.octopusdeploy.OctopusDeployPackRecorder plugin="octopusdeploy">
+            <toolId>Default</toolId>
+            <additionalArgs/>
+            <waitForDeployment>false</waitForDeployment>
+            <verboseLogging>false</verboseLogging>
+            <cancelOnTimeout>false</cancelOnTimeout>
+            <packageId>PackageId</packageId>
+            <packageVersion>1.0.0</packageVersion>
+            <packageFormat>zip</packageFormat>
+            <sourcePath>.</sourcePath>
+            <includePaths/>
+            <outputPath>.</outputPath>
+            <overwriteExisting>false</overwriteExisting>
+        </hudson.plugins.octopusdeploy.OctopusDeployPackRecorder>
+        <hudson.plugins.octopusdeploy.OctopusDeployPushRecorder plugin="octopusdeploy">
+            <serverId>TestServer</serverId>
+            <toolId>Default</toolId>
+            <spaceId>Spaces-1</spaceId>
+            <additionalArgs/>
+            <waitForDeployment>false</waitForDeployment>
+            <verboseLogging>false</verboseLogging>
+            <cancelOnTimeout>false</cancelOnTimeout>
+            <packagePaths>**/*.zip</packagePaths>
+            <overwriteMode>FailIfExists</overwriteMode>
+        </hudson.plugins.octopusdeploy.OctopusDeployPushRecorder>
+        <hudson.plugins.octopusdeploy.OctopusDeployPushBuildInformationRecorder plugin="octopusdeploy">
+            <serverId>TestServer</serverId>
+            <toolId>Default</toolId>
+            <spaceId/>
+            <additionalArgs/>
+            <waitForDeployment>false</waitForDeployment>
+            <verboseLogging>false</verboseLogging>
+            <cancelOnTimeout>false</cancelOnTimeout>
+            <packageId>PackageId</packageId>
+            <packageVersion>1.0.0</packageVersion>
+            <commentParser>GitHub</commentParser>
+            <overwriteMode>FailIfExists</overwriteMode>
+        </hudson.plugins.octopusdeploy.OctopusDeployPushBuildInformationRecorder>
+    </builders>
+    <publishers/>
+    <buildWrappers/>
+</project>

@@ -39,6 +39,7 @@ dependencies {
   testImplementation libs.assertj.core
   testImplementation libs.mockito.jupiter
   testImplementation libs.mockito.inline
+  testImplementation libs.bundles.octopus
 
   integrationTestImplementation libs.bundles.octopus
   integrationTestImplementation libs.bundles.junit
@@ -103,10 +104,6 @@ if (file('src/integration-test').directory) {
 
   task integrationTest(type: Test, dependsOn: ["compileTestJava"]) {
     useJUnitPlatform()
-    testLogging {
-      showStandardStreams = true
-      exceptionFormat = 'full'
-    }
     maxParallelForks = 1 // Consider increasing this when test volume exceeds overhead of docker containers starting
     group = "verification"
     description = "Runs integration tests"
