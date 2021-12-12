@@ -11,7 +11,7 @@ dependencyResolutionManagement {
       alias('spotless').toPluginId('com.diffplug.spotless').version('5.15.0')
 
       // Libraries
-      version('octopus', '0.0.2-SNAPSHOT')
+      version('octopus', '0.0.3')
       alias('test-support').to('com.octopus', 'test-support').versionRef('octopus')
       alias('octopus-sdk').to('com.octopus', 'octopus-sdk').versionRef('octopus')
       bundle('octopus', ['test-support', 'octopus-sdk'])
